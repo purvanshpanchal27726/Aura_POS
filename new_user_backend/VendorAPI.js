@@ -1,0 +1,126 @@
+const express = require('express');
+const db = require('./db');
+
+const router = express.Router();
+
+/**
+ * POST /api/vendors
+ * Creates a new vendor.
+ */
+router.post('/', async (req, res) => {
+  try {
+    const data = req.body.VendorModel || req.body || {};
+    const { first_name, last_name, company, address_1, address_2, city, country, phone_1, phone_2, email, created_by } = data;
+
+    if (!first_name || !last_name || !address_1 || !city || !country || !phone_1 || !email) {
+      return res.status(400).json({ error: 'Missing required fields for Vendor creation.' });
+    }
+
+    const query = `
+      INSERT INTO vendors (
+        first_name, last_name, company, address_1, address_2, 
+        city, country, phone_1, phone_2, email, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    const [result] = await db.execute(query, [
+      first_name,
+      last_name,
+      company || null,
+      address_1,
+      address_2 || null,
+      city,
+      country,
+      phone_1,
+      phone_2 || null,
+      email,
+      created_by || 'System'
+    ]);
+
+    res.status(201).json({ message: 'Vendor created successfully', vendor_id: result.insertId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * GET /api/vendors
+ * Fetches all vendors.
+ */
+router.get('/', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM vendors ORDER BY vendor_id ASC');
+    res.json(rows.map(r => ({ ...r, id: r.vendor_id })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PUT /api/vendors/:id
+ * Updates details of a vendor.
+ */
+router.put('/:id', async (req, res) => {
+  try {
+    const vendorId = req.params.id;
+    const data = req.body.VendorModel || req.body || {};
+    const { first_name, last_name, company, address_1, address_2, city, country, phone_1, phone_2, email } = data;
+
+    const [rows] = await db.execute('SELECT * FROM vendors WHERE vendor_id = ?', [vendorId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Vendor not found' });
+    }
+
+    const existing = rows[0];
+    const f_name = first_name !== undefined ? first_name : existing.first_name;
+    const l_name = last_name !== undefined ? last_name : existing.last_name;
+    const comp = company !== undefined ? company : existing.company;
+    const addr1 = address_1 !== undefined ? address_1 : existing.address_1;
+    const addr2 = address_2 !== undefined ? address_2 : existing.address_2;
+    const c_city = city !== undefined ? city : existing.city;
+    const c_country = country !== undefined ? country : existing.country;
+    const p1 = phone_1 !== undefined ? phone_1 : existing.phone_1;
+    const p2 = phone_2 !== undefined ? phone_2 : existing.phone_2;
+    const mail = email !== undefined ? email : existing.email;
+
+    const query = `
+      UPDATE vendors SET 
+        first_name = ?, last_name = ?, company = ?, address_1 = ?, address_2 = ?, 
+        city = ?, country = ?, phone_1 = ?, phone_2 = ?, email = ?
+      WHERE vendor_id = ?
+    `;
+
+    await db.execute(query, [f_name, l_name, comp, addr1, addr2, c_city, c_country, p1, p2, mail, vendorId]);
+    res.json({ message: 'Vendor updated successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * DELETE /api/vendors/:id
+ * Deletes a vendor and shifts subsequent IDs down.
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const vendorId = parseInt(req.params.id);
+    const [rows] = await db.execute('SELECT * FROM vendors WHERE vendor_id = ?', [vendorId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Vendor not found' });
+    }
+
+    await db.query('START TRANSACTION');
+    await db.execute('DELETE FROM vendors WHERE vendor_id = ?', [vendorId]);
+    await db.execute('UPDATE vendors SET vendor_id = vendor_id - 1 WHERE vendor_id > ?', [vendorId]);
+    await db.execute('ALTER TABLE vendors AUTO_INCREMENT = 1');
+    await db.query('COMMIT');
+    
+    res.json({ message: 'Vendor deleted successfully' });
+  } catch (err) {
+    await db.query('ROLLBACK').catch(() => {});
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
+

@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: pos-backend
+    runtime: node
+    rootDir: new_user_backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: PG_HOST
+        fromDatabase:
+          name: pos-system-db
+          property: host
+      - key: PG_PORT
+        fromDatabase:
+          name: pos-system-db
+          property: port
+      - key: PG_USER
+        fromDatabase:
+          name: pos-system-db
+          property: user
+      - key: PG_PASSWORD
+        fromDatabase:
+          name: pos-system-db
+          property: password
+      - key: PG_NAME
+        fromDatabase:
+          name: pos-system-db
+          property: database
+
+databases:
+  - name: pos-system-db
+    plan: free

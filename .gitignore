@@ -1,0 +1,17 @@
+# Backend
+new_user_backend/.env
+new_user_backend/node_modules/
+new_user_backend/uploads/
+
+# Flutter
+new_user_flutter/.dart_tool/
+new_user_flutter/build/
+new_user_flutter/.flutter-plugins
+new_user_flutter/.flutter-plugins-dependencies
+new_user_flutter/.pub-cache/
+new_user_flutter/.pub/
+new_user_flutter/*.iml
+
+# General
+.DS_Store
+Thumbs.db
