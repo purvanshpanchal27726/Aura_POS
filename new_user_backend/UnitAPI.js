@@ -65,6 +65,24 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/units/:id
+ * Fetches a single unit by ID.
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const unitId = req.params.id;
+    const [rows] = await db.execute('SELECT * FROM units WHERE unit_id = ?', [unitId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Unit not found' });
+    }
+    const r = rows[0];
+    res.json({ ...r, id: r.unit_id, acitve: r.active });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * PUT /api/units/:id
  * Updates details for a specific unit.
  */

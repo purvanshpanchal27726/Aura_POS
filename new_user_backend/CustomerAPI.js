@@ -75,6 +75,23 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/customers/:id
+ * Fetches a single customer by ID.
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const customerId = req.params.id;
+    const [rows] = await db.execute('SELECT * FROM customers WHERE customer_id = ?', [customerId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * PUT /api/customers/:id
  * Updates details for a specific customer.
  */
