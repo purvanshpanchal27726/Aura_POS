@@ -1,0 +1,95 @@
+name: Build Mobile App (APK & Unsigned IPA)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: |
+          cd new_user_flutter
+          flutter pub get
+
+      - name: Build APK
+        run: |
+          cd new_user_flutter
+          flutter build apk --release
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pos-system-android-apk
+          path: new_user_flutter/build/app/outputs/flutter-apk/app-release.apk
+
+  build-ipa:
+    name: Build Unsigned iOS IPA
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: |
+          cd new_user_flutter
+          flutter pub get
+
+      - name: Install CocoaPods
+        run: |
+          cd new_user_flutter/ios
+          pod install
+
+      - name: Build iOS App Bundle
+        run: |
+          cd new_user_flutter
+          flutter build ios --release --no-codesign
+
+      - name: Package Unsigned IPA
+        run: |
+          cd new_user_flutter
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r app-release-unsigned.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pos-system-ios-unsigned-ipa
+          path: new_user_flutter/app-release-unsigned.ipa
