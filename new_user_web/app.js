@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // When served BY the backend (same origin), baseUrl is '' (relative paths).
   // When opened as a file:// (standalone), it points to Render directly.
   // ─────────────────────────────────────────────────────────────────────────
-  const RENDER_BACKEND_URL = 'https://pos-backend.onrender.com';
+  const RENDER_BACKEND_URL = 'https://possys-w2ip.onrender.com';
 
   // Utility to dynamically compute API URL
   const getApiUrl = (path = '') => {
