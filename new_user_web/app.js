@@ -319,6 +319,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Back button navigation to dashboard
+  const btnBack = document.getElementById('btnBack');
+  if (btnBack) {
+    btnBack.addEventListener('click', () => {
+      switchScreen('dashboard');
+    });
+  }
+
   // Close drawer overlay when clicking the outer scrim
   if (sideDrawer) {
     sideDrawer.addEventListener('click', (e) => {
@@ -596,6 +604,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!checkScreenPermission(screenName)) {
       alert('Access Denied: Your role does not have permission to access this module.');
       return;
+    }
+
+    // Toggle Back / Menu button visibility based on active page
+    const btnBack = document.getElementById('btnBack');
+    const btnMenu = document.getElementById('btnMenu');
+    if (btnBack && btnMenu) {
+      if (screenName === 'dashboard') {
+        btnBack.style.display = 'none';
+        btnMenu.style.display = 'inline-flex';
+      } else {
+        btnBack.style.display = 'inline-flex';
+        btnMenu.style.display = 'none';
+      }
     }
 
     Object.keys(screens).forEach(key => {

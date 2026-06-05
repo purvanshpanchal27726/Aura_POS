@@ -351,6 +351,14 @@ class _MainLayoutState extends State<MainLayout> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: _currentIndex == 0
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  setState(() => _currentIndex = 0);
+                },
+              ),
         title: Text(
           _getAppBarTitle(),
           style: TextStyle(fontWeight: FontWeight.bold),

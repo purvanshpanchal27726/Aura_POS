@@ -49,7 +49,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.statusCode == 200) {
         final resData = json.decode(response.body);
-        widget.onLoginSuccess(Map<String, dynamic>.from(resData['user']));
+        final user = Map<String, dynamic>.from(resData['user']);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_outline_rounded, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Login Successful! Welcome, ${user['username']}.',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            margin: const EdgeInsets.all(16),
+          ),
+        );
+        widget.onLoginSuccess(user);
       } else {
         final resData = json.decode(response.body);
         _showError(resData['error'] ?? 'Invalid username or password.');

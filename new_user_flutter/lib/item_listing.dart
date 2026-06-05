@@ -368,359 +368,367 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: Theme.of(context).cardColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: Text(
-            item != null ? 'Edit Item Details' : 'Register New Item',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Color(0xFF1E293B),
-            ),
-          ),
-          content: SingleChildScrollView(
-            child: SizedBox(
-              width: 700,
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
+        builder: (context, setDialogState) {
+          Widget buildLeftColumn() {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Item Details',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF64748B),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Sr No ID (Only in Edit mode)
+                if (editingItemId != null) ...[
+                  TextFormField(
+                    initialValue: editingItemId.toString(),
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      labelText: 'Sr No (ID)',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      filled: true,
+                      fillColor: Color(0xFFF1F5F9),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                // Short Name
+                TextFormField(
+                  controller: _shortNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Short Name',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Barcode Code
+                TextFormField(
+                  controller: _codeController,
+                  decoration: InputDecoration(
+                    labelText: 'ItemCode/Barcode',
+                    prefixIcon: Icon(Icons.qr_code, color: Color(0xFF2563EB)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Long Name / Full Name
+                TextFormField(
+                  controller: _nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Item Name *',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                  ),
+                  validator: (val) => val == null || val.trim().isEmpty ? 'Item Name is required' : null,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _longNameController,
+                  decoration: InputDecoration(
+                    labelText: 'Long Name',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Image Uploader
+                Text('Upload Image', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF475569))),
+                const SizedBox(height: 4),
+                Row(
                   children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Left Column
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Item Details',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF64748B),
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              // Sr No ID (Only in Edit mode)
-                              if (editingItemId != null) ...[
-                                TextFormField(
-                                  initialValue: editingItemId.toString(),
-                                  readOnly: true,
-                                  decoration: InputDecoration(
-                                    labelText: 'Sr No (ID)',
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                    filled: true,
-                                    fillColor: Color(0xFFF1F5F9),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                              ],
-                              // Short Name
-                              TextFormField(
-                                controller: _shortNameController,
-                                decoration: InputDecoration(
-                                  labelText: 'Short Name',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  filled: true,
-                                  fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              // Barcode Code
-                              TextFormField(
-                                controller: _codeController,
-                                decoration: InputDecoration(
-                                  labelText: 'ItemCode/Barcode',
-                                  prefixIcon: Icon(Icons.qr_code, color: Color(0xFF2563EB)),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  filled: true,
-                                  fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              // Long Name / Full Name
-                              TextFormField(
-                                controller: _nameController,
-                                decoration: InputDecoration(
-                                  labelText: 'Item Name *',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  filled: true,
-                                  fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                                ),
-                                validator: (val) => val == null || val.trim().isEmpty ? 'Item Name is required' : null,
-                              ),
-                              const SizedBox(height: 12),
-                              TextFormField(
-                                controller: _longNameController,
-                                decoration: InputDecoration(
-                                  labelText: 'Long Name',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  filled: true,
-                                  fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              // Image Uploader
-                              Text('Upload Image', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF475569))),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                      decoration: BoxDecoration(
-                                        color: Color(0xFFF8FAFC),
-                                        border: Border.all(color: Color(0xFFCBD5E1)),
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        imageFilename ?? 'No file chosen',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(color: imageFilename != null ? Colors.black : Colors.grey),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Color(0xFFE2E8F0),
-                                      foregroundColor: Colors.black,
-                                      padding: EdgeInsets.symmetric(vertical: 14),
-                                    ),
-                                    onPressed: () => _pickImage(setDialogState),
-                                    child: Text('...'),
-                                  ),
-                                ],
-                              ),
-                              if (imageBase64 != null) ...[
-                                const SizedBox(height: 8),
-                                Center(
-                                  child: Container(
-                                    height: 70,
-                                    width: 70,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(color: Color(0xFFE2E8F0)),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: _getItemImage(imageBase64, size: 70),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 12),
-                              // Prices
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: _salesPriceController,
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      decoration: InputDecoration(
-                                        labelText: 'Retail Price *',
-                                        prefixIcon: Icon(Icons.currency_rupee, color: Color(0xFF2563EB), size: 16),
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                        filled: true,
-                                        fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                                      ),
-                                      validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: _purchasePriceController,
-                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                      decoration: InputDecoration(
-                                        labelText: 'Purchase Price *',
-                                        prefixIcon: Icon(Icons.currency_rupee, color: Color(0xFF2563EB), size: 16),
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                        filled: true,
-                                        fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                                      ),
-                                      validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              // Checkboxes
-                              Column(
-                                children: [
-                                  CheckboxListTile(
-                                    dense: true,
-                                    title: Text('Editable Price', style: TextStyle(fontSize: 13)),
-                                    value: isEditablePrice,
-                                    activeColor: Color(0xFF2563EB),
-                                    contentPadding: EdgeInsets.zero,
-                                    onChanged: (val) {
-                                      setDialogState(() => isEditablePrice = val ?? false);
-                                    },
-                                  ),
-                                  CheckboxListTile(
-                                    dense: true,
-                                    title: Text('Visible', style: TextStyle(fontSize: 13)),
-                                    value: isVisible,
-                                    activeColor: Color(0xFF2563EB),
-                                    contentPadding: EdgeInsets.zero,
-                                    onChanged: (val) {
-                                      setDialogState(() => isVisible = val ?? true);
-                                    },
-                                  ),
-                                  CheckboxListTile(
-                                    dense: true,
-                                    title: Text('Active', style: TextStyle(fontSize: 13)),
-                                    value: isActive,
-                                    activeColor: Color(0xFF2563EB),
-                                    contentPadding: EdgeInsets.zero,
-                                    onChanged: (val) {
-                                      setDialogState(() => isActive = val ?? true);
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
+                    Expanded(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFF8FAFC),
+                          border: Border.all(color: Color(0xFFCBD5E1)),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(width: 24),
-                        // Right Column
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Parameters & Configurations',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF64748B),
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              // Tax Dropdown
-                              DropdownButtonFormField<int>(
-                                initialValue: selectedTaxId,
-                                decoration: InputDecoration(
-                                  labelText: 'Tax Rate(%)',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  filled: true,
-                                  fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                                ),
-                                hint: Text('Select Tax Rate'),
-                                items: taxes.map<DropdownMenuItem<int>>((tax) {
-                                  return DropdownMenuItem<int>(
-                                    value: tax['tax_id'],
-                                    child: Text(tax['name'] ?? ''),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  setDialogState(() => selectedTaxId = val);
-                                },
-                              ),
-                              const SizedBox(height: 12),
-                              // Base Quantity
-                              TextFormField(
-                                controller: _baseQuantityController,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                decoration: InputDecoration(
-                                  labelText: 'Base Quantity',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  filled: true,
-                                  fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                                ),
-                                validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
-                              ),
-                              const SizedBox(height: 12),
-                              // Base Unit of Measurement
-                              DropdownButtonFormField<int>(
-                                initialValue: selectedUnitId,
-                                decoration: InputDecoration(
-                                  labelText: 'Base Unit of Measurement',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  filled: true,
-                                  fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                                ),
-                                hint: Text('Select Unit'),
-                                items: units.map<DropdownMenuItem<int>>((unit) {
-                                  return DropdownMenuItem<int>(
-                                    value: unit['unit_id'],
-                                    child: Text(unit['name'] ?? ''),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  setDialogState(() => selectedUnitId = val);
-                                },
-                              ),
-                              const SizedBox(height: 12),
-                              // Category Dropdown
-                              DropdownButtonFormField<int>(
-                                initialValue: selectedCategoryId,
-                                decoration: InputDecoration(
-                                  labelText: 'Category',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  filled: true,
-                                  fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                                ),
-                                hint: Text('Select Category'),
-                                items: categories.map<DropdownMenuItem<int>>((cat) {
-                                  return DropdownMenuItem<int>(
-                                    value: cat['category_id'],
-                                    child: Text(cat['name'] ?? ''),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  setDialogState(() => selectedCategoryId = val);
-                                },
-                              ),
-                              const SizedBox(height: 12),
-                              DropdownButtonFormField<String>(
-                                key: ValueKey(weightMeasurement),
-                                initialValue: weightMeasurement,
-                                decoration: InputDecoration(
-                                  labelText: 'Weight Measurement',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  filled: true,
-                                  fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                                ),
-                                items: [
-                                  DropdownMenuItem<String>(value: 'none', child: Text('None')),
-                                  DropdownMenuItem<String>(value: 'auto', child: Text('Auto Weight')),
-                                  DropdownMenuItem<String>(value: 'manual', child: Text('Manual Weight')),
-                                ],
-                                onChanged: (val) {
-                                  setDialogState(() => weightMeasurement = val ?? 'none');
-                                },
-                              ),
-                              const SizedBox(height: 12),
-                              // Description
-                              TextFormField(
-                                controller: _descriptionController,
-                                maxLines: 3,
-                                decoration: InputDecoration(
-                                  labelText: 'Description',
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                  filled: true,
-                                  fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                                ),
-                              ),
-                            ],
-                          ),
+                        child: Text(
+                          imageFilename ?? 'No file chosen',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: imageFilename != null ? Colors.black : Colors.grey),
                         ),
-                      ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFFE2E8F0),
+                        foregroundColor: Colors.black,
+                        padding: EdgeInsets.symmetric(vertical: 14),
+                      ),
+                      onPressed: () => _pickImage(setDialogState),
+                      child: Text('...'),
                     ),
                   ],
                 ),
+                if (imageBase64 != null) ...[
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Container(
+                      height: 70,
+                      width: 70,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Color(0xFFE2E8F0)),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: _getItemImage(imageBase64, size: 70),
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                // Prices
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _salesPriceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Retail Price *',
+                          prefixIcon: Icon(Icons.currency_rupee, color: Color(0xFF2563EB), size: 16),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          filled: true,
+                          fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                        ),
+                        validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _purchasePriceController,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        decoration: InputDecoration(
+                          labelText: 'Purchase Price *',
+                          prefixIcon: Icon(Icons.currency_rupee, color: Color(0xFF2563EB), size: 16),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          filled: true,
+                          fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                        ),
+                        validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Checkboxes
+                Column(
+                  children: [
+                    CheckboxListTile(
+                      dense: true,
+                      title: Text('Editable Price', style: TextStyle(fontSize: 13)),
+                      value: isEditablePrice,
+                      activeColor: Color(0xFF2563EB),
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (val) {
+                        setDialogState(() => isEditablePrice = val ?? false);
+                      },
+                    ),
+                    CheckboxListTile(
+                      dense: true,
+                      title: Text('Visible', style: TextStyle(fontSize: 13)),
+                      value: isVisible,
+                      activeColor: Color(0xFF2563EB),
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (val) {
+                        setDialogState(() => isVisible = val ?? true);
+                      },
+                    ),
+                    CheckboxListTile(
+                      dense: true,
+                      title: Text('Active', style: TextStyle(fontSize: 13)),
+                      value: isActive,
+                      activeColor: Color(0xFF2563EB),
+                      contentPadding: EdgeInsets.zero,
+                      onChanged: (val) {
+                        setDialogState(() => isActive = val ?? true);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }
+
+          Widget buildRightColumn() {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Parameters & Configurations',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF64748B),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Tax Dropdown
+                DropdownButtonFormField<int>(
+                  initialValue: selectedTaxId,
+                  decoration: InputDecoration(
+                    labelText: 'Tax Rate(%)',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                  ),
+                  hint: Text('Select Tax Rate'),
+                  items: taxes.map<DropdownMenuItem<int>>((tax) {
+                    return DropdownMenuItem<int>(
+                      value: tax['tax_id'],
+                      child: Text(tax['name'] ?? ''),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setDialogState(() => selectedTaxId = val);
+                  },
+                ),
+                const SizedBox(height: 12),
+                // Base Quantity
+                TextFormField(
+                  controller: _baseQuantityController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    labelText: 'Base Quantity',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                  ),
+                  validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
+                ),
+                const SizedBox(height: 12),
+                // Base Unit of Measurement
+                DropdownButtonFormField<int>(
+                  initialValue: selectedUnitId,
+                  decoration: InputDecoration(
+                    labelText: 'Base Unit of Measurement',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                  ),
+                  hint: Text('Select Unit'),
+                  items: units.map<DropdownMenuItem<int>>((unit) {
+                    return DropdownMenuItem<int>(
+                      value: unit['unit_id'],
+                      child: Text(unit['name'] ?? ''),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setDialogState(() => selectedUnitId = val);
+                  },
+                ),
+                const SizedBox(height: 12),
+                // Category Dropdown
+                DropdownButtonFormField<int>(
+                  initialValue: selectedCategoryId,
+                  decoration: InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                  ),
+                  hint: Text('Select Category'),
+                  items: categories.map<DropdownMenuItem<int>>((cat) {
+                    return DropdownMenuItem<int>(
+                      value: cat['category_id'],
+                      child: Text(cat['name'] ?? ''),
+                    );
+                  }).toList(),
+                  onChanged: (val) {
+                    setDialogState(() => selectedCategoryId = val);
+                  },
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  key: ValueKey(weightMeasurement),
+                  initialValue: weightMeasurement,
+                  decoration: InputDecoration(
+                    labelText: 'Weight Measurement',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                  ),
+                  items: [
+                    DropdownMenuItem<String>(value: 'none', child: Text('None')),
+                    DropdownMenuItem<String>(value: 'auto', child: Text('Auto Weight')),
+                    DropdownMenuItem<String>(value: 'manual', child: Text('Manual Weight')),
+                  ],
+                  onChanged: (val) {
+                    setDialogState(() => weightMeasurement = val ?? 'none');
+                  },
+                ),
+                const SizedBox(height: 12),
+                // Description
+                TextFormField(
+                  controller: _descriptionController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    filled: true,
+                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          final screenWidth = MediaQuery.of(context).size.width;
+
+          return AlertDialog(
+            backgroundColor: Theme.of(context).cardColor,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            title: Text(
+              item != null ? 'Edit Item Details' : 'Register New Item',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Color(0xFF1E293B),
               ),
             ),
-          ),
-          actions: [
+            content: SingleChildScrollView(
+              child: SizedBox(
+                width: screenWidth > 650 ? 700 : double.infinity,
+                child: Form(
+                  key: _formKey,
+                  child: screenWidth > 650
+                      ? Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(child: buildLeftColumn()),
+                            const SizedBox(width: 24),
+                            Expanded(child: buildRightColumn()),
+                          ],
+                        )
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            buildLeftColumn(),
+                            const SizedBox(height: 24),
+                            buildRightColumn(),
+                          ],
+                        ),
+                ),
+              ),
+            ),
+            actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
@@ -752,9 +760,10 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
               child: Text(item != null ? 'Update Item' : 'Save Item'),
             ),
           ],
-        ),
-      ),
-    );
+        );
+      },
+    ),
+  );
   }
 
   @override
