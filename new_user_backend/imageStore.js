@@ -41,7 +41,11 @@ const parseDataUri = (value) => {
   };
 };
 
-const getPublicBaseUrl = (req) => `${req.protocol}://${req.get('host')}`;
+const getPublicBaseUrl = (req) => {
+  const host = req.get('host') || '';
+  const protocol = (req.protocol === 'https' || req.headers['x-forwarded-proto'] === 'https' || (!host.includes('localhost') && !host.includes('127.0.0.1'))) ? 'https' : 'http';
+  return `${protocol}://${host}`;
+};
 
 const toPublicUrl = (req, variant, filename) => (
   `${getPublicBaseUrl(req)}/Images/${variant}/${filename}`
@@ -181,38 +185,25 @@ const publicImageFields = (storedImage, req) => {
     };
   }
 
-  // If it's a simple path string starting with /Images/
-  if (typeof storedImage === 'string' && storedImage.startsWith('/Images/')) {
-    const basename = path.basename(storedImage);
-    const mappedVariants = {};
-    
-    variants.forEach((v) => {
-      mappedVariants[v] = {
-        url: `${getPublicBaseUrl(req)}/Images/${v}/${basename}`,
-        path: `/Images/${v}/${basename}`,
-        mime: 'image/jpeg'
-      };
-    });
-
-    const preferredUrl = `${getPublicBaseUrl(req)}${storedImage}`;
-
-    return {
-      image: preferredUrl,
-      image_url: preferredUrl,
-      image_variants: mappedVariants
-    };
-  }
-
-  // If it's the old JSON format, parse it
+  // 1. If it's the old JSON format, parse it first (safe from path string manipulation)
   if (isStoredImageRecord(storedImage)) {
     const parsed = JSON.parse(storedImage);
     const mappedVariants = {};
 
     Object.entries(parsed.variants || {}).forEach(([variant, data]) => {
       if (!data) return;
+      let pathVal = data.path;
+      if (typeof pathVal === 'string') {
+        pathVal = pathVal.replace(/\\/g, '/');
+        const idx = pathVal.indexOf('Images/');
+        if (idx !== -1) {
+          pathVal = '/' + pathVal.slice(idx);
+        }
+      }
       mappedVariants[variant] = {
         ...data,
-        url: data.url || (data.path ? `${getPublicBaseUrl(req)}${data.path}` : null)
+        path: pathVal,
+        url: data.url || (pathVal ? `${getPublicBaseUrl(req)}${pathVal}` : null)
       };
     });
 
@@ -226,6 +217,41 @@ const publicImageFields = (storedImage, req) => {
     return {
       image: preferred ? preferred.url : null,
       image_url: preferred ? preferred.url : null,
+      image_variants: mappedVariants
+    };
+  }
+
+  // 2. Otherwise, treat as a simple path string, and apply robust path normalization
+  let normalizedImage = storedImage;
+  if (typeof normalizedImage === 'string') {
+    normalizedImage = normalizedImage.replace(/\\/g, '/');
+    const idx = normalizedImage.indexOf('Images/');
+    if (idx !== -1) {
+      normalizedImage = '/' + normalizedImage.slice(idx);
+    }
+  }
+
+  if (typeof normalizedImage === 'string' && normalizedImage.startsWith('/Images/')) {
+    const basename = path.basename(normalizedImage);
+    const mappedVariants = {};
+    
+    // Extract actual variant directory if specified in the path, otherwise default to 'web'
+    const parts = normalizedImage.split('/');
+    const currentVariant = (parts.length >= 3 && variants.includes(parts[2])) ? parts[2] : 'web';
+    
+    variants.forEach((v) => {
+      mappedVariants[v] = {
+        url: `${getPublicBaseUrl(req)}/Images/${v}/${basename}`,
+        path: `/Images/${v}/${basename}`,
+        mime: 'image/jpeg'
+      };
+    });
+
+    const preferredUrl = `${getPublicBaseUrl(req)}/Images/${currentVariant}/${basename}`;
+
+    return {
+      image: preferredUrl,
+      image_url: preferredUrl,
       image_variants: mappedVariants
     };
   }

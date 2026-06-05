@@ -20,6 +20,7 @@ const db = require('./db');
 db.initDb();
 
 const app = express();
+app.enable('trust proxy');
 const PORT = process.env.PORT || 3000;
 
 // Body parsing middleware

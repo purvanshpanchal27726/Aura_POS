@@ -3,6 +3,8 @@ new_user_backend/.env
 new_user_backend/.env.render
 new_user_backend/node_modules/
 new_user_backend/uploads/
+new_user_backend/Images/
+
 
 # Flutter
 new_user_flutter/.dart_tool/

@@ -98,6 +98,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }, duration);
   };
 
+  // Global override of standard window.alert to show non-blocking glassmorphic toasts
+  window.alert = (message) => {
+    if (!message) return;
+    const msgStr = message.toString();
+    const msgLower = msgStr.toLowerCase();
+    let type = 'info';
+    let title = 'Notice';
+    
+    if (msgLower.includes('success') || msgLower.includes('recorded') || msgLower.includes('registered') || msgLower.includes('updated') || msgLower.includes('saved') || msgLower.includes('completed')) {
+      type = 'success';
+      title = 'Success';
+      AudioSynth.playSuccess();
+    } else if (msgLower.includes('error') || msgLower.includes('failed') || msgLower.includes('denied') || msgLower.includes('invalid') || msgLower.includes('cannot') || msgLower.includes('less than')) {
+      type = 'danger';
+      title = 'Error';
+      AudioSynth.playError();
+    } else if (msgLower.includes('warning') || msgLower.includes('choose') || msgLower.includes('select') || msgLower.includes('require')) {
+      type = 'warning';
+      title = 'Warning';
+      AudioSynth.playError();
+    }
+    
+    showToast(title, msgStr, type);
+  };
+
   // Server-Sent Events Subscriber (Real-Time Live Sync)
   const initRealtimeSSE = () => {
     try {
@@ -146,22 +171,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Launch live-sync client listener
   initRealtimeSSE();
 
-  // Override browser alert globally to use Toast notifications and sound triggers
-  window.alert = (message) => {
-    const isError = message.toLowerCase().includes('error') || 
-                    message.toLowerCase().includes('fail') || 
-                    message.toLowerCase().includes('denied') || 
-                    message.toLowerCase().includes('cannot') || 
-                    message.toLowerCase().includes('invalid') || 
-                    message.toLowerCase().includes('please');
-    if (isError) {
-      AudioSynth.playError();
-      showToast('Notice', message, 'warning');
-    } else {
-      AudioSynth.playSuccess();
-      showToast('Success', message, 'success');
-    }
-  };
 
   const money = (value) => `Rs.${(parseFloat(value || 0)).toFixed(2)}`;
 
@@ -3183,10 +3192,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const data = await response.json();
         localStorage.setItem('pos_active_user', JSON.stringify(data.user));
-        alert('Login successful!');
+        showToast('Login Successful', `Welcome back, ${username}!`, 'success');
+        AudioSynth.playSuccess();
         checkAuthSession();
       } catch (err) {
-        alert(err.message);
+        showToast('Login Failed', err.message, 'danger');
+        AudioSynth.playError();
       }
     });
   }

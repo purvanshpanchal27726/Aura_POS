@@ -11,26 +11,24 @@
 </head>
 <body>
   <!-- Login / Signup Overlay -->
-  <div id="loginOverlay" class="modal-overlay" style="display: flex; justify-content: center; align-items: center; background: #0f172a; z-index: 10000; position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
-    <div class="modal-card" style="max-width: 400px; padding: 2.5rem; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); background: #ffffff;">
-      <h2 style="text-align: center; margin-bottom: 1.5rem; color: #1e293b;" id="loginTitle">Login to POS System</h2>
+  <div id="loginOverlay" class="modal-overlay" style="display: flex; justify-content: center; align-items: center; background: var(--bg-color); z-index: 10000; position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
+    <div class="modal-card" style="max-width: 400px; padding: 2.5rem; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main);">
+      <h2 style="text-align: center; margin-bottom: 1.5rem; color: var(--text-main);" id="loginTitle">Login to POS System</h2>
       
       <!-- Login Form -->
       <form id="loginForm">
         <div class="form-field" style="margin-bottom: 1.25rem;">
-          <label for="loginUsername" style="color: #475569; font-weight: 500; font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">Username <span class="required-star">*</span></label>
-          <input type="text" id="loginUsername" required placeholder="Enter username" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem;">
+          <label for="loginUsername" style="color: var(--text-secondary); font-weight: 500; font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">Username <span class="required-star">*</span></label>
+          <input type="text" id="loginUsername" required placeholder="Enter username" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
         </div>
         <div class="form-field" style="margin-bottom: 1.75rem;">
-          <label for="loginPassword" style="color: #475569; font-weight: 500; font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">Password <span class="required-star">*</span></label>
-          <input type="password" id="loginPassword" required placeholder="Enter password" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem;">
+          <label for="loginPassword" style="color: var(--text-secondary); font-weight: 500; font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">Password <span class="required-star">*</span></label>
+          <input type="password" id="loginPassword" required placeholder="Enter password" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
         </div>
         <div style="display: flex; flex-direction: column; gap: 1rem;">
           <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.75rem; font-size: 1rem; font-weight: 600; border-radius: 8px;">Login</button>
         </div>
       </form>
-
-
     </div>
   </div>
 
