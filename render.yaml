@@ -10,6 +10,12 @@ services:
         value: production
       - key: PORT
         value: 10000
+      # DATABASE_URL — Internal connection string with SSL (highest priority in db.js)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pos-system-db
+          property: connectionString
+      # Individual PG_* vars (fallback if DATABASE_URL is not available)
       - key: PG_HOST
         fromDatabase:
           name: pos-system-db

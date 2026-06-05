@@ -1,8 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Utility to dynamically compute API URL if running from a local file protocol
+  // ─────────────────────────────────────────────────────────────────────────
+  // 🌐 PRODUCTION: Render.com backend URL
+  // Update this if your Render service name changes.
+  // When served BY the backend (same origin), baseUrl is '' (relative paths).
+  // When opened as a file:// (standalone), it points to Render directly.
+  // ─────────────────────────────────────────────────────────────────────────
+  const RENDER_BACKEND_URL = 'https://pos-backend.onrender.com';
+
+  // Utility to dynamically compute API URL
   const getApiUrl = (path = '') => {
     const isLocalFile = window.location.protocol === 'file:';
-    const baseUrl = isLocalFile ? 'http://localhost:3000' : '';
+    const baseUrl = isLocalFile ? RENDER_BACKEND_URL : '';
     return `${baseUrl}${path}`;
   };
 
