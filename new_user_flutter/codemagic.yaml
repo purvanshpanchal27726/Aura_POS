@@ -1,0 +1,86 @@
+workflows:
+  ios-release:
+    name: iOS Release Build
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store   # Change to 'ad_hoc' for direct device install without TestFlight
+        bundle_identifier: com.yourname.possystem  # ⚠️ CHANGE THIS to your Bundle ID from Apple Developer Portal
+
+    scripts:
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+
+      - name: Get Flutter packages
+        script: |
+          flutter packages pub get
+
+      - name: Install CocoaPods
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+        working_directory: ios
+
+      - name: Flutter build iOS release
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+
+    publishing:
+      email:
+        recipients:
+          - your-email@gmail.com   # ⚠️ CHANGE THIS to your email
+        notify:
+          success: true
+          failure: true
+      app_store_connect:             # Remove this block if you don't want App Store upload
+        auth: integration
+
+  ios-debug-adhoc:
+    name: iOS Ad Hoc Build (Direct Install)
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: ad_hoc   # Allows installation on registered devices without TestFlight
+        bundle_identifier: com.yourname.possystem  # ⚠️ CHANGE THIS
+
+    scripts:
+      - name: Set up code signing settings on Xcode project
+        script: |
+          xcode-project use-profiles
+
+      - name: Get Flutter packages
+        script: |
+          flutter packages pub get
+
+      - name: Install CocoaPods
+        script: |
+          find . -name "Podfile" -execdir pod install \;
+        working_directory: ios
+
+      - name: Flutter build iOS ad hoc
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      email:
+        recipients:
+          - your-email@gmail.com   # ⚠️ CHANGE THIS to your email
+        notify:
+          success: true
+          failure: true
