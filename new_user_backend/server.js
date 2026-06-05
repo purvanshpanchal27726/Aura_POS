@@ -111,13 +111,14 @@ app.get('/api/dashboard/stats', async (req, res) => {
     const [units] = await db.query('SELECT COUNT(*) AS count FROM units');
     const [taxes] = await db.query('SELECT COUNT(*) AS count FROM taxes');
 
+    // NOTE: PostgreSQL COUNT(*) returns a string — must parseInt()
     res.json({
-      users: users[0].count,
-      customers: customers[0].count,
-      items: items[0].count,
-      categories: categories[0].count,
-      units: units[0].count,
-      taxes: taxes[0].count
+      users: parseInt(users[0].count) || 0,
+      customers: parseInt(customers[0].count) || 0,
+      items: parseInt(items[0].count) || 0,
+      categories: parseInt(categories[0].count) || 0,
+      units: parseInt(units[0].count) || 0,
+      taxes: parseInt(taxes[0].count) || 0
     });
   } catch (err) {
     res.status(500).json({ error: err.message });

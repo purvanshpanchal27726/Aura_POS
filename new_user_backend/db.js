@@ -2,18 +2,39 @@ const { Pool } = require('pg');
 const { AsyncLocalStorage } = require('async_hooks');
 require('dotenv').config();
 
-// Create PostgreSQL connection pool
-const pgPool = new Pool({
-  host: process.env.PG_HOST || 'localhost',
-  port: parseInt(process.env.PG_PORT || '5432'),
-  user: process.env.PG_USER || 'postgres',
-  password: process.env.PG_PASSWORD,
-  database: process.env.PG_NAME || 'POSSystem',
-  max: 10,
-  idleTimeoutMillis: 30000,       // Release idle connections after 30s
-  connectionTimeoutMillis: 5000,  // Fail fast if PG is unreachable
-  allowExitOnIdle: false          // Keep pool alive even when idle
-});
+// ─────────────────────────────────────────────────────────────────────────────
+// PostgreSQL Connection Pool
+// Priority: DATABASE_URL (Render external URL with SSL) > individual PG_* vars
+// ─────────────────────────────────────────────────────────────────────────────
+let poolConfig;
+
+if (process.env.DATABASE_URL) {
+  // Render provides DATABASE_URL — use it with SSL required
+  poolConfig = {
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false }, // Required for Render PostgreSQL
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+    allowExitOnIdle: false
+  };
+} else {
+  // Local development — use individual PG_* environment variables
+  poolConfig = {
+    host: process.env.PG_HOST || 'localhost',
+    port: parseInt(process.env.PG_PORT || '5432'),
+    user: process.env.PG_USER || 'postgres',
+    password: process.env.PG_PASSWORD,
+    database: process.env.PG_NAME || 'POSSystem',
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+    allowExitOnIdle: false
+  };
+}
+
+const pgPool = new Pool(poolConfig);
+console.log(`[DB] Connecting via ${process.env.DATABASE_URL ? 'DATABASE_URL (Render)' : 'PG_* env vars (local)'}`);
 
 // ⚠️ CRITICAL: Handle unexpected connection drops gracefully.
 // Without this handler, any dropped PG connection crashes the Node process.

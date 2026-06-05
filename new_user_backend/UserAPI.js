@@ -74,9 +74,9 @@ router.post('/', async (req, res) => {
       });
     }
 
-    // Check if this is the first user
+    // Check if this is the first user (PostgreSQL COUNT returns string, must parseInt)
     const [countResult] = await db.query('SELECT COUNT(*) AS count FROM users');
-    const isFirstUser = countResult[0].count === 0;
+    const isFirstUser = parseInt(countResult[0].count) === 0;
     const finalRoleId = isFirstUser ? 1 : (role_id ? parseInt(role_id) : 3);
 
     const encryptedPassword = encryptPassword(password);

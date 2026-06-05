@@ -1,5 +1,6 @@
 # Backend
 new_user_backend/.env
+new_user_backend/.env.render
 new_user_backend/node_modules/
 new_user_backend/uploads/
 
