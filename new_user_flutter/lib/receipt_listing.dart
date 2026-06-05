@@ -323,7 +323,7 @@ class _ReceiptListingScreenState extends State<ReceiptListingScreen> {
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6366F1).withOpacity(0.12),
+                        backgroundColor: const Color(0xFF6366F1).withValues(alpha: 0.12),
                         foregroundColor: const Color(0xFF6366F1),
                         elevation: 0,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -397,7 +397,7 @@ class _ReceiptListingScreenState extends State<ReceiptListingScreen> {
                 DataCell(
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF6366F1).withOpacity(0.12),
+                      backgroundColor: const Color(0xFF6366F1).withValues(alpha: 0.12),
                       foregroundColor: const Color(0xFF6366F1),
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

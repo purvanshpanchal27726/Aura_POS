@@ -1,6 +1,19 @@
 const { Pool } = require('pg');
 const { AsyncLocalStorage } = require('async_hooks');
-require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
+
+// Load Render-specific environment variables if running on Render
+if (process.env.RENDER === 'true') {
+  const renderEnvPath = path.join(__dirname, '.env.render');
+  if (fs.existsSync(renderEnvPath)) {
+    require('dotenv').config({ path: renderEnvPath });
+  } else {
+    require('dotenv').config();
+  }
+} else {
+  require('dotenv').config();
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PostgreSQL Connection Pool
@@ -20,8 +33,9 @@ if (process.env.DATABASE_URL) {
   };
 } else {
   // Local development — use individual PG_* environment variables
+  const pgHost = process.env.PG_HOST || 'localhost';
   poolConfig = {
-    host: process.env.PG_HOST || 'localhost',
+    host: pgHost,
     port: parseInt(process.env.PG_PORT || '5432'),
     user: process.env.PG_USER || 'postgres',
     password: process.env.PG_PASSWORD,
@@ -31,6 +45,11 @@ if (process.env.DATABASE_URL) {
     connectionTimeoutMillis: 5000,
     allowExitOnIdle: false
   };
+
+  // Enable SSL if connecting to a remote host (like Render PostgreSQL)
+  if (pgHost !== 'localhost' && pgHost !== '127.0.0.1') {
+    poolConfig.ssl = { rejectUnauthorized: false };
+  }
 }
 
 const pgPool = new Pool(poolConfig);
@@ -259,4 +278,63 @@ const db = {
   }
 };
 
+// Auto-initialize database schema if empty
+db.initDb = async function() {
+  const fs = require('fs');
+  const path = require('path');
+  
+  try {
+    // Check if the 'users' table exists
+    const [result] = await this.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'users'
+      )
+    `);
+    
+    if (result && result[0] && result[0].exists) {
+      console.log('[DB] Database already initialized. Skipping auto-creation.');
+      return;
+    }
+    
+    console.log('[DB] Database tables not found. Initializing PostgreSQL database...');
+    
+    const schemaPath = path.join(__dirname, 'schema_pg.sql');
+    if (!fs.existsSync(schemaPath)) {
+      console.error('[DB] schema_pg.sql not found! Cannot auto-initialize.');
+      return;
+    }
+    
+    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+    
+    // Split statements by semicolon, removing comments
+    const statements = schemaSql
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && !s.startsWith('--'));
+      
+    console.log(`[DB] Executing ${statements.length} schema statements...`);
+    
+    const client = await pgPool.connect();
+    try {
+      await client.query('BEGIN');
+      for (const statement of statements) {
+        await client.query(statement);
+      }
+      await client.query('COMMIT');
+      console.log('[DB] Database initialization completed successfully!');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('[DB] Failed to execute schema statements:', err);
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error('[DB] Database auto-initialization error:', err);
+  }
+};
+
 module.exports = db;
+

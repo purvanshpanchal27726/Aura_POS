@@ -98,14 +98,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         gradient: LinearGradient(
                           colors: isDark 
                             ? [const Color(0xFF312E81), const Color(0xFF1E1B4B), const Color(0xFF111827)]
-                            : [primaryColor, primaryColor.withOpacity(0.85), primaryColor.withOpacity(0.7)],
+                            : [primaryColor, primaryColor.withValues(alpha: 0.85), primaryColor.withValues(alpha: 0.7)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
                         borderRadius: BorderRadius.circular(24),
                         boxShadow: [
                           BoxShadow(
-                            color: primaryColor.withOpacity(isDark ? 0.2 : 0.3),
+                            color: primaryColor.withValues(alpha: isDark ? 0.2 : 0.3),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           )
@@ -131,7 +131,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   'Logged in as $roleName. Here is your terminal administrative summary overview.',
                                   style: GoogleFonts.inter(
                                     fontSize: 13,
-                                    color: Colors.white.withOpacity(0.85),
+                                    color: Colors.white.withValues(alpha: 0.85),
                                   ),
                                 ),
                               ],
@@ -141,7 +141,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.15),
+                                color: Colors.white.withValues(alpha: 0.15),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(Icons.point_of_sale_rounded, color: Colors.white, size: 40),
@@ -363,7 +363,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.12),
+          color: color.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 20),
@@ -421,7 +421,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   borderRadius: BorderRadius.circular(14),
                   boxShadow: [
                     BoxShadow(
-                      color: gradientColors[0].withOpacity(0.3),
+                      color: gradientColors[0].withValues(alpha: 0.3),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     )

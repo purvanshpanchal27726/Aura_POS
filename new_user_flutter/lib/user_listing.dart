@@ -299,7 +299,7 @@ class _UserListingScreenState extends State<UserListingScreen> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: primaryColor.withOpacity(0.1),
+                            color: primaryColor.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
@@ -364,7 +364,7 @@ class _UserListingScreenState extends State<UserListingScreen> {
                                     ),
                                   DropdownButtonFormField<int>(
                                     key: ValueKey(selectedRoleId),
-                                    value: selectedRoleId,
+                                    initialValue: selectedRoleId,
                                     decoration: InputDecoration(
                                       labelText: 'System Role *',
                                       labelStyle: GoogleFonts.inter(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B), fontSize: 13),

@@ -1,6 +1,23 @@
 const express = require('express');
 const path = require('path');
-require('dotenv').config();
+const fs = require('fs');
+
+// Load Render-specific environment variables if running on Render
+if (process.env.RENDER === 'true') {
+  const renderEnvPath = path.join(__dirname, '.env.render');
+  if (fs.existsSync(renderEnvPath)) {
+    require('dotenv').config({ path: renderEnvPath });
+  } else {
+    require('dotenv').config();
+  }
+} else {
+  require('dotenv').config();
+}
+
+const db = require('./db');
+
+// Run auto-init database schema if empty
+db.initDb();
 
 const app = express();
 const PORT = process.env.PORT || 3000;

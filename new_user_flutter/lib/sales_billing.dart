@@ -662,7 +662,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF6366F1).withOpacity(0.1),
+                                  color: const Color(0xFF6366F1).withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(Icons.add_rounded, size: 16, color: Color(0xFF6366F1)),
@@ -684,7 +684,6 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
 
   Widget _buildCartPanel() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).primaryColor;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -695,8 +694,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
           BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: ListView(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -708,7 +706,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withOpacity(0.12),
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -723,7 +721,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
           // Customer selection & Bill Date
           DropdownButtonFormField<int>(
             key: ValueKey(selectedCustomerId),
-            value: selectedCustomerId,
+            initialValue: selectedCustomerId,
             style: GoogleFonts.inter(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 13.5),
             decoration: InputDecoration(
               labelText: 'Select Customer *',
@@ -774,26 +772,28 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
           const Divider(height: 24),
           
           // Cart line items list
-          Expanded(
-            child: cartLines.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.shopping_cart_outlined, size: 36, color: isDark ? const Color(0xFF334155) : const Color(0xFF94A3B8)),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Checkout cart is empty.',
-                          style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF94A3B8)),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.separated(
-                    itemCount: cartLines.length,
-                    separatorBuilder: (ctx, idx) => Divider(height: 12, color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF1F5F9)),
-                    itemBuilder: (ctx, idx) {
-                      final line = cartLines[idx];
+          cartLines.isEmpty
+              ? Container(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.shopping_cart_outlined, size: 36, color: isDark ? const Color(0xFF334155) : const Color(0xFF94A3B8)),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Checkout cart is empty.',
+                        style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF94A3B8)),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: cartLines.length,
+                  separatorBuilder: (ctx, idx) => Divider(height: 12, color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF1F5F9)),
+                  itemBuilder: (ctx, idx) {
+                    final line = cartLines[idx];
                       final qty = line['quantity'] as double;
                       final rate = line['rate'] as double;
                       final isEditable = line['editable_price'] == true;
@@ -891,7 +891,6 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
                       );
                     },
                   ),
-          ),
           const Divider(height: 24),
           
           // Invoice Calculations

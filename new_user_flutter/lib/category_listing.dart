@@ -200,7 +200,7 @@ class _CategoryListingScreenState extends State<CategoryListingScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
+                    color: primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(Icons.category_rounded, color: primaryColor, size: 20),
@@ -217,12 +217,13 @@ class _CategoryListingScreenState extends State<CategoryListingScreen> {
             ),
             content: SizedBox(
               width: 380,
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     Text(
                       'Provide a unique name for this category segment.',
                       style: GoogleFonts.inter(
@@ -277,6 +278,7 @@ class _CategoryListingScreenState extends State<CategoryListingScreen> {
                 ),
               ),
             ),
+          ),
             actions: [
               TextButton(
                 onPressed: () {

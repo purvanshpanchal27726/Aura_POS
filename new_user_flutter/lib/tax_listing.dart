@@ -209,7 +209,7 @@ class _TaxListingScreenState extends State<TaxListingScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: primaryColor.withOpacity(0.1),
+                    color: primaryColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
@@ -231,12 +231,13 @@ class _TaxListingScreenState extends State<TaxListingScreen> {
             ),
             content: SizedBox(
               width: screenWidth > 500 ? 450 : screenWidth * 0.9,
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     Text(
                       'Tax Details',
                       style: GoogleFonts.inter(
@@ -339,6 +340,7 @@ class _TaxListingScreenState extends State<TaxListingScreen> {
                 ),
               ),
             ),
+          ),
             actions: [
               TextButton(
                 onPressed: () {

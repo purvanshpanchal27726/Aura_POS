@@ -116,9 +116,8 @@ class _MyAppState extends State<MyApp> {
         primaryColor: primaryColor,
         colorScheme: ColorScheme.light(
           primary: primaryColor,
-          secondary: primaryColor.withOpacity(0.7),
+          secondary: primaryColor.withValues(alpha: 0.7),
           surface: Colors.white,
-          background: const Color(0xFFF8FAFC),
         ),
         textTheme: GoogleFonts.interTextTheme(const TextTheme(
           bodyLarge: TextStyle(color: Color(0xFF0F172A), fontSize: 14), // Slate-900 primary text
@@ -147,9 +146,8 @@ class _MyAppState extends State<MyApp> {
         primaryColor: primaryColor,
         colorScheme: ColorScheme.dark(
           primary: primaryColor,
-          secondary: primaryColor.withOpacity(0.7),
+          secondary: primaryColor.withValues(alpha: 0.7),
           surface: const Color(0xFF151D30), // Rich dark-blue card
-          background: const Color(0xFF0B0F19),
         ),
         textTheme: GoogleFonts.interTextTheme(const TextTheme(
           bodyLarge: TextStyle(color: Color(0xFFF8FAFC), fontSize: 14), // Slate-50 primary text

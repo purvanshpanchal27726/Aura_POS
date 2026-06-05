@@ -12,7 +12,6 @@ class ConnectionSetupScreen extends StatefulWidget {
 }
 
 class _MainConnectState {
-  static const primaryColor = Color(0xFF6366F1); // Indigo
   static const darkBg = Color(0xFF0F172A); // Slate-900
   static const darkCard = Color(0xFF1E293B); // Slate-800
 }
@@ -115,8 +114,8 @@ class _ConnectionSetupScreenState extends State<ConnectionSetupScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: _testSuccess 
-                        ? const Color(0xFF10B981).withOpacity(0.1) 
-                        : const Color(0xFFEF4444).withOpacity(0.1),
+                        ? const Color(0xFF10B981).withValues(alpha: 0.1) 
+                        : const Color(0xFFEF4444).withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -153,10 +152,10 @@ class _ConnectionSetupScreenState extends State<ConnectionSetupScreen> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF0F172A).withOpacity(0.5) : const Color(0xFFF8FAFC),
+                    color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isDark ? const Color(0xFF334155).withOpacity(0.5) : const Color(0xFFE2E8F0),
+                      color: isDark ? const Color(0xFF334155).withValues(alpha: 0.5) : const Color(0xFFE2E8F0),
                     ),
                   ),
                   child: Column(
@@ -214,8 +213,8 @@ class _ConnectionSetupScreenState extends State<ConnectionSetupScreen> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: _testSuccess 
-                        ? const Color(0xFF10B981).withOpacity(0.08) 
-                        : const Color(0xFFEF4444).withOpacity(0.08),
+                        ? const Color(0xFF10B981).withValues(alpha: 0.08) 
+                        : const Color(0xFFEF4444).withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(

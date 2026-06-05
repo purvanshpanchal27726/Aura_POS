@@ -99,7 +99,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(Icons.dns_rounded, color: Theme.of(context).primaryColor, size: 22),
@@ -168,9 +168,10 @@ class _LoginScreenState extends State<LoginScreen> {
             ElevatedButton(
               onPressed: () async {
                 final scaffoldMessenger = ScaffoldMessenger.of(context);
+                final navigator = Navigator.of(ctx);
                 await AppConfig.setCustomHost(hostCtrl.text.trim());
                 if (mounted) {
-                  Navigator.pop(ctx);
+                  navigator.pop();
                   scaffoldMessenger.showSnackBar(
                     SnackBar(
                       content: Text('Server endpoint set to: ${AppConfig.baseUrl}'),
@@ -209,7 +210,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444).withOpacity(0.1),
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 22),
@@ -234,7 +235,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEF4444).withOpacity(0.05),
+                  color: const Color(0xFFEF4444).withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -306,7 +307,7 @@ class _LoginScreenState extends State<LoginScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: primaryColor.withOpacity(isDark ? 0.15 : 0.2),
+                color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.2),
               ),
               child: Image.network(
                 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=200',
@@ -324,10 +325,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: screenWidth > 500 ? 450 : screenWidth * 0.95,
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 40),
                 decoration: BoxDecoration(
-                  color: isDark ? const Color(0xFF1E293B).withOpacity(0.85) : Colors.white.withOpacity(0.9),
+                  color: isDark ? const Color(0xFF1E293B).withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: isDark ? const Color(0xFF334155).withOpacity(0.5) : const Color(0xFFE2E8F0),
+                    color: isDark ? const Color(0xFF334155).withValues(alpha: 0.5) : const Color(0xFFE2E8F0),
                     width: 1.5,
                   ),
                   boxShadow: [
@@ -349,7 +350,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: primaryColor.withOpacity(0.1),
+                            color: primaryColor.withValues(alpha: 0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(

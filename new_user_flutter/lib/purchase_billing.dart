@@ -655,7 +655,7 @@ class _PurchaseBillingScreenState extends State<PurchaseBillingScreen> {
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF10B981).withOpacity(0.1),
+                                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(Icons.add_rounded, size: 16, color: Color(0xFF10B981)),
@@ -687,8 +687,7 @@ class _PurchaseBillingScreenState extends State<PurchaseBillingScreen> {
           BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: ListView(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -718,7 +717,7 @@ class _PurchaseBillingScreenState extends State<PurchaseBillingScreen> {
           
           DropdownButtonFormField<int>(
             key: ValueKey(selectedVendorId),
-            value: selectedVendorId,
+            initialValue: selectedVendorId,
             style: GoogleFonts.inter(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 13.5),
             decoration: InputDecoration(
               labelText: 'Select Vendor/Supplier *',
@@ -771,116 +770,117 @@ class _PurchaseBillingScreenState extends State<PurchaseBillingScreen> {
           ),
           const Divider(height: 24),
           
-          Expanded(
-            child: cartLines.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+          cartLines.isEmpty
+              ? Container(
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.shopping_cart_outlined, size: 36, color: isDark ? const Color(0xFF334155) : const Color(0xFF94A3B8)),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Checkout cart is empty.',
+                        style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF94A3B8)),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: cartLines.length,
+                  separatorBuilder: (ctx, idx) => Divider(height: 12, color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF1F5F9)),
+                  itemBuilder: (ctx, idx) {
+                    final line = cartLines[idx];
+                    final qty = line['quantity'] as double;
+                    final rate = line['rate'] as double;
+                    
+                    return Row(
                       children: [
-                        Icon(Icons.shopping_cart_outlined, size: 36, color: isDark ? const Color(0xFF334155) : const Color(0xFF94A3B8)),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Checkout cart is empty.',
-                          style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF94A3B8)),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.separated(
-                    itemCount: cartLines.length,
-                    separatorBuilder: (ctx, idx) => Divider(height: 12, color: isDark ? const Color(0xFF1F2937) : const Color(0xFFF1F5F9)),
-                    itemBuilder: (ctx, idx) {
-                      final line = cartLines[idx];
-                      final qty = line['quantity'] as double;
-                      final rate = line['rate'] as double;
-                      
-                      return Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  line['name'] ?? '',
-                                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF0F172A)),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                SizedBox(
-                                  width: 100,
-                                  height: 32,
-                                  child: TextFormField(
-                                    initialValue: rate.toStringAsFixed(2),
-                                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                    style: GoogleFonts.inter(fontSize: 12, color: isDark ? Colors.white : const Color(0xFF0F172A)),
-                                    decoration: const InputDecoration(
-                                      prefixText: '₹',
-                                      contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-                                      border: OutlineInputBorder(),
-                                    ),
-                                    onChanged: (val) {
-                                      final newRate = double.tryParse(val) ?? 0.0;
-                                      _updateLineRate(idx, newRate);
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          
-                          Row(
-                            children: [
-                              IconButton(
-                                onPressed: () => _updateLineQuantity(idx, qty - 1.0),
-                                icon: const Icon(Icons.remove_rounded, size: 14),
-                                style: IconButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: const Size(26, 26),
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                                child: Text(
-                                  qty.toStringAsFixed(0),
-                                  style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13.5),
-                                ),
-                              ),
-                              IconButton(
-                                onPressed: () => _updateLineQuantity(idx, qty + 1.0),
-                                icon: const Icon(Icons.add_rounded, size: 14),
-                                style: IconButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  minimumSize: const Size(26, 26),
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(width: 14),
-                          
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.end,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                '₹${(line['item_amount'] as double).toStringAsFixed(2)}',
+                                line['name'] ?? '',
                                 style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 3),
-                              InkWell(
-                                onTap: () => _removeCartLine(idx),
-                                child: Text('Remove', style: GoogleFonts.inter(color: const Color(0xFFEF4444), fontSize: 11, fontWeight: FontWeight.w600)),
+                              const SizedBox(height: 4),
+                              SizedBox(
+                                width: 100,
+                                height: 32,
+                                child: TextFormField(
+                                  initialValue: rate.toStringAsFixed(2),
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  style: GoogleFonts.inter(fontSize: 12, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                                  decoration: const InputDecoration(
+                                    prefixText: '₹',
+                                    contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                    border: OutlineInputBorder(),
+                                  ),
+                                  onChanged: (val) {
+                                    final newRate = double.tryParse(val) ?? 0.0;
+                                    _updateLineRate(idx, newRate);
+                                  },
+                                ),
                               ),
                             ],
                           ),
-                        ],
-                      );
-                    },
-                  ),
-          ),
+                        ),
+                        
+                        Row(
+                          children: [
+                            IconButton(
+                              onPressed: () => _updateLineQuantity(idx, qty - 1.0),
+                              icon: const Icon(Icons.remove_rounded, size: 14),
+                              style: IconButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: const Size(26, 26),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                              child: Text(
+                                qty.toStringAsFixed(0),
+                                style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13.5),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => _updateLineQuantity(idx, qty + 1.0),
+                              icon: const Icon(Icons.add_rounded, size: 14),
+                              style: IconButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                minimumSize: const Size(26, 26),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 14),
+                        
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              '₹${(line['item_amount'] as double).toStringAsFixed(2)}',
+                              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                            ),
+                            const SizedBox(height: 3),
+                            InkWell(
+                              onTap: () => _removeCartLine(idx),
+                              child: Text('Remove', style: GoogleFonts.inter(color: const Color(0xFFEF4444), fontSize: 11, fontWeight: FontWeight.w600)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
           const Divider(height: 24),
           
           Row(
