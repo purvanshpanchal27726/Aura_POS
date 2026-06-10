@@ -30,6 +30,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     'taxes': 0,
   };
   bool isLoading = true;
+  List<dynamic> allItems = [];
+  List<dynamic> filteredItems = [];
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -37,14 +41,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
     fetchStats();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> fetchStats() async {
     try {
       setState(() => isLoading = true);
-      final response = await http.get(Uri.parse(AppConfig.dashboardStatsUrl));
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
+      final responses = await Future.wait([
+        http.get(Uri.parse(AppConfig.dashboardStatsUrl)),
+        http.get(Uri.parse(AppConfig.itemsApiUrl)),
+      ]);
+
+      if (responses[0].statusCode == 200 && responses[1].statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(responses[0].body);
+        final List<dynamic> itemsData = json.decode(responses[1].body);
         setState(() {
           stats = data.map((key, val) => MapEntry(key, int.tryParse(val.toString()) ?? 0));
+          allItems = itemsData;
           isLoading = false;
         });
       } else {
@@ -149,7 +165,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
+
+                    // Quick Product Lookup Widget
+                    _buildProductLookupWidget(isDark, primaryColor),
+                    const SizedBox(height: 24),
 
                     // Quick Actions Section
                     Text(
@@ -476,6 +496,181 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _getItemImage(dynamic imageUrlOrBase64, {double size = 36}) {
+    if (imageUrlOrBase64 == null || imageUrlOrBase64.toString().isEmpty) {
+      return Icon(Icons.image, size: size, color: Colors.grey);
+    }
+    final imgStr = imageUrlOrBase64.toString();
+    if (imgStr.startsWith('http://') || imgStr.startsWith('https://')) {
+      return Image.network(
+        imgStr,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (ctx, err, st) => Icon(Icons.broken_image, size: size, color: Colors.grey),
+      );
+    } else if (imgStr.startsWith('/uploads/') || imgStr.startsWith('/Images/')) {
+      final fullUrl = '${AppConfig.baseUrl}$imgStr';
+      return Image.network(
+        fullUrl,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        errorBuilder: (ctx, err, st) => Icon(Icons.broken_image, size: size, color: Colors.grey),
+      );
+    } else if (imgStr.contains('base64,')) {
+      try {
+        final base64Data = imgStr.split('base64,').last;
+        return Image.memory(
+          base64Decode(base64Data),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (ctx, err, st) => Icon(Icons.broken_image, size: size, color: Colors.grey),
+        );
+      } catch (e) {
+        return Icon(Icons.broken_image, size: size, color: Colors.grey);
+      }
+    } else {
+      try {
+        return Image.memory(
+          base64Decode(imgStr),
+          width: size,
+          height: size,
+          fit: BoxFit.cover,
+          errorBuilder: (ctx, err, st) => Icon(Icons.broken_image, size: size, color: Colors.grey),
+        );
+      } catch (e) {
+        return Icon(Icons.image, size: size, color: Colors.grey);
+      }
+    }
+  }
+
+  Widget _buildProductLookupWidget(bool isDark, Color primaryColor) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF151D30) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? const Color(0xFF1F2937) : const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Quick Product Lookup',
+            style: GoogleFonts.outfit(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: isDark ? Colors.white : const Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _searchController,
+            onChanged: (val) {
+              setState(() {
+                _searchQuery = val.trim().toLowerCase();
+                if (_searchQuery.isEmpty) {
+                  filteredItems = [];
+                } else {
+                  filteredItems = allItems.where((item) {
+                    final name = (item['name'] ?? '').toString().toLowerCase();
+                    final code = (item['code'] ?? '').toString().toLowerCase();
+                    return name.contains(_searchQuery) || code.contains(_searchQuery);
+                  }).toList();
+                }
+              });
+            },
+            style: GoogleFonts.inter(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 14),
+            decoration: InputDecoration(
+              hintText: 'Scan barcode or type item name...',
+              prefixIcon: const Icon(Icons.search_rounded),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear_rounded),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                          filteredItems = [];
+                        });
+                      },
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: primaryColor, width: 1.5),
+              ),
+            ),
+          ),
+          if (_searchQuery.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            filteredItems.isEmpty
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Text(
+                        'No matching items found.',
+                        style: GoogleFonts.inter(color: const Color(0xFF94A3B8), fontSize: 13),
+                      ),
+                    ),
+                  )
+                : Container(
+                    constraints: const BoxConstraints(maxHeight: 220),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: filteredItems.length,
+                      itemBuilder: (context, index) {
+                        final item = filteredItems[index];
+                        final name = item['name'] ?? '';
+                        final code = item['code'] ?? 'No Code';
+                        final price = double.tryParse(item['sales_price']?.toString() ?? '0') ?? 0.0;
+                        final desc = item['description'] ?? 'No description';
+                        
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          elevation: 0,
+                          color: isDark ? const Color(0xFF0B0F19) : const Color(0xFFF8FAFC),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(color: isDark ? const Color(0xFF1F2937) : const Color(0xFFE2E8F0)),
+                          ),
+                          child: ListTile(
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: _getItemImage(item['image'], size: 40),
+                            ),
+                            title: Text(
+                              name,
+                              style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 14),
+                            ),
+                            subtitle: Text(
+                              'Code: $code | $desc',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(fontSize: 12),
+                            ),
+                            trailing: Text(
+                              '₹${price.toStringAsFixed(2)}',
+                              style: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: primaryColor, fontSize: 14),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+          ],
+        ],
       ),
     );
   }
