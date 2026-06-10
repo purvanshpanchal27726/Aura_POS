@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:io' as io;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:file_picker/file_picker.dart';
 import 'config.dart';
 
 /// Stateful Item Administration Screen.
@@ -302,33 +305,33 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
     imageFilename = null;
   }
 
-  // /// Opens file picker and converts image to Base64
-  // Future<void> _pickImage(StateSetter setDialogState) async {
-  //   try {
-  //     final result = await FilePicker.pickFiles(
-  //       type: FileType.image,
-  //       allowMultiple: false,
-  //       withData: kIsWeb,
-  //     );
-  //     if (result != null) {
-  //       final file = result.files.single;
-  //       Uint8List fileBytes;
-  //       if (kIsWeb) {
-  //         fileBytes = file.bytes!;
-  //       } else {
-  //         fileBytes = await io.File(file.path!).readAsBytes();
-  //       }
-  //       final base64Str = base64Encode(fileBytes);
-  //       final extension = file.extension ?? 'png';
-  //       setDialogState(() {
-  //         imageBase64 = 'data:image/$extension;base64,$base64Str';
-  //         imageFilename = file.name;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     debugPrint('Error picking image: $e');
-  //   }
-  // }
+  /// Opens file picker and converts image to Base64
+  Future<void> _pickImage(StateSetter setDialogState) async {
+    try {
+      final result = await FilePicker.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+        withData: kIsWeb,
+      );
+      if (result != null) {
+        final file = result.files.single;
+        Uint8List fileBytes;
+        if (kIsWeb) {
+          fileBytes = file.bytes!;
+        } else {
+          fileBytes = await io.File(file.path!).readAsBytes();
+        }
+        final base64Str = base64Encode(fileBytes);
+        final extension = file.extension ?? 'png';
+        setDialogState(() {
+          imageBase64 = 'data:image/$extension;base64,$base64Str';
+          imageFilename = file.name;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+    }
+  }
 
   /// Opens the Add/Edit modal dialog pre-filled for [item], or blank for a new entry.
   void _openItemDialog({Map<String, dynamic>? item}) {
@@ -419,6 +422,56 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                       fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
                     ),
                   ),
+                  const SizedBox(height: 14),
+                  // Item Image Selector
+                  Text('Item Image', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Color(0xFF475569))),
+                  const SizedBox(height: 6),
+                  StatefulBuilder(
+                    builder: (context, setDialogState) {
+                      return Row(
+                        children: [
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                            ),
+                            child: imageBase64 != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: _getItemImage(imageBase64, size: 60),
+                                  )
+                                : const Icon(Icons.image_outlined, color: Colors.grey),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                              foregroundColor: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF1E293B),
+                              elevation: 0,
+                            ),
+                            icon: const Icon(Icons.upload_file_rounded, size: 16),
+                            label: Text(imageFilename != null ? 'Change Image' : 'Upload Image'),
+                            onPressed: () => _pickImage(setDialogState),
+                          ),
+                          if (imageBase64 != null) ...[
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: Colors.red),
+                              onPressed: () {
+                                setDialogState(() {
+                                  imageBase64 = null;
+                                  imageFilename = null;
+                                });
+                              },
+                            ),
+                          ],
+                        ],
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -484,30 +537,34 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                         BoxShadow(color: Color(0x0A000000), blurRadius: 6, offset: Offset(0, 2)),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         Text(
                           'Registered Items',
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Color(0xFF1E293B)),
                         ),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             if (canModify)
                               ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFF2563EB),
+                                  backgroundColor: const Color(0xFF2563EB),
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                 ),
-                                icon: Icon(Icons.add, size: 18),
-                                label: Text('New Item'),
+                                icon: const Icon(Icons.add, size: 18),
+                                label: const Text('New Item'),
                                 onPressed: () => _openItemDialog(),
                               ),
                             if (canModify) const SizedBox(width: 8),
                             IconButton(
-                              icon: Icon(Icons.sync, color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF64748B)),
+                              icon: Icon(Icons.sync, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                               tooltip: 'Reload Items Table',
                               onPressed: fetchData,
                             ),
@@ -551,46 +608,73 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                                   dataTextStyle: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Color(0xFF1E293B), fontSize: 13),
                                   dividerThickness: 1,
                                   columns: [
-                                    DataColumn(label: Text('Code')),
-                                    DataColumn(label: Text('Item Name')),
-                                    DataColumn(label: Text('Description')),
-                                    if (canModify) DataColumn(label: Text('Actions')),
+                                    DataColumn(label: SizedBox(width: 70, child: Text('Code'))),
+                                    DataColumn(label: SizedBox(width: 160, child: Text('Item Name'))),
+                                    DataColumn(label: SizedBox(width: 180, child: Text('Description'))),
+                                    if (canModify) DataColumn(label: SizedBox(width: 90, child: Text('Actions'))),
                                   ],
                                   rows: items.map<DataRow>((item) {
                                     final desc = item['description'] ?? 'No description';
 
                                     return DataRow(cells: [
-                                      DataCell(Text(
-                                        item['code'] ?? 'N/A',
-                                        style: TextStyle(fontWeight: FontWeight.bold),
+                                      DataCell(SizedBox(
+                                        width: 70,
+                                        child: Text(
+                                          item['code'] ?? 'N/A',
+                                          style: const TextStyle(fontWeight: FontWeight.bold),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       )),
-                                      DataCell(Row(
-                                        children: [
-                                          ClipRRect(
-                                            borderRadius: BorderRadius.circular(4),
-                                            child: _getItemImage(item['image'], size: 32),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(item['name'] ?? ''),
-                                        ],
+                                      DataCell(SizedBox(
+                                        width: 160,
+                                        child: Row(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius: BorderRadius.circular(4),
+                                              child: _getItemImage(item['image'], size: 32),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                item['name'] ?? '',
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       )),
-                                      DataCell(Text(desc)),
+                                      DataCell(SizedBox(
+                                        width: 180,
+                                        child: Text(
+                                          desc,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      )),
                                       if (canModify)
                                         DataCell(
-                                          Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              IconButton(
-                                                icon: Icon(Icons.edit, color: Color(0xFF2563EB), size: 20),
-                                                tooltip: 'Edit Item',
-                                                onPressed: () => _openItemDialog(item: Map<String, dynamic>.from(item)),
-                                              ),
-                                              IconButton(
-                                                icon: Icon(Icons.delete, color: Color(0xFFDC2626), size: 20),
-                                                tooltip: 'Delete Item',
-                                                onPressed: () => deleteItem(item['item_id']),
-                                              ),
-                                            ],
+                                          SizedBox(
+                                            width: 90,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                IconButton(
+                                                  icon: const Icon(Icons.edit, color: Color(0xFF2563EB), size: 20),
+                                                  tooltip: 'Edit Item',
+                                                  padding: EdgeInsets.zero,
+                                                  constraints: const BoxConstraints(),
+                                                  onPressed: () => _openItemDialog(item: Map<String, dynamic>.from(item)),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                IconButton(
+                                                  icon: const Icon(Icons.delete, color: Color(0xFFDC2626), size: 20),
+                                                  tooltip: 'Delete Item',
+                                                  padding: EdgeInsets.zero,
+                                                  constraints: const BoxConstraints(),
+                                                  onPressed: () => deleteItem(item['item_id']),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                     ]);

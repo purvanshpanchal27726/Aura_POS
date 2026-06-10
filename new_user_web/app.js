@@ -2145,12 +2145,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (itemModal) {
       itemModal.style.display = 'none';
     }
-    itemForm.reset();
+    resetItemFormState();
   };
 
   if (btnNewItem) {
     btnNewItem.addEventListener('click', () => {
-      itemForm.reset();
+      resetItemFormState();
       if (itemModal) {
         itemModal.style.display = 'flex';
       }

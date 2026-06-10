@@ -141,29 +141,33 @@ class _RolewisePermissionsScreenState extends State<RolewisePermissionsScreen> {
                         BoxShadow(color: Color(0x0A000000), blurRadius: 6, offset: Offset(0, 2)),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: [
                         Text(
                           'Rolewise Module Settings',
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Color(0xFF1E293B)),
                         ),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Color(0xFF2563EB),
+                                backgroundColor: const Color(0xFF2563EB),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                               ),
-                              icon: Icon(Icons.save, size: 18),
-                              label: Text('Save Settings'),
+                              icon: const Icon(Icons.save, size: 18),
+                              label: const Text('Save Settings'),
                               onPressed: savePermissionsMatrix,
                             ),
                             const SizedBox(width: 8),
                             IconButton(
-                              icon: Icon(Icons.sync, color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF64748B)),
+                              icon: Icon(Icons.sync, color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                               tooltip: 'Refresh Matrix Data',
                               onPressed: loadPermissionsMatrix,
                             ),
@@ -256,7 +260,7 @@ class _RolewisePermissionsScreenState extends State<RolewisePermissionsScreen> {
                                   ),
                                   dividerThickness: 1,
                                   columns: [
-                                    DataColumn(label: Text('Role Name')),
+                                    DataColumn(label: SizedBox(width: 120, child: Text('Role Name'))),
                                     ...modules.map((m) {
                                       // Human friendly names matching web
                                       String mName = m['name'] ?? '';
@@ -265,7 +269,7 @@ class _RolewisePermissionsScreenState extends State<RolewisePermissionsScreen> {
                                       if (mName == 'Item') mName = 'Item Master';
                                       if (mName == 'Sales') mName = 'Sales (Sell)';
                                       return DataColumn(
-                                        label: Center(child: Text(mName)),
+                                        label: SizedBox(width: 110, child: Center(child: Text(mName))),
                                       );
                                     }),
                                   ],
@@ -275,18 +279,28 @@ class _RolewisePermissionsScreenState extends State<RolewisePermissionsScreen> {
 
                                     return DataRow(
                                       cells: [
-                                        DataCell(Text(roleName, style: TextStyle(fontWeight: FontWeight.bold))),
+                                        DataCell(SizedBox(
+                                          width: 120,
+                                          child: Text(
+                                            roleName,
+                                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        )),
                                         ...modules.map((mod) {
                                           final moduleId = mod['module_id'] as int;
                                           final isAllowed = _isAllowed(roleId, moduleId);
                                           return DataCell(
-                                            Center(
-                                              child: Checkbox(
-                                                value: isAllowed,
-                                                activeColor: Color(0xFF2563EB),
-                                                onChanged: (val) {
-                                                  _togglePermission(roleId, moduleId, val ?? false);
-                                                },
+                                            SizedBox(
+                                              width: 110,
+                                              child: Center(
+                                                child: Checkbox(
+                                                  value: isAllowed,
+                                                  activeColor: const Color(0xFF2563EB),
+                                                  onChanged: (val) {
+                                                    _togglePermission(roleId, moduleId, val ?? false);
+                                                  },
+                                                ),
                                               ),
                                             ),
                                           );
