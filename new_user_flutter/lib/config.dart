@@ -7,17 +7,33 @@ class AppConfig {
   static String? _customHost;
 
   // ─────────────────────────────────────────────────────────────────────────
-  // 🌐 PRODUCTION: Render.com backend URL
-  // Update this if your Render service name changes.
+  // 🌐 PRODUCTION: Render.com backend URL  (24/7 hosted — default)
+  // This is the permanent backend URL deployed on Render.
+  // No ngrok or local server needed — the app works out of the box.
+  // Update this only if your Render service URL changes.
   // Find it in: Render Dashboard → your Web Service → URL at the top
   // ─────────────────────────────────────────────────────────────────────────
   static const String _renderProductionUrl = 'https://possys-w2ip.onrender.com';
+
+  static bool _isRestaurantMode = false;
+  static bool get isRestaurantMode => _isRestaurantMode;
+
+  static Future<void> setRestaurantMode(bool val) async {
+    _isRestaurantMode = val;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('is_restaurant_mode', val);
+    } catch (e) {
+      debugPrint('Error saving restaurant mode: $e');
+    }
+  }
 
   /// Initializes config values from SharedPreferences.
   static Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       _customHost = prefs.getString('backend_host');
+      _isRestaurantMode = prefs.getBool('is_restaurant_mode') ?? false;
     } catch (e) {
       debugPrint('Error loading custom backend host: $e');
     }
@@ -49,20 +65,24 @@ class AppConfig {
   static String get currentHost => _customHost ?? '';
 
   /// Resolves the base URL for the backend API.
-  /// Priority: Custom host (from settings) > Render production URL
+  /// Priority: Custom host (from settings) > Render production URL (default)
   static String get baseUrl {
-    // If user has manually set a custom host (e.g. local dev or ngrok)
+    // If user has manually set a custom host (e.g. local dev fallback)
     if (_customHost != null && _customHost!.isNotEmpty) {
-      if (_customHost!.contains('ngrok-free.dev') ||
+      // HTTPS hosts: Render, Cloudflare tunnels, or already prefixed with https://
+      if (_customHost!.contains('onrender.com') ||
           _customHost!.contains('trycloudflare.com') ||
-          _customHost!.contains('onrender.com') ||
+          _customHost!.contains('ngrok-free.dev') ||
+          _customHost!.contains('ngrok.io') ||
           _customHost!.contains('https://')) {
-        return 'https://$_customHost';
+        // Strip any accidental double-prefix before adding https://
+        final clean = _customHost!.replaceFirst(RegExp(r'^https?://'), '');
+        return 'https://$clean';
       }
       return 'http://$_customHost';
     }
 
-    // Default: always use Render production URL for all platforms
+    // Default: Render.com production URL — always-on, 24/7
     return _renderProductionUrl;
   }
 
@@ -103,12 +123,15 @@ class AppConfig {
   static String get purchasesApiUrl => '$baseUrl/api/purchase';
 
   /// Returns extra HTTP headers required based on the current host.
-  /// For Ngrok tunnels, adds the bypass header to skip the interstitial page.
+  /// Render.com does not need any special headers.
+  /// Ngrok tunnels require a bypass header to skip the interstitial warning page.
   static Map<String, String> get extraHeaders {
-    if (_customHost != null &&
-        (_customHost!.contains('ngrok-free.dev') ||
-         _customHost!.contains('ngrok.io') ||
-         _customHost!.contains('trycloudflare.com'))) {
+    // No custom host → using Render production → no extra headers needed
+    if (_customHost == null || _customHost!.isEmpty) return {};
+
+    // Ngrok interstitial bypass (only needed for local dev tunnels)
+    if (_customHost!.contains('ngrok-free.dev') ||
+        _customHost!.contains('ngrok.io')) {
       return {'ngrok-skip-browser-warning': 'true'};
     }
     return {};

@@ -185,6 +185,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (AppConfig.isRestaurantMode && _selectedReportType == 'purchase') {
+      _selectedReportType = 'sales';
+    }
     final primaryColor = Theme.of(context).primaryColor;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -198,7 +201,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 children: [
                   // Top Overview Cards Row
                   LayoutBuilder(builder: (ctx, constraints) {
-                    final cols = constraints.maxWidth > 800 ? 3 : 1;
+                    final cols = (constraints.maxWidth > 800 && !AppConfig.isRestaurantMode) ? 3 : 1;
                     final list = [
                       _buildMetricCard(
                         title: 'TOTAL SALES VALUE',
@@ -207,22 +210,24 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         icon: Icons.trending_up_rounded,
                         bgLight: isDark ? const Color(0xFF064E3B) : const Color(0xFFECFDF5),
                       ),
-                      _buildMetricCard(
-                        title: 'TOTAL PURCHASE VALUE',
-                        value: '₹${totalPurchases.toStringAsFixed(2)}',
-                        color: const Color(0xFFEF4444),
-                        icon: Icons.trending_down_rounded,
-                        bgLight: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFEF2F2),
-                      ),
-                      _buildMetricCard(
-                        title: 'NET MARGIN PROFIT',
-                        value: '₹${netMargin.toStringAsFixed(2)}',
-                        color: netMargin >= 0.0 ? const Color(0xFF6366F1) : const Color(0xFFF59E0B),
-                        icon: Icons.account_balance_wallet_rounded,
-                        bgLight: netMargin >= 0.0
-                            ? (isDark ? const Color(0xFF1E3A8A) : const Color(0xFFEFF6FF))
-                            : (isDark ? const Color(0xFF78350F) : const Color(0xFFFFFBEB)),
-                      ),
+                      if (!AppConfig.isRestaurantMode)
+                        _buildMetricCard(
+                          title: 'TOTAL PURCHASE VALUE',
+                          value: '₹${totalPurchases.toStringAsFixed(2)}',
+                          color: const Color(0xFFEF4444),
+                          icon: Icons.trending_down_rounded,
+                          bgLight: isDark ? const Color(0xFF7F1D1D) : const Color(0xFFFEF2F2),
+                        ),
+                      if (!AppConfig.isRestaurantMode)
+                        _buildMetricCard(
+                          title: 'NET MARGIN PROFIT',
+                          value: '₹${netMargin.toStringAsFixed(2)}',
+                          color: netMargin >= 0.0 ? const Color(0xFF6366F1) : const Color(0xFFF59E0B),
+                          icon: Icons.account_balance_wallet_rounded,
+                          bgLight: netMargin >= 0.0
+                              ? (isDark ? const Color(0xFF1E3A8A) : const Color(0xFFEFF6FF))
+                              : (isDark ? const Color(0xFF78350F) : const Color(0xFFFFFBEB)),
+                        ),
                     ];
                     if (cols == 3) {
                       return Row(
@@ -238,10 +243,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       return Column(
                         children: [
                           list[0],
-                          const SizedBox(height: 12),
-                          list[1],
-                          const SizedBox(height: 12),
-                          list[2],
+                          if (list.length > 1) ...[
+                            const SizedBox(height: 12),
+                            list[1],
+                          ],
+                          if (list.length > 2) ...[
+                            const SizedBox(height: 12),
+                            list[2],
+                          ],
                         ],
                       );
                     }
@@ -356,13 +365,14 @@ class _ReportsScreenState extends State<ReportsScreen> {
                       isExpanded: true,
                       dropdownColor: isDark ? const Color(0xFF151D30) : Colors.white,
                       style: GoogleFonts.inter(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 13),
-                      items: const [
-                        DropdownMenuItem(value: 'sales', child: Text('Sales Transaction Ledger')),
-                        DropdownMenuItem(value: 'purchase', child: Text('Purchase Inward Ledger')),
-                        DropdownMenuItem(value: 'item', child: Text('Registered Items Inventory')),
-                        DropdownMenuItem(value: 'category', child: Text('Item Categories List')),
-                        DropdownMenuItem(value: 'customer', child: Text('Customers Ledger')),
-                        DropdownMenuItem(value: 'user', child: Text('Operator Users List')),
+                      items: [
+                        const DropdownMenuItem(value: 'sales', child: Text('Sales Transaction Ledger')),
+                        if (!AppConfig.isRestaurantMode)
+                          const DropdownMenuItem(value: 'purchase', child: Text('Purchase Inward Ledger')),
+                        const DropdownMenuItem(value: 'item', child: Text('Registered Items Inventory')),
+                        const DropdownMenuItem(value: 'category', child: Text('Item Categories List')),
+                        const DropdownMenuItem(value: 'customer', child: Text('Customers Ledger')),
+                        const DropdownMenuItem(value: 'user', child: Text('Operator Users List')),
                       ],
                       onChanged: (val) {
                         if (val != null) {
@@ -782,7 +792,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     double maxVal = 0.0;
     for (var date in last10Dates) {
       final sVal = data[date]?['sales'] ?? 0.0;
-      final pVal = data[date]?['purchases'] ?? 0.0;
+      final pVal = AppConfig.isRestaurantMode ? 0.0 : (data[date]?['purchases'] ?? 0.0);
       if (sVal > maxVal) maxVal = sVal;
       if (pVal > maxVal) maxVal = pVal;
     }
@@ -798,7 +808,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: last10Dates.map((date) {
           final sVal = data[date]?['sales'] ?? 0.0;
-          final pVal = data[date]?['purchases'] ?? 0.0;
+          final pVal = AppConfig.isRestaurantMode ? 0.0 : (data[date]?['purchases'] ?? 0.0);
           
           final sHeight = (sVal / maxVal) * 120.0;
           final pHeight = (pVal / maxVal) * 120.0;
@@ -826,19 +836,21 @@ class _ReportsScreenState extends State<ReportsScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    // Purchases bar
-                    Container(
-                      width: 14,
-                      height: pHeight > 2 ? pHeight : 2,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEF4444),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(4),
-                          topRight: Radius.circular(4),
+                    if (!AppConfig.isRestaurantMode) ...[
+                      const SizedBox(width: 4),
+                      // Purchases bar
+                      Container(
+                        width: 14,
+                        height: pHeight > 2 ? pHeight : 2,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEF4444),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(4),
+                            topRight: Radius.circular(4),
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 6),
@@ -1046,7 +1058,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           const DataColumn(label: Text('Base Unit')),
           const DataColumn(label: Text('Tax Rate')),
           const DataColumn(label: Text('Sales Price')),
-          const DataColumn(label: Text('Purchase Price')),
+          if (!AppConfig.isRestaurantMode) const DataColumn(label: Text('Purchase Price')),
           const DataColumn(label: Text('Status')),
         ];
       case 'category':
@@ -1177,7 +1189,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
           DataCell(Text(i['unit_name'] ?? 'N/A')),
           DataCell(Text(i['tax_name'] ?? 'N/A')),
           DataCell(Text('₹${salesPrice.toStringAsFixed(2)}')),
-          DataCell(Text('₹${purchasePrice.toStringAsFixed(2)}')),
+          if (!AppConfig.isRestaurantMode) DataCell(Text('₹${purchasePrice.toStringAsFixed(2)}')),
           DataCell(
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

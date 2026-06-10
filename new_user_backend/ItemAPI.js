@@ -46,6 +46,22 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Duplicate Check
+    const nameCheck = name.trim().toLowerCase();
+    const codeCheck = code && code.trim().length > 0 ? code.trim() : null;
+
+    let duplicateCheckQuery = 'SELECT * FROM items WHERE LOWER(name) = ?';
+    let duplicateCheckValues = [nameCheck];
+    if (codeCheck) {
+      duplicateCheckQuery += ' OR code = ?';
+      duplicateCheckValues.push(codeCheck);
+    }
+
+    const [existing] = await db.execute(duplicateCheckQuery, duplicateCheckValues);
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'This item is already added.' });
+    }
+
     const query = `
       INSERT INTO items (
         name, short_name, long_name, description, code, image,
@@ -220,6 +236,24 @@ router.put('/:id', async (req, res) => {
     const finalVisible = visible !== undefined ? (visible ? 1 : 0) : existing.visible;
     const finalBaseQuantity = base_quantity !== undefined ? base_quantity : existing.base_quantity;
     const finalWeightMeasurement = weight_measurement !== undefined ? weight_measurement : existing.weight_measurement;
+
+    // Duplicate Check
+    const nameCheck = finalName ? finalName.trim().toLowerCase() : '';
+    const codeCheck = finalCode && finalCode.trim().length > 0 ? finalCode.trim() : null;
+
+    let duplicateCheckQuery = 'SELECT * FROM items WHERE (LOWER(name) = ?';
+    let duplicateCheckValues = [nameCheck];
+    if (codeCheck) {
+      duplicateCheckQuery += ' OR code = ?';
+      duplicateCheckValues.push(codeCheck);
+    }
+    duplicateCheckQuery += ') AND item_id != ?';
+    duplicateCheckValues.push(itemId);
+
+    const [existingDup] = await db.execute(duplicateCheckQuery, duplicateCheckValues);
+    if (existingDup.length > 0) {
+      return res.status(400).json({ error: 'This item is already added.' });
+    }
 
     const query = `
       UPDATE items SET 

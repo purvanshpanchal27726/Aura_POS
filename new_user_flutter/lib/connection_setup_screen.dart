@@ -22,6 +22,9 @@ class _ConnectionSetupScreenState extends State<ConnectionSetupScreen> {
   String? _testMessage;
   bool _testSuccess = false;
 
+  // The Render.com production URL — always-on, 24/7
+  static const String _renderUrl = 'possys-w2ip.onrender.com';
+
   @override
   void initState() {
     super.initState();
@@ -48,7 +51,7 @@ class _ConnectionSetupScreenState extends State<ConnectionSetupScreen> {
     try {
       final response = await http
           .get(Uri.parse(AppConfig.usersApiUrl), headers: AppConfig.extraHeaders)
-          .timeout(const Duration(seconds: 8));
+          .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {
         setState(() {
@@ -74,6 +77,12 @@ class _ConnectionSetupScreenState extends State<ConnectionSetupScreen> {
         _testSuccess = false;
       });
     }
+  }
+
+  /// Fills the Render URL and immediately tests the connection.
+  Future<void> _useRenderAndTest() async {
+    _hostController.text = _renderUrl;
+    await _testConnection();
   }
 
   @override
@@ -171,15 +180,13 @@ class _ConnectionSetupScreenState extends State<ConnectionSetupScreen> {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        '🌐 Render (Production — Recommended):\n'
-                        '  Enter: pos-backend.onrender.com\n\n'
-                        '📶 Local Wi-Fi:\n'
+                        '🌐 Render (Production — Always On):\n'
+                        '  Tap the button below to auto-connect\n'
+                        '  to the cloud backend (no setup needed).\n\n'
+                        '📶 Local Wi-Fi (Fallback):\n'
                         '1. Start the Node.js backend on your PC.\n'
-                        '2. Both devices on same Wi-Fi.\n'
-                        '3. Enter your PC\'s IP (e.g. 192.168.1.5:3000).\n\n'
-                        '🔗 Ngrok Tunnel:\n'
-                        '1. Run: ngrok http 3000 in terminal.\n'
-                        '2. Paste the forwarding URL below.',
+                        '2. Ensure both devices are on same Wi-Fi.\n'
+                        '3. Enter your PC\'s IP (e.g. 192.168.1.5:3000).',
                         style: TextStyle(
                           fontSize: 11.5,
                           height: 1.5,
@@ -196,9 +203,9 @@ class _ConnectionSetupScreenState extends State<ConnectionSetupScreen> {
                   controller: _hostController,
                   style: TextStyle(color: isDark ? Colors.white : const Color(0xFF0F172A)),
                   decoration: InputDecoration(
-                    labelText: 'Server Host IP & Port',
+                    labelText: 'Server Host (optional override)',
                     labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
-                    hintText: 'e.g. 192.168.1.5:3000  or  sizzle-xxx.ngrok-free.dev',
+                    hintText: 'e.g. possys-w2ip.onrender.com  or  192.168.1.5:3000',
                     hintStyle: const TextStyle(color: Colors.grey),
                     prefixIcon: Icon(Icons.dns_rounded, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -232,8 +239,14 @@ class _ConnectionSetupScreenState extends State<ConnectionSetupScreen> {
                 ],
 
                 // Action buttons
-                ElevatedButton(
-                  onPressed: _isTesting ? null : _testConnection,
+                // --- Primary: Use Render (cloud, 24/7) ---
+                ElevatedButton.icon(
+                  onPressed: _isTesting ? null : _useRenderAndTest,
+                  icon: const Icon(Icons.cloud_done_rounded, size: 18),
+                  label: const Text(
+                    'Use Render (Recommended)',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6366F1),
                     foregroundColor: Colors.white,
@@ -241,16 +254,37 @@ class _ConnectionSetupScreenState extends State<ConnectionSetupScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
-                  child: _isTesting
+                ),
+                const SizedBox(height: 10),
+                // --- Secondary: Test custom host ---
+                OutlinedButton.icon(
+                  onPressed: _isTesting ? null : _testConnection,
+                  icon: Icon(
+                    Icons.wifi_tethering_rounded,
+                    size: 18,
+                    color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  ),
+                  label: _isTesting
                       ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2.5),
                         )
-                      : const Text(
-                          'Test Connection',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      : Text(
+                          'Test Custom Host',
+                          style: TextStyle(
+                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
                         ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    side: BorderSide(
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 OutlinedButton(

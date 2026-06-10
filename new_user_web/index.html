@@ -318,21 +318,15 @@
           <table>
             <thead>
               <tr>
-                <th style="width: 80px;">Item ID</th>
-                <th>Code</th>
+                <th style="width: 150px;">Code</th>
                 <th>Item Name</th>
-                <th>Category</th>
-                <th>Unit</th>
-                <th>Tax</th>
-                <th>Sales Price</th>
-                <th>Purchase Price</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>Description</th>
+                <th style="width: 100px;">Actions</th>
               </tr>
             </thead>
             <tbody id="itemTableBody">
               <tr>
-                <td colspan="10" class="empty-state">No items registered yet.</td>
+                <td colspan="4" class="empty-state">No items registered yet.</td>
               </tr>
             </tbody>
           </table>
@@ -767,6 +761,25 @@
 
     <!-- Screen 12: Settings -->
     <div id="screenSettings" class="screen-view" style="display: none;">
+      <!-- General Application Configuration -->
+      <section class="form-section card" style="max-width: 1000px; margin: 0 auto 1.5rem auto; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg);">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+          <span class="material-icons" style="color: var(--primary-color);">settings_applications</span>
+          <h2 style="margin: 0; color: var(--text-main); font-size: 1.25rem;">General Settings</h2>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">Configure global administrative variables and operational mode.</p>
+        
+        <div class="form-grid col-2">
+          <div class="form-field">
+            <label for="settingAppMode" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem; display: block;">Application Mode</label>
+            <select id="settingAppMode" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+              <option value="retail">Retail POS Mode (Includes purchases and pricing)</option>
+              <option value="restaurant">Restaurant POS Mode (Hides purchase price & inward billing)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
       <section class="list-section card" style="max-width: 1000px; margin: 0 auto;">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -1201,110 +1214,47 @@
           <input type="hidden" id="item_created_by" name="created_by" value="System">
           <input type="hidden" id="item_image_base64" name="image">
 
-          <div class="form-grid col-2">
-            <!-- Left Column -->
-            <div class="item-form-column">
-              <div class="form-field" id="itemSrNoGroup">
-                <label for="item_sr_no">Sr No (ID)</label>
-                <input type="text" id="item_sr_no" readonly placeholder="Auto-generated" style="background-color: #f1f5f9;">
-              </div>
-              <div class="form-field">
-                <label for="item_short_name">Short Name</label>
-                <input type="text" id="item_short_name" name="short_name" placeholder="Enter short name">
-              </div>
-              <div class="form-field">
-                <label for="item_code">ItemCode/Barcode</label>
-                <input type="text" id="item_code" name="code" placeholder="Enter barcode/code">
-              </div>
-              <div class="form-field">
-                <label for="item_name">Item Name <span class="required-star">*</span></label>
-                <input type="text" id="item_name" name="name" placeholder="Enter item name" required>
-              </div>
-              <div class="form-field">
-                <label for="item_long_name">Long Name</label>
-                <input type="text" id="item_long_name" name="long_name" placeholder="Enter long name">
-              </div>
-              <div class="form-field">
-                <label>Upload Image</label>
-                <div class="image-uploader-wrapper">
-                  <input type="file" id="item_image_file" style="display: none;" accept="image/*">
-                  <input type="text" id="item_image_filename" readonly placeholder="No file chosen" style="flex: 1;">
-                  <button type="button" class="btn btn-secondary" id="btnChooseImage" style="height: 42px; width: 42px; border-radius: 8px; padding: 0; display: flex; align-items: center; justify-content: center;">...</button>
-                </div>
-                <div id="itemImagePreviewBox" class="item-image-preview-box" style="display: none; margin-top: 0.5rem; text-align: center;">
-                  <img id="itemImagePreview" src="" alt="preview" style="max-height: 80px; border-radius: 8px; border: 1px solid var(--border-color);">
-                </div>
-              </div>
-              <div class="form-field">
-                <label for="item_sales_price">Retail Price <span class="required-star">*</span></label>
-                <input type="number" step="0.01" id="item_sales_price" name="sales_price" placeholder="0.00" required>
-              </div>
-              <div class="form-field">
-                <label for="item_purchase_price">Purchase Price <span class="required-star">*</span></label>
-                <input type="number" step="0.01" id="item_purchase_price" name="purchase_price" placeholder="0.00" required>
-              </div>
-              <div class="form-field" style="flex-direction: row; gap: 1rem; margin-top: 1.5rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <input type="checkbox" id="item_editable_price" name="editable_price" value="true" style="width: auto; cursor: pointer;">
-                  <label for="item_editable_price" style="cursor: pointer; margin-bottom: 0;">Editable Price</label>
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <input type="checkbox" id="item_visible" name="visible" value="true" checked style="width: auto; cursor: pointer;">
-                  <label for="item_visible" style="cursor: pointer; margin-bottom: 0;">Visible</label>
-                </div>
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                  <input type="checkbox" id="item_active" name="active" value="true" checked style="width: auto; cursor: pointer;">
-                  <label for="item_active" style="cursor: pointer; margin-bottom: 0;">Active</label>
-                </div>
-              </div>
+          <!-- Visible fields (clean vertical layout) -->
+          <div class="form-grid col-1">
+            <div class="form-field">
+              <label for="item_code">Item Code / Barcode</label>
+              <input type="text" id="item_code" name="code" placeholder="Enter barcode/code" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
             </div>
+            <div class="form-field" style="margin-top: 1rem;">
+              <label for="item_name">Item Name <span class="required-star">*</span></label>
+              <input type="text" id="item_name" name="name" placeholder="Enter item name" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field" style="margin-top: 1rem;">
+              <label for="item_description">Description</label>
+              <textarea id="item_description" name="description" placeholder="Description details..." rows="4" style="font-family: inherit; font-size: 0.95rem; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; resize: vertical; background: var(--input-bg); color: var(--text-main);"></textarea>
+            </div>
+          </div>
 
-            <!-- Right Column -->
-            <div class="item-form-column">
-              <div class="form-field">
-                <label for="item_tax_id">Tax Rate(%)</label>
-                <select id="item_tax_id" name="tax_id">
-                  <option value="">Select Tax Rate</option>
-                </select>
-              </div>
-              <div class="form-field">
-                <label for="item_base_quantity">Base Quantity</label>
-                <input type="number" step="0.01" id="item_base_quantity" name="base_quantity" value="1.00">
-              </div>
-              <div class="form-field">
-                <label for="item_unit_id">Base Unit of Measurement</label>
-                <select id="item_unit_id" name="unit_id">
-                  <option value="">Select Unit</option>
-                </select>
-              </div>
-              <div class="form-field">
-                <label for="item_category_id">Category</label>
-                <select id="item_category_id" name="category_id">
-                  <option value="">Select Category</option>
-                </select>
-              </div>
-              <div class="form-field">
-                <label>Weight Measurement</label>
-                <div class="weight-measurement-box" style="border: 1px solid var(--border-color); padding: 0.75rem; border-radius: 8px; display: flex; flex-direction: column; gap: 0.5rem;">
-                  <div class="radio-option" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <input type="radio" id="weight_none" name="weight_measurement" value="none" checked style="width: auto; cursor: pointer;">
-                    <label for="weight_none" style="cursor: pointer; margin-bottom: 0;">None</label>
-                  </div>
-                  <div class="radio-option" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <input type="radio" id="weight_auto" name="weight_measurement" value="auto" style="width: auto; cursor: pointer;">
-                    <label for="weight_auto" style="cursor: pointer; margin-bottom: 0;">Auto Weight</label>
-                  </div>
-                  <div class="radio-option" style="display: flex; align-items: center; gap: 0.5rem;">
-                    <input type="radio" id="weight_manual" name="weight_measurement" value="manual" style="width: auto; cursor: pointer;">
-                    <label for="weight_manual" style="cursor: pointer; margin-bottom: 0;">Manual Weight</label>
-                  </div>
-                </div>
-              </div>
-              <div class="form-field" style="margin-top: 1rem;">
-                <label for="item_description">Description</label>
-                <textarea id="item_description" name="description" placeholder="Description details..." rows="3" style="font-family: inherit; font-size: 0.9rem; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; resize: vertical;"></textarea>
-              </div>
-            </div>
+          <!-- Hidden fields for database compatibility & Javascript bindings -->
+          <div style="display: none;">
+            <input type="text" id="item_sr_no" readonly value="Auto-generated">
+            <input type="text" id="item_short_name" name="short_name">
+            <input type="text" id="item_long_name" name="long_name">
+            <input type="file" id="item_image_file">
+            <input type="text" id="item_image_filename">
+            <input type="number" step="0.01" id="item_sales_price" name="sales_price" value="0.00">
+            <input type="number" step="0.01" id="item_purchase_price" name="purchase_price" value="0.00">
+            <input type="checkbox" id="item_editable_price" name="editable_price" value="false">
+            <input type="checkbox" id="item_visible" name="visible" value="true" checked>
+            <input type="checkbox" id="item_active" name="active" value="true" checked>
+            <select id="item_tax_id" name="tax_id">
+              <option value="">Select Tax Rate</option>
+            </select>
+            <input type="number" step="0.01" id="item_base_quantity" name="base_quantity" value="1.00">
+            <select id="item_unit_id" name="unit_id">
+              <option value="">Select Unit</option>
+            </select>
+            <select id="item_category_id" name="category_id">
+              <option value="">Select Category</option>
+            </select>
+            <input type="radio" id="weight_none" name="weight_measurement" value="none" checked>
+            <input type="radio" id="weight_auto" name="weight_measurement" value="auto">
+            <input type="radio" id="weight_manual" name="weight_measurement" value="manual">
           </div>
 
           <div class="form-actions" style="margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">

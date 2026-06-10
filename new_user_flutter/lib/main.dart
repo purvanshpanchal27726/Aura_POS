@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -199,51 +200,111 @@ class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
   bool isLoading = true;
   bool isConnectionFailed = false;
+  bool _isWakingUp = false; // true when Render cold-start is detected
 
   List<dynamic> allUsers = [];
   Map<String, dynamic>? activeUser;
   List<dynamic> permissionsData = [];
 
+  /// Keep-alive timer — pings Render every 13 min so it never sleeps.
+  Timer? _keepAliveTimer;
+
   @override
   void initState() {
     super.initState();
     fetchUsersAndPermissions();
+    _startKeepAlive();
   }
 
-  Future<void> fetchUsersAndPermissions() async {
-    try {
-      setState(() {
-        isLoading = true;
-        isConnectionFailed = false;
-      });
-      
-      final responses = await Future.wait([
-        http.get(Uri.parse(AppConfig.usersApiUrl)),
-        http.get(Uri.parse(AppConfig.permissionsApiUrl)),
-      ]).timeout(const Duration(seconds: 5));
-      
-      if (responses[0].statusCode == 200 && responses[1].statusCode == 200) {
-        final List<dynamic> users = json.decode(responses[0].body);
-        final Map<String, dynamic> permData = json.decode(responses[1].body);
-        
-        setState(() {
-          allUsers = users;
-          permissionsData = permData['permissions'] ?? [];
-          isLoading = false;
-          isConnectionFailed = false;
-        });
-      } else {
-        setState(() {
-          isLoading = false;
-          isConnectionFailed = true;
-        });
+  @override
+  void dispose() {
+    _keepAliveTimer?.cancel();
+    super.dispose();
+  }
+
+  /// Silently pings the backend every 13 minutes to prevent Render cold starts.
+  void _startKeepAlive() {
+    _keepAliveTimer?.cancel();
+    _keepAliveTimer = Timer.periodic(const Duration(minutes: 13), (_) async {
+      try {
+        await http
+            .get(Uri.parse(AppConfig.usersApiUrl), headers: AppConfig.extraHeaders)
+            .timeout(const Duration(seconds: 10));
+        debugPrint('[KeepAlive] Render pinged successfully.');
+      } catch (e) {
+        debugPrint('[KeepAlive] Ping failed (will retry next cycle): $e');
       }
-    } catch (e) {
-      debugPrint('Error fetching users and permissions: $e');
-      setState(() {
-        isLoading = false;
-        isConnectionFailed = true;
-      });
+    });
+  }
+
+  /// Fetches users and permissions from the backend.
+  /// Automatically handles Render.com cold starts with a 3-attempt retry:
+  ///   Attempt 1 — 8s  (fast check)
+  ///   Attempt 2 — 25s (Render may be waking up)
+  ///   Attempt 3 — 50s (full cold-start wait)
+  Future<void> fetchUsersAndPermissions() async {
+    setState(() {
+      isLoading = true;
+      isConnectionFailed = false;
+      _isWakingUp = false;
+    });
+
+    const attempts = [
+      Duration(seconds: 8),
+      Duration(seconds: 25),
+      Duration(seconds: 50),
+    ];
+
+    for (int i = 0; i < attempts.length; i++) {
+      // On 2nd+ attempt, show the waking-up message
+      if (i == 1 && mounted) {
+        setState(() => _isWakingUp = true);
+      }
+
+      try {
+        final responses = await Future.wait([
+          http.get(Uri.parse(AppConfig.usersApiUrl), headers: AppConfig.extraHeaders),
+          http.get(Uri.parse(AppConfig.permissionsApiUrl), headers: AppConfig.extraHeaders),
+        ]).timeout(attempts[i]);
+
+        if (responses[0].statusCode == 200 && responses[1].statusCode == 200) {
+          final List<dynamic> users = json.decode(responses[0].body);
+          final Map<String, dynamic> permData = json.decode(responses[1].body);
+
+          if (mounted) {
+            setState(() {
+              allUsers = users;
+              permissionsData = permData['permissions'] ?? [];
+              isLoading = false;
+              isConnectionFailed = false;
+              _isWakingUp = false;
+            });
+          }
+          return; // success — stop retrying
+        }
+        // Non-200 response — don't retry, show error immediately
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+            isConnectionFailed = true;
+            _isWakingUp = false;
+          });
+        }
+        return;
+      } catch (e) {
+        debugPrint('[Attempt ${i + 1}/${attempts.length}] Connection error: $e');
+        if (i == attempts.length - 1) {
+          // All attempts exhausted
+          if (mounted) {
+            setState(() {
+              isLoading = false;
+              isConnectionFailed = true;
+              _isWakingUp = false;
+            });
+          }
+        }
+        // else: loop continues to next attempt
+      }
     }
   }
 
@@ -327,8 +388,46 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Scaffold(
-        body: Center(child: CircularProgressIndicator(color: Theme.of(context).primaryColor)),
+        backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Animated spinner
+              SizedBox(
+                width: 52,
+                height: 52,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3.5,
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
+              const SizedBox(height: 28),
+              Text(
+                _isWakingUp ? '☁️  Waking up server...' : 'Connecting to server...',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white : const Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                _isWakingUp
+                    ? 'The cloud server was idle.\nThis may take up to 60 seconds on first launch.'
+                    : 'Please wait while we load your data.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.5,
+                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -529,7 +628,7 @@ class _MainLayoutState extends State<MainLayout> {
                         },
                       ),
                     
-                    if (_hasPermission(5))
+                    if (_hasPermission(5) && !AppConfig.isRestaurantMode)
                       ListTile(
                         leading: Icon(Icons.receipt_long_outlined, color: Color(0xFF64748B)),
                         title: Text('Purchase'),

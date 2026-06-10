@@ -1957,37 +1957,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (list.length === 0) {
       itemTableBody.innerHTML = `
         <tr>
-          <td colspan="10" class="empty-state">No items registered yet.</td>
+          <td colspan="4" class="empty-state">No items registered yet.</td>
         </tr>
       `;
       return;
     }
 
     itemTableBody.innerHTML = list.map(item => {
-      const statusText = item.active ? 'Active' : 'Inactive';
-      const statusClass = item.active ? 'status-active' : 'status-inactive';
-      
-      const catName = item.category_name || 'N/A';
-      const unitName = item.unit_name || 'N/A';
-      const taxName = item.tax_name || 'N/A';
-      
-      const salesPrice = parseFloat(item.sales_price || 0).toFixed(2);
-      const purchasePrice = parseFloat(item.purchase_price || 0).toFixed(2);
       const itemCode = item.code || 'N/A';
       const imageSrc = getItemImageSrc(item, 'thumb');
       const imageTag = imageSrc ? `<img src="${imageSrc}" class="item-table-image" alt="${item.name || 'Item image'}">` : '';
+      const description = item.description || 'No description';
 
       return `
         <tr>
-          <td>${item.item_id}</td>
           <td><strong>${itemCode}</strong></td>
           <td>${imageTag}${item.name}</td>
-          <td><span class="badge badge-light">${catName}</span></td>
-          <td><span class="badge badge-light">${unitName}</span></td>
-          <td><span class="badge badge-light">${taxName}</span></td>
-          <td>₹${salesPrice}</td>
-          <td>₹${purchasePrice}</td>
-          <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+          <td>${description}</td>
           <td>
             <div class="table-actions">
               <button type="button" class="btn-icon text-primary btn-edit-item" data-id="${item.item_id}" title="Edit Item">
@@ -3653,11 +3639,13 @@ document.addEventListener('DOMContentLoaded', () => {
       dateMap[dDate].sales += parseFloat(d.item_amount || 0);
     });
     
-    purchaseDetails.forEach(d => {
-      const dDate = d.purchase_date.split('T')[0];
-      if (!dateMap[dDate]) dateMap[dDate] = { sales: 0, purchases: 0 };
-      dateMap[dDate].purchases += parseFloat(d.item_amount || 0);
-    });
+    if (appMode !== 'restaurant') {
+      purchaseDetails.forEach(d => {
+        const dDate = d.purchase_date.split('T')[0];
+        if (!dateMap[dDate]) dateMap[dDate] = { sales: 0, purchases: 0 };
+        dateMap[dDate].purchases += parseFloat(d.item_amount || 0);
+      });
+    }
     
     // Sort dates ascending
     const sortedDates = Object.keys(dateMap).sort();
@@ -3693,12 +3681,12 @@ document.addEventListener('DOMContentLoaded', () => {
             backgroundColor: primaryColor,
             borderRadius: 4
           },
-          {
+          ...(appMode === 'restaurant' ? [] : [{
             label: 'Purchase Cost',
             data: purchaseData.length > 0 ? purchaseData : [0],
             backgroundColor: '#ef4444',
             borderRadius: 4
-          }
+          }])
         ]
       },
       options: {
@@ -4168,6 +4156,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         reportsRowCount.textContent = `${filtered.length} records found`;
         
+        const isRestaurant = appMode === 'restaurant';
         reportsResultHeader.innerHTML = `
           <tr>
             <th>Item ID</th>
@@ -4177,13 +4166,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <th>Base Unit</th>
             <th>Tax Rate</th>
             <th style="text-align: right;">Sales Price</th>
-            <th style="text-align: right;">Purchase Price</th>
+            ${isRestaurant ? '' : '<th style="text-align: right;">Purchase Price</th>'}
             <th>Status</th>
           </tr>
         `;
         
         if (filtered.length === 0) {
-          reportsResultBody.innerHTML = `<tr><td colspan="9" class="empty-state">No matching items found.</td></tr>`;
+          reportsResultBody.innerHTML = `<tr><td colspan="${isRestaurant ? '8' : '9'}" class="empty-state">No matching items found.</td></tr>`;
         } else {
           reportsResultBody.innerHTML = filtered.map(i => `
             <tr>
@@ -4193,11 +4182,11 @@ document.addEventListener('DOMContentLoaded', () => {
               <td>${i.category_name || '--'}</td>
               <td>${i.unit_name || '--'}</td>
               <td>${i.tax_name || '--'}</td>
-              <td style="text-align: right;">₹${parseFloat(i.price || 0).toFixed(2)}</td>
-              <td style="text-align: right;">₹${parseFloat(i.purchase_price || 0).toFixed(2)}</td>
+              <td style="text-align: right;">₹${parseFloat(i.price || i.sales_price || 0).toFixed(2)}</td>
+              ${isRestaurant ? '' : `<td style="text-align: right;">₹${parseFloat(i.purchase_price || 0).toFixed(2)}</td>`}
               <td>
-                <span class="status-badge ${i.status == 1 ? 'status-active' : 'status-inactive'}">
-                  ${i.status == 1 ? 'Active' : 'Inactive'}
+                <span class="status-badge ${i.status == 1 || i.active == 1 ? 'status-active' : 'status-inactive'}">
+                  ${(i.status == 1 || i.active == 1) ? 'Active' : 'Inactive'}
                 </span>
               </td>
             </tr>
@@ -4398,7 +4387,66 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- App Mode / Restaurant POS Mode State and Listeners ---
+  const settingAppMode = document.getElementById('settingAppMode');
+  let appMode = localStorage.getItem('appMode') || 'retail';
+
+  const updateReportTypeSelect = () => {
+    if (!reportTypeSelect) return;
+    const currentVal = reportTypeSelect.value;
+    const isRestaurant = appMode === 'restaurant';
+    
+    let html = `
+      <option value="sales">Sales Report</option>
+      ${isRestaurant ? '' : '<option value="purchase">Purchase Report</option>'}
+      <option value="item">Item Report</option>
+      <option value="category">Item Category Report</option>
+      <option value="customer">Customer Report</option>
+      <option value="user">User Report</option>
+    `;
+    reportTypeSelect.innerHTML = html;
+    
+    if (currentVal && (currentVal !== 'purchase' || !isRestaurant)) {
+      reportTypeSelect.value = currentVal;
+    } else {
+      reportTypeSelect.value = 'sales';
+    }
+  };
+
+  const applyAppModeSettings = () => {
+    const isRestaurant = appMode === 'restaurant';
+    
+    // Hide/show Purchase navigation menu item
+    const menuPurchase = document.getElementById('menuPurchase');
+    if (menuPurchase) {
+      menuPurchase.style.display = isRestaurant ? 'none' : '';
+    }
+
+    // Hide/show Purchase-related stats on Reports screen
+    const cardValMargin = document.getElementById('reportValMargin')?.closest('.stat-card');
+    const cardValPurchases = document.getElementById('reportValPurchases')?.closest('.stat-card');
+    if (cardValMargin) cardValMargin.style.display = isRestaurant ? 'none' : '';
+    if (cardValPurchases) cardValPurchases.style.display = isRestaurant ? 'none' : '';
+
+    // Update Report Module select options
+    updateReportTypeSelect();
+  };
+
+  if (settingAppMode) {
+    settingAppMode.value = appMode;
+    settingAppMode.addEventListener('change', () => {
+      appMode = settingAppMode.value;
+      localStorage.setItem('appMode', appMode);
+      applyAppModeSettings();
+      alert(`Application mode switched to ${appMode === 'restaurant' ? 'Restaurant POS (Purchase features hidden)' : 'Retail POS'}.`);
+    });
+  }
+
+  // Initial load execution of App Mode configuration
+  applyAppModeSettings();
+
   screens['reports'].onTransition = async () => {
+    updateReportTypeSelect();
     await loadReportsMetadata();
     await fetchReportsOverviewMetrics();
     await generateReport();

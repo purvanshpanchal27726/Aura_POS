@@ -287,7 +287,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         tabIndex: 9, // Sell Screen index
       ));
     }
-    if (_hasPermission(5)) {
+    if (_hasPermission(5) && !AppConfig.isRestaurantMode) {
       actions.add(_buildActionButton(
         label: 'Purchase Inward',
         icon: Icons.receipt_long_rounded,

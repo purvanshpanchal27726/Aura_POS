@@ -174,6 +174,56 @@ class _RolewisePermissionsScreenState extends State<RolewisePermissionsScreen> {
                   ),
                   const SizedBox(height: 16),
 
+                  // General application setting card
+                  Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          Icon(Icons.restaurant_rounded, color: Theme.of(context).primaryColor, size: 28),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Restaurant POS Mode',
+                                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Hides purchase price configuration, purchase bills entry, and cost metrics in reports.',
+                                  style: TextStyle(fontSize: 12, color: Theme.of(context).brightness == Brightness.dark ? Colors.white60 : Colors.black54),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: AppConfig.isRestaurantMode,
+                            activeThumbColor: const Color(0xFF2563EB),
+                            onChanged: (val) async {
+                              await AppConfig.setRestaurantMode(val);
+                              if (!context.mounted) return;
+                              setState(() {});
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(val ? 'Restaurant mode activated.' : 'Retail mode activated.'),
+                                  backgroundColor: const Color(0xFF2563EB),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   // Permission table
                   Expanded(
                     child: Container(

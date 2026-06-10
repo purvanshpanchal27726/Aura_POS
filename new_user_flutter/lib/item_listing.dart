@@ -1,9 +1,6 @@
 import 'dart:convert';
-import 'dart:io' as io;
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:file_picker/file_picker.dart';
 import 'config.dart';
 
 /// Stateful Item Administration Screen.
@@ -215,9 +212,10 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final errorMsg = e.toString().replaceFirst('Exception: ', '').replaceFirst('Error: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(errorMsg),
             backgroundColor: Color(0xFFDC2626),
           ),
         );
@@ -304,33 +302,33 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
     imageFilename = null;
   }
 
-  /// Opens file picker and converts image to Base64
-  Future<void> _pickImage(StateSetter setDialogState) async {
-    try {
-      final result = await FilePicker.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-        withData: kIsWeb,
-      );
-      if (result != null) {
-        final file = result.files.single;
-        Uint8List fileBytes;
-        if (kIsWeb) {
-          fileBytes = file.bytes!;
-        } else {
-          fileBytes = await io.File(file.path!).readAsBytes();
-        }
-        final base64Str = base64Encode(fileBytes);
-        final extension = file.extension ?? 'png';
-        setDialogState(() {
-          imageBase64 = 'data:image/$extension;base64,$base64Str';
-          imageFilename = file.name;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error picking image: $e');
-    }
-  }
+  // /// Opens file picker and converts image to Base64
+  // Future<void> _pickImage(StateSetter setDialogState) async {
+  //   try {
+  //     final result = await FilePicker.pickFiles(
+  //       type: FileType.image,
+  //       allowMultiple: false,
+  //       withData: kIsWeb,
+  //     );
+  //     if (result != null) {
+  //       final file = result.files.single;
+  //       Uint8List fileBytes;
+  //       if (kIsWeb) {
+  //         fileBytes = file.bytes!;
+  //       } else {
+  //         fileBytes = await io.File(file.path!).readAsBytes();
+  //       }
+  //       final base64Str = base64Encode(fileBytes);
+  //       final extension = file.extension ?? 'png';
+  //       setDialogState(() {
+  //         imageBase64 = 'data:image/$extension;base64,$base64Str';
+  //         imageFilename = file.name;
+  //       });
+  //     }
+  //   } catch (e) {
+  //     debugPrint('Error picking image: $e');
+  //   }
+  // }
 
   /// Opens the Add/Edit modal dialog pre-filled for [item], or blank for a new entry.
   void _openItemDialog({Map<String, dynamic>? item}) {
@@ -367,403 +365,101 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          Widget buildLeftColumn() {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Item Details',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF64748B),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Sr No ID (Only in Edit mode)
-                if (editingItemId != null) ...[
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Text(
+          item != null ? 'Edit Item Details' : 'Register New Item',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Color(0xFF1E293B),
+          ),
+        ),
+        content: SingleChildScrollView(
+          child: SizedBox(
+            width: 450,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Item Code
                   TextFormField(
-                    initialValue: editingItemId.toString(),
-                    readOnly: true,
+                    controller: _codeController,
                     decoration: InputDecoration(
-                      labelText: 'Sr No (ID)',
+                      labelText: 'Item Code / Barcode',
+                      prefixIcon: const Icon(Icons.qr_code, color: Color(0xFF2563EB)),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                       filled: true,
-                      fillColor: Color(0xFFF1F5F9),
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                ],
-                // Short Name
-                TextFormField(
-                  controller: _shortNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Short Name',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Barcode Code
-                TextFormField(
-                  controller: _codeController,
-                  decoration: InputDecoration(
-                    labelText: 'ItemCode/Barcode',
-                    prefixIcon: Icon(Icons.qr_code, color: Color(0xFF2563EB)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Long Name / Full Name
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Item Name *',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                  ),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'Item Name is required' : null,
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _longNameController,
-                  decoration: InputDecoration(
-                    labelText: 'Long Name',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Image Uploader
-                Text('Upload Image', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF475569))),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF8FAFC),
-                          border: Border.all(color: Color(0xFFCBD5E1)),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          imageFilename ?? 'No file chosen',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(color: imageFilename != null ? Colors.black : Colors.grey),
-                        ),
-                      ),
+                  const SizedBox(height: 14),
+                  // Item Name
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      labelText: 'Item Name *',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
                     ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFFE2E8F0),
-                        foregroundColor: Colors.black,
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onPressed: () => _pickImage(setDialogState),
-                      child: Text('...'),
-                    ),
-                  ],
-                ),
-                if (imageBase64 != null) ...[
-                  const SizedBox(height: 8),
-                  Center(
-                    child: Container(
-                      height: 70,
-                      width: 70,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Color(0xFFE2E8F0)),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: _getItemImage(imageBase64, size: 70),
-                      ),
+                    validator: (val) => val == null || val.trim().isEmpty ? 'Item Name is required' : null,
+                  ),
+                  const SizedBox(height: 14),
+                  // Description
+                  TextFormField(
+                    controller: _descriptionController,
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      labelText: 'Description',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
                     ),
                   ),
                 ],
-                const SizedBox(height: 12),
-                // Prices
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _salesPriceController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: InputDecoration(
-                          labelText: 'Retail Price *',
-                          prefixIcon: Icon(Icons.currency_rupee, color: Color(0xFF2563EB), size: 16),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          filled: true,
-                          fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                        ),
-                        validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _purchasePriceController,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        decoration: InputDecoration(
-                          labelText: 'Purchase Price *',
-                          prefixIcon: Icon(Icons.currency_rupee, color: Color(0xFF2563EB), size: 16),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          filled: true,
-                          fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                        ),
-                        validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                // Checkboxes
-                Column(
-                  children: [
-                    CheckboxListTile(
-                      dense: true,
-                      title: Text('Editable Price', style: TextStyle(fontSize: 13)),
-                      value: isEditablePrice,
-                      activeColor: Color(0xFF2563EB),
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (val) {
-                        setDialogState(() => isEditablePrice = val ?? false);
-                      },
-                    ),
-                    CheckboxListTile(
-                      dense: true,
-                      title: Text('Visible', style: TextStyle(fontSize: 13)),
-                      value: isVisible,
-                      activeColor: Color(0xFF2563EB),
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (val) {
-                        setDialogState(() => isVisible = val ?? true);
-                      },
-                    ),
-                    CheckboxListTile(
-                      dense: true,
-                      title: Text('Active', style: TextStyle(fontSize: 13)),
-                      value: isActive,
-                      activeColor: Color(0xFF2563EB),
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (val) {
-                        setDialogState(() => isActive = val ?? true);
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            );
-          }
-
-          Widget buildRightColumn() {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Parameters & Configurations',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF64748B),
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Tax Dropdown
-                DropdownButtonFormField<int>(
-                  initialValue: selectedTaxId,
-                  decoration: InputDecoration(
-                    labelText: 'Tax Rate(%)',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                  ),
-                  hint: Text('Select Tax Rate'),
-                  items: taxes.map<DropdownMenuItem<int>>((tax) {
-                    return DropdownMenuItem<int>(
-                      value: tax['tax_id'],
-                      child: Text(tax['name'] ?? ''),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    setDialogState(() => selectedTaxId = val);
-                  },
-                ),
-                const SizedBox(height: 12),
-                // Base Quantity
-                TextFormField(
-                  controller: _baseQuantityController,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    labelText: 'Base Quantity',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                  ),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'Required' : null,
-                ),
-                const SizedBox(height: 12),
-                // Base Unit of Measurement
-                DropdownButtonFormField<int>(
-                  initialValue: selectedUnitId,
-                  decoration: InputDecoration(
-                    labelText: 'Base Unit of Measurement',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                  ),
-                  hint: Text('Select Unit'),
-                  items: units.map<DropdownMenuItem<int>>((unit) {
-                    return DropdownMenuItem<int>(
-                      value: unit['unit_id'],
-                      child: Text(unit['name'] ?? ''),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    setDialogState(() => selectedUnitId = val);
-                  },
-                ),
-                const SizedBox(height: 12),
-                // Category Dropdown
-                DropdownButtonFormField<int>(
-                  initialValue: selectedCategoryId,
-                  decoration: InputDecoration(
-                    labelText: 'Category',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                  ),
-                  hint: Text('Select Category'),
-                  items: categories.map<DropdownMenuItem<int>>((cat) {
-                    return DropdownMenuItem<int>(
-                      value: cat['category_id'],
-                      child: Text(cat['name'] ?? ''),
-                    );
-                  }).toList(),
-                  onChanged: (val) {
-                    setDialogState(() => selectedCategoryId = val);
-                  },
-                ),
-                const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
-                  key: ValueKey(weightMeasurement),
-                  initialValue: weightMeasurement,
-                  decoration: InputDecoration(
-                    labelText: 'Weight Measurement',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                  ),
-                  items: [
-                    DropdownMenuItem<String>(value: 'none', child: Text('None')),
-                    DropdownMenuItem<String>(value: 'auto', child: Text('Auto Weight')),
-                    DropdownMenuItem<String>(value: 'manual', child: Text('Manual Weight')),
-                  ],
-                  onChanged: (val) {
-                    setDialogState(() => weightMeasurement = val ?? 'none');
-                  },
-                ),
-                const SizedBox(height: 12),
-                // Description
-                TextFormField(
-                  controller: _descriptionController,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    labelText: 'Description',
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                    filled: true,
-                    fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
-                  ),
-                ),
-              ],
-            );
-          }
-
-          final screenWidth = MediaQuery.of(context).size.width;
-
-          return AlertDialog(
-            backgroundColor: Theme.of(context).cardColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            title: Text(
-              item != null ? 'Edit Item Details' : 'Register New Item',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Color(0xFF1E293B),
               ),
             ),
-            content: SingleChildScrollView(
-              child: SizedBox(
-                width: screenWidth > 650 ? 700 : double.infinity,
-                child: Form(
-                  key: _formKey,
-                  child: screenWidth > 650
-                      ? Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(child: buildLeftColumn()),
-                            const SizedBox(width: 24),
-                            Expanded(child: buildRightColumn()),
-                          ],
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            buildLeftColumn(),
-                            const SizedBox(height: 24),
-                            buildRightColumn(),
-                          ],
-                        ),
-                ),
-              ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _resetForm();
+            },
+            child: Text('Cancel', style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF64748B))),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF2563EB),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
+            onPressed: () async {
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final navigator = Navigator.of(ctx);
+              final success = await saveItem();
+              if (success) {
+                navigator.pop();
                 _resetForm();
-              },
-              child: Text('Cancel', style: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Color(0xFF94A3B8) : Color(0xFF64748B))),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              onPressed: () async {
-                final success = await saveItem();
-                if (success && ctx.mounted) {
-                  Navigator.pop(ctx);
-                  _resetForm();
-                  fetchData();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Item ${editingItemId == null ? "registered" : "updated"} successfully!'),
-                      backgroundColor: Color(0xFF16A34A),
-                    ),
-                  );
-                }
-              },
-              child: Text(item != null ? 'Update Item' : 'Save Item'),
-            ),
-          ],
-        );
-      },
-    ),
-  );
+                fetchData();
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Item ${editingItemId == null ? "registered" : "updated"} successfully!'),
+                    backgroundColor: const Color(0xFF16A34A),
+                  ),
+                );
+              }
+            },
+            child: Text(item != null ? 'Update Item' : 'Save Item'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -855,42 +551,15 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                                   dataTextStyle: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Color(0xFF1E293B), fontSize: 13),
                                   dividerThickness: 1,
                                   columns: [
-                                    DataColumn(
-                                      label: Text(
-                                        'ITEM ID',
-                                        style: TextStyle(fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
                                     DataColumn(label: Text('Code')),
                                     DataColumn(label: Text('Item Name')),
-                                    DataColumn(label: Text('Category')),
-                                    DataColumn(label: Text('Unit')),
-                                    DataColumn(label: Text('Tax')),
-                                    DataColumn(label: Text('Sales Price')),
-                                    DataColumn(label: Text('Purchase Price')),
-                                    DataColumn(label: Text('Status')),
+                                    DataColumn(label: Text('Description')),
                                     if (canModify) DataColumn(label: Text('Actions')),
                                   ],
                                   rows: items.map<DataRow>((item) {
-                                    final isActiveItem = item['active'] == true || item['active'] == 1;
-                                    final catName = item['category_name'] ?? 'N/A';
-                                    final unitName = item['unit_name'] ?? 'N/A';
-                                    final taxName = item['tax_name'] ?? 'N/A';
-
-                                    final salesPriceVal = item['sales_price'] != null
-                                        ? double.tryParse(item['sales_price'].toString()) ?? 0.0
-                                        : 0.0;
-                                    final purchasePriceVal = item['purchase_price'] != null
-                                        ? double.tryParse(item['purchase_price'].toString()) ?? 0.0
-                                        : 0.0;
+                                    final desc = item['description'] ?? 'No description';
 
                                     return DataRow(cells: [
-                                      DataCell(
-                                        Text(
-                                          item['item_id'].toString(),
-                                          style: TextStyle(fontWeight: FontWeight.bold, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Color(0xFF334155)),
-                                        ),
-                                      ),
                                       DataCell(Text(
                                         item['code'] ?? 'N/A',
                                         style: TextStyle(fontWeight: FontWeight.bold),
@@ -905,37 +574,7 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                                           Text(item['name'] ?? ''),
                                         ],
                                       )),
-                                      DataCell(Chip(
-                                        label: Text(catName, style: TextStyle(fontSize: 11)),
-                                        
-                                      )),
-                                      DataCell(Chip(
-                                        label: Text(unitName, style: TextStyle(fontSize: 11)),
-                                        
-                                      )),
-                                      DataCell(Chip(
-                                        label: Text(taxName, style: TextStyle(fontSize: 11)),
-                                        
-                                      )),
-                                      DataCell(Text('₹${salesPriceVal.toStringAsFixed(2)}')),
-                                      DataCell(Text('₹${purchasePriceVal.toStringAsFixed(2)}')),
-                                      DataCell(
-                                        Container(
-                                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: isActiveItem ? Color(0xFFDCFCE7) : Color(0xFFFEE2E2),
-                                            borderRadius: BorderRadius.circular(20),
-                                          ),
-                                          child: Text(
-                                            isActiveItem ? 'Active' : 'Inactive',
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              color: isActiveItem ? Color(0xFF16A34A) : Color(0xFFDC2626),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
+                                      DataCell(Text(desc)),
                                       if (canModify)
                                         DataCell(
                                           Row(
