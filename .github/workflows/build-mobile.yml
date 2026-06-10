@@ -68,11 +68,6 @@ jobs:
           cd new_user_flutter
           flutter pub get
 
-      - name: Install CocoaPods
-        run: |
-          cd new_user_flutter/ios
-          pod install
-
       - name: Build iOS App Bundle
         run: |
           cd new_user_flutter
