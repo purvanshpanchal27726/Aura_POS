@@ -1966,7 +1966,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (list.length === 0) {
       itemTableBody.innerHTML = `
         <tr>
-          <td colspan="4" class="empty-state">No items registered yet.</td>
+          <td colspan="5" class="empty-state">No items registered yet.</td>
         </tr>
       `;
       return;
@@ -1976,12 +1976,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const itemCode = item.code || 'N/A';
       const imageSrc = getItemImageSrc(item, 'thumb');
       const imageTag = imageSrc ? `<img src="${imageSrc}" class="item-table-image" alt="${item.name || 'Item image'}">` : '';
+      const categoryName = item.category_name || 'N/A';
       const description = item.description || 'No description';
 
       return `
         <tr>
           <td><strong>${itemCode}</strong></td>
           <td>${imageTag}${item.name}</td>
+          <td><span class="status-badge status-active" style="background-color: rgba(79, 70, 229, 0.08); color: var(--primary-color); border: 1px solid rgba(79, 70, 229, 0.15);">${categoryName}</span></td>
           <td>${description}</td>
           <td>
             <div class="table-actions">

@@ -432,6 +432,27 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                     ),
                   ),
                   const SizedBox(height: 14),
+                  // Category Selection Dropdown
+                  DropdownButtonFormField<int>(
+                    initialValue: selectedCategoryId,
+                    decoration: InputDecoration(
+                      labelText: 'Category',
+                      prefixIcon: const Icon(Icons.category_outlined, color: Color(0xFF2563EB)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                    ),
+                    dropdownColor: Theme.of(context).cardColor,
+                    items: categories.map<DropdownMenuItem<int>>((cat) {
+                      return DropdownMenuItem<int>(
+                        value: cat['category_id'] as int,
+                        child: Text(cat['name'] ?? ''),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      selectedCategoryId = val;
+                    },
+                  ),
                   // Retail Price (Sales Price)
                   TextFormField(
                     controller: _salesPriceController,
@@ -666,7 +687,8 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                                   columns: [
                                     DataColumn(label: SizedBox(width: 80, child: Text('Code'))),
                                     DataColumn(label: SizedBox(width: 220, child: Text('Item Name'))),
-                                    DataColumn(label: SizedBox(width: 280, child: Text('Description'))),
+                                    DataColumn(label: SizedBox(width: 140, child: Text('Category'))),
+                                    DataColumn(label: SizedBox(width: 200, child: Text('Description'))),
                                     if (canModify) DataColumn(label: SizedBox(width: 100, child: Text('Actions'))),
                                   ],
                                   rows: items.map<DataRow>((item) {
@@ -701,7 +723,27 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                                         ),
                                       )),
                                       DataCell(SizedBox(
-                                        width: 280,
+                                        width: 140,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).primaryColor.withValues(alpha: 0.08),
+                                            borderRadius: BorderRadius.circular(20),
+                                            border: Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.15)),
+                                          ),
+                                          child: Text(
+                                            item['category_name'] ?? 'N/A',
+                                            style: TextStyle(
+                                              color: Theme.of(context).primaryColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 11,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      )),
+                                      DataCell(SizedBox(
+                                        width: 200,
                                         child: Text(
                                           desc,
                                           maxLines: 2,
