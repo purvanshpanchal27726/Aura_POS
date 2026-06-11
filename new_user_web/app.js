@@ -184,9 +184,18 @@ document.addEventListener('DOMContentLoaded', () => {
       variants.thumb ||
       variants.original;
 
-    if (variant && variant.url) return variant.url;
-    if (typeof item.image_url === 'string' && item.image_url) return item.image_url;
-    if (typeof item.image === 'string' && item.image) return item.image;
+    let src = '';
+    if (variant && variant.url) src = variant.url;
+    else if (typeof item.image_url === 'string' && item.image_url) src = item.image_url;
+    else if (typeof item.image === 'string' && item.image) src = item.image;
+
+    if (src) {
+      const match = src.match(/(\/Images\/[^\s?]+|\/uploads\/[^\s?]+)/);
+      if (match) {
+        return getApiUrl(match[1]);
+      }
+      return src;
+    }
     return '';
   };
 
@@ -2130,6 +2139,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('item_visible').checked = true;
     document.getElementById('item_editable_price').checked = false;
     document.getElementById('item_base_quantity').value = '1.00';
+    document.getElementById('item_sales_price').value = '';
+    document.getElementById('item_purchase_price').value = '';
     
     const rNone = document.getElementById('weight_none');
     if (rNone) rNone.checked = true;
@@ -2217,10 +2228,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const short_name = document.getElementById('item_short_name').value;
       const long_name = document.getElementById('item_long_name').value;
       const description = document.getElementById('item_description').value;
-      const sales_price = parseFloat(document.getElementById('item_sales_price').value);
-      const purchase_price = parseFloat(document.getElementById('item_purchase_price').value);
+      const sales_price = parseFloat(document.getElementById('item_sales_price').value || 0);
+      let purchase_price = parseFloat(document.getElementById('item_purchase_price').value || 0);
 
-      if (sales_price < purchase_price) {
+      if (appMode === 'restaurant') {
+        purchase_price = 0.00;
+      }
+
+      if (appMode !== 'restaurant' && sales_price < purchase_price) {
         alert("Retail price (Retail Price) cannot be less than purchase price (Purchase Price).");
         return;
       }
@@ -4427,6 +4442,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const cardValPurchases = document.getElementById('reportValPurchases')?.closest('.stat-card');
     if (cardValMargin) cardValMargin.style.display = isRestaurant ? 'none' : '';
     if (cardValPurchases) cardValPurchases.style.display = isRestaurant ? 'none' : '';
+
+    // Toggle Purchase Price field visibility in New Item Modal
+    const purchasePriceContainer = document.getElementById('purchase_price_container');
+    if (purchasePriceContainer) {
+      purchasePriceContainer.style.display = isRestaurant ? 'none' : '';
+      const input = document.getElementById('item_purchase_price');
+      if (input) {
+        if (isRestaurant) {
+          input.removeAttribute('required');
+        } else {
+          input.setAttribute('required', 'required');
+        }
+      }
+    }
 
     // Update Report Module select options
     updateReportTypeSelect();

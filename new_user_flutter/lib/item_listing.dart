@@ -27,18 +27,25 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
       return Icon(Icons.image, size: size, color: Colors.grey);
     }
     final imgStr = imageUrlOrBase64.toString();
-    if (imgStr.startsWith('http://') || imgStr.startsWith('https://')) {
+    
+    // Extract relative path from potential absolute/relative URL to ensure consistency
+    final RegExp pathRegExp = RegExp(r'(/Images/[^?\s]+|/uploads/[^?\s]+)');
+    final match = pathRegExp.firstMatch(imgStr);
+    if (match != null) {
+      final relativePath = match.group(1)!;
+      final fullUrl = '${AppConfig.baseUrl}$relativePath';
       return Image.network(
-        imgStr,
+        fullUrl,
         width: size,
         height: size,
         fit: BoxFit.cover,
         errorBuilder: (ctx, err, st) => Icon(Icons.broken_image, size: size, color: Colors.grey),
       );
-    } else if (imgStr.startsWith('/uploads/') || imgStr.startsWith('/Images/')) {
-      final fullUrl = '${AppConfig.baseUrl}$imgStr';
+    }
+
+    if (imgStr.startsWith('http://') || imgStr.startsWith('https://')) {
       return Image.network(
-        fullUrl,
+        imgStr,
         width: size,
         height: size,
         fit: BoxFit.cover,
@@ -153,12 +160,14 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
     if (!_formKey.currentState!.validate()) return false;
 
     final salesPrice = double.tryParse(_salesPriceController.text) ?? 0.0;
-    final purchasePrice = double.tryParse(_purchasePriceController.text) ?? 0.0;
+    final purchasePrice = AppConfig.isRestaurantMode
+        ? 0.0
+        : (double.tryParse(_purchasePriceController.text) ?? 0.0);
 
-    if (salesPrice < purchasePrice) {
+    if (!AppConfig.isRestaurantMode && salesPrice < purchasePrice) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('Retail Price cannot be less than Purchase Price'),
             backgroundColor: Color(0xFFDC2626),
           ),
@@ -423,6 +432,53 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                     ),
                   ),
                   const SizedBox(height: 14),
+                  // Retail Price (Sales Price)
+                  TextFormField(
+                    controller: _salesPriceController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: 'Retail Price (Sales Price) *',
+                      prefixText: '₹',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                    ),
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) {
+                        return 'Retail Price is required';
+                      }
+                      if (double.tryParse(val) == null) {
+                        return 'Please enter a valid price';
+                      }
+                      return null;
+                    },
+                  ),
+                  if (!AppConfig.isRestaurantMode) ...[
+                    const SizedBox(height: 14),
+                    // Purchase Price
+                    TextFormField(
+                      controller: _purchasePriceController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        labelText: 'Purchase Price *',
+                        prefixText: '₹',
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        filled: true,
+                        fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                      ),
+                      validator: (val) {
+                        if (AppConfig.isRestaurantMode) return null;
+                        if (val == null || val.trim().isEmpty) {
+                          return 'Purchase Price is required';
+                        }
+                        if (double.tryParse(val) == null) {
+                          return 'Please enter a valid price';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                  const SizedBox(height: 14),
                   // Item Image Selector
                   Text('Item Image', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Theme.of(context).brightness == Brightness.dark ? Colors.white70 : Color(0xFF475569))),
                   const SizedBox(height: 6),
@@ -608,17 +664,17 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                                   dataTextStyle: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Color(0xFF1E293B), fontSize: 13),
                                   dividerThickness: 1,
                                   columns: [
-                                    DataColumn(label: SizedBox(width: 70, child: Text('Code'))),
-                                    DataColumn(label: SizedBox(width: 160, child: Text('Item Name'))),
-                                    DataColumn(label: SizedBox(width: 180, child: Text('Description'))),
-                                    if (canModify) DataColumn(label: SizedBox(width: 90, child: Text('Actions'))),
+                                    DataColumn(label: SizedBox(width: 80, child: Text('Code'))),
+                                    DataColumn(label: SizedBox(width: 220, child: Text('Item Name'))),
+                                    DataColumn(label: SizedBox(width: 280, child: Text('Description'))),
+                                    if (canModify) DataColumn(label: SizedBox(width: 100, child: Text('Actions'))),
                                   ],
                                   rows: items.map<DataRow>((item) {
                                     final desc = item['description'] ?? 'No description';
 
                                     return DataRow(cells: [
                                       DataCell(SizedBox(
-                                        width: 70,
+                                        width: 80,
                                         child: Text(
                                           item['code'] ?? 'N/A',
                                           style: const TextStyle(fontWeight: FontWeight.bold),
@@ -626,25 +682,26 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                                         ),
                                       )),
                                       DataCell(SizedBox(
-                                        width: 160,
+                                        width: 220,
                                         child: Row(
                                           children: [
                                             ClipRRect(
-                                              borderRadius: BorderRadius.circular(4),
-                                              child: _getItemImage(item['image'], size: 32),
+                                              borderRadius: BorderRadius.circular(6),
+                                              child: _getItemImage(item['image'], size: 40),
                                             ),
-                                            const SizedBox(width: 8),
+                                            const SizedBox(width: 10),
                                             Expanded(
                                               child: Text(
                                                 item['name'] ?? '',
                                                 overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(fontWeight: FontWeight.w500),
                                               ),
                                             ),
                                           ],
                                         ),
                                       )),
                                       DataCell(SizedBox(
-                                        width: 180,
+                                        width: 280,
                                         child: Text(
                                           desc,
                                           maxLines: 2,
@@ -654,7 +711,7 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                                       if (canModify)
                                         DataCell(
                                           SizedBox(
-                                            width: 90,
+                                            width: 100,
                                             child: Row(
                                               mainAxisSize: MainAxisSize.min,
                                               children: [
@@ -665,7 +722,7 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                                                   constraints: const BoxConstraints(),
                                                   onPressed: () => _openItemDialog(item: Map<String, dynamic>.from(item)),
                                                 ),
-                                                const SizedBox(width: 12),
+                                                const SizedBox(width: 16),
                                                 IconButton(
                                                   icon: const Icon(Icons.delete, color: Color(0xFFDC2626), size: 20),
                                                   tooltip: 'Delete Item',

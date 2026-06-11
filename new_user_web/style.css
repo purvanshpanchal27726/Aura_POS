@@ -1353,3 +1353,14 @@ body.print-report-active th, body.print-report-active td {
   padding-top: 6px;
 }
 
+/* Item Table Image style to avoid visual breakage */
+.item-table-image {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  vertical-align: middle;
+  margin-right: 12px;
+}
+
