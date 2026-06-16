@@ -56,8 +56,30 @@ class _CategoryListingScreenState extends State<CategoryListingScreen> {
   Future<bool> saveCategory() async {
     if (!_formKey.currentState!.validate()) return false;
 
+    final name = nameCtrl.text.trim();
+    final nameLower = name.toLowerCase();
+    final isDuplicate = categories.any((cat) =>
+        cat['name'].toString().trim().toLowerCase() == nameLower &&
+        cat['category_id'] != editingCategoryId);
+    if (isDuplicate) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'This category is already added.',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+            ),
+            backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+      return false;
+    }
+
     final categoryData = {
-      'name': nameCtrl.text.trim(),
+      'name': name,
       'active': isActive,
       'created_by': editingCategoryId == null ? 'System' : null,
     };
@@ -88,10 +110,16 @@ class _CategoryListingScreenState extends State<CategoryListingScreen> {
       }
     } catch (e) {
       if (mounted) {
+        final errorMsg = e.toString().replaceFirst('Exception: ', '').replaceFirst('Error: ', '');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text(
+              errorMsg,
+              style: GoogleFonts.inter(fontWeight: FontWeight.w500),
+            ),
             backgroundColor: const Color(0xFFDC2626),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
         );
       }
@@ -354,11 +382,14 @@ class _CategoryListingScreenState extends State<CategoryListingScreen> {
                         BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 12,
+                      runSpacing: 12,
                       children: [
                         Text(
-                          'Categories Master',
+                          'Category Master',
                           style: GoogleFonts.outfit(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -366,6 +397,7 @@ class _CategoryListingScreenState extends State<CategoryListingScreen> {
                           ),
                         ),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             if (canModify)
                               ElevatedButton.icon(

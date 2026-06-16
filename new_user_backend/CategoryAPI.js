@@ -23,6 +23,13 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Duplicate Check
+    const nameCheck = name.trim().toLowerCase();
+    const [existing] = await db.execute('SELECT * FROM categories WHERE LOWER(name) = ?', [nameCheck]);
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'This category is already added.' });
+    }
+
     const query = `
       INSERT INTO categories (name, active, created_by)
       VALUES (?, ?, ?)
@@ -101,6 +108,18 @@ router.put('/:id', async (req, res) => {
     const existingCategory = rows[0];
     const finalName = name !== undefined ? name : existingCategory.name;
     const finalActive = active !== undefined ? (active ? 1 : 0) : existingCategory.active;
+
+    // Duplicate Check
+    if (name !== undefined) {
+      const nameCheck = name.trim().toLowerCase();
+      const [existingDup] = await db.execute(
+        'SELECT * FROM categories WHERE LOWER(name) = ? AND category_id != ?',
+        [nameCheck, categoryId]
+      );
+      if (existingDup.length > 0) {
+        return res.status(400).json({ error: 'This category is already added.' });
+      }
+    }
 
     const query = `
       UPDATE categories SET name = ?, active = ?

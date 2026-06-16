@@ -1870,6 +1870,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const name = document.getElementById('category_name').value;
       const active = document.getElementById('category_active').checked;
 
+      // Client-side duplicate check
+      const nameCheck = name.trim().toLowerCase();
+      const isDuplicate = allCategories.some(c => c.name.trim().toLowerCase() === nameCheck && String(c.category_id) !== String(id));
+      if (isDuplicate) {
+        showToast('Duplicate Category', 'This category is already added.', 'warning');
+        return;
+      }
+
       const data = { name, active };
 
       const url = id ? getApiUrl(`/api/categories/${id}`) : getApiUrl('/api/categories');
@@ -3201,7 +3209,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const username = document.getElementById('loginUsername').value;
+      const username = document.getElementById('loginUsername').value.trim();
       const password = document.getElementById('loginPassword').value;
 
       try {

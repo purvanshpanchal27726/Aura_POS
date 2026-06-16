@@ -266,6 +266,10 @@ router.post('/login', async (req, res) => {
     }
 
     const user = rows[0];
+    if (user.username !== username) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+
     const decrypted = decryptPassword(user.password);
     if (decrypted !== password) {
       return res.status(401).json({ error: 'Invalid username or password' });

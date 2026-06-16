@@ -417,8 +417,11 @@ class _TaxListingScreenState extends State<TaxListingScreen> {
                         ),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 12,
+                      runSpacing: 12,
                       children: [
                         Text(
                           'Taxes Master',
@@ -429,6 +432,7 @@ class _TaxListingScreenState extends State<TaxListingScreen> {
                           ),
                         ),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             if (canModify)
                               ElevatedButton.icon(

@@ -425,8 +425,11 @@ class _UnitListingScreenState extends State<UnitListingScreen> {
                         BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0, 2)),
                       ],
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Wrap(
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 12,
+                      runSpacing: 12,
                       children: [
                         Text(
                           'Units Master',
@@ -437,6 +440,7 @@ class _UnitListingScreenState extends State<UnitListingScreen> {
                           ),
                         ),
                         Row(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             if (canModify)
                               ElevatedButton.icon(

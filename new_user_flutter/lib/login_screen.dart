@@ -407,6 +407,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Username Input
                       TextFormField(
                         controller: _usernameCtrl,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        textCapitalization: TextCapitalization.none,
                         style: GoogleFonts.inter(color: isDark ? Colors.white : const Color(0xFF0F172A)),
                         decoration: InputDecoration(
                           labelText: 'Username *',
