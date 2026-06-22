@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
@@ -78,6 +79,23 @@ class _CustomerListingScreenState extends State<CustomerListingScreen> {
   /// Performs a creation (POST) or update (PUT) operations on the customer endpoints.
   Future<bool> saveCustomer() async {
     if (!_formKey.currentState!.validate()) return false;
+
+    final phoneVal = phone1Ctrl.text.trim();
+    final isDuplicate = customers.any((c) =>
+        c['customer_id'] != editingCustomerId &&
+        (c['phone_1'] ?? '').toString().trim() == phoneVal);
+
+    if (isDuplicate) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Customer with this mobile number already exists.'),
+            backgroundColor: Color(0xFFDC2626),
+          ),
+        );
+      }
+      return false;
+    }
 
     final customerData = {
       'first_name': firstNameCtrl.text.trim(),
@@ -384,7 +402,7 @@ class _CustomerListingScreenState extends State<CustomerListingScreen> {
                                     keyboardType: TextInputType.phone,
                                     validator: (val) {
                                       if (val == null || val.isEmpty) return 'Primary phone is required';
-                                      if (val.trim().length < 8) return 'Enter a valid phone number';
+                                      if (val.trim().length != 10) return 'Primary phone must be exactly 10 digits';
                                       return null;
                                     },
                                   ),
@@ -841,6 +859,12 @@ class _CustomerListingScreenState extends State<CustomerListingScreen> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: keyboardType == TextInputType.phone
+          ? [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10),
+            ]
+          : null,
       style: GoogleFonts.inter(fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF0F172A)),
       decoration: InputDecoration(
         labelText: isRequired ? '$labelText *' : labelText,

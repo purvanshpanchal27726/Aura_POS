@@ -260,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const email2Input = document.getElementById('email_2');
 
   const restrictToNumeric = (e) => {
-    e.target.value = e.target.value.replace(/\D/g, '');
+    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
   };
 
   if (phone1Input) {
@@ -1209,10 +1209,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (custEmailInput) custEmailInput.setCustomValidity('');
 
       let isValid = true;
+      const id = custIdInput.value;
 
       if (custPhone1Input && custPhone1Input.value.length !== 10) {
-        custPhone1Input.setCustomValidity('Enter a valid phone number');
+        custPhone1Input.setCustomValidity('Primary phone must be exactly 10 digits');
         isValid = false;
+      } else if (custPhone1Input) {
+        const phoneVal = custPhone1Input.value.trim();
+        const duplicatePhone = allCustomers.some(c => c.customer_id != id && c.phone_1.trim() === phoneVal);
+        if (duplicatePhone) {
+          custPhone1Input.setCustomValidity('Customer with this mobile number already exists.');
+          isValid = false;
+        }
       }
 
       const emailReg = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
@@ -1228,7 +1236,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const formData = new FormData(customerForm);
       const data = Object.fromEntries(formData.entries());
-      const id = custIdInput.value;
 
       const url = id ? getApiUrl(`/api/customers/${id}`) : getApiUrl('/api/customers');
       const method = id ? 'PUT' : 'POST';
@@ -2284,6 +2291,16 @@ document.addEventListener('DOMContentLoaded', () => {
         created_by: activeUser ? activeUser.username : 'System'
       };
 
+      // Check duplicate on frontend
+      const duplicate = allItems.find(item => item.item_id != id && (
+        item.name.trim().toLowerCase() === name.trim().toLowerCase() ||
+        (code && item.code && item.code.trim().toLowerCase() === code.trim().toLowerCase())
+      ));
+      if (duplicate) {
+        alert('This item is already added.');
+        return;
+      }
+
       const url = id ? getApiUrl(`/api/items/${id}`) : getApiUrl('/api/items');
       const method = id ? 'PUT' : 'POST';
 
@@ -2299,7 +2316,7 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(errorData.error || `Failed to ${id ? 'update' : 'register'} item`);
         }
 
-        alert(`Item ${id ? 'updated' : 'registered'} successfully!`);
+        alert(id ? `Item updated successfully!` : `item has been successfully added`);
         closeItemModal();
         fetchItems();
       } catch (err) {
@@ -2431,6 +2448,32 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnRefreshVendors) btnRefreshVendors.addEventListener('click', fetchVendors);
   if (vendorModalClose) vendorModalClose.addEventListener('click', closeVendorModal);
   if (btnVendorCancel) btnVendorCancel.addEventListener('click', closeVendorModal);
+
+  const vendorPhone1Input = document.getElementById('vendor_phone_1');
+  const vendorPhone2Input = document.getElementById('vendor_phone_2');
+  const vendorEmailInput = document.getElementById('vendor_email');
+  const vendorCompanyInput = document.getElementById('vendor_company');
+
+  if (vendorPhone1Input) {
+    vendorPhone1Input.addEventListener('input', (e) => {
+      restrictToNumeric(e);
+      vendorPhone1Input.setCustomValidity('');
+    });
+  }
+  if (vendorPhone2Input) {
+    vendorPhone2Input.addEventListener('input', restrictToNumeric);
+  }
+  if (vendorEmailInput) {
+    vendorEmailInput.addEventListener('input', () => {
+      vendorEmailInput.setCustomValidity('');
+    });
+  }
+  if (vendorCompanyInput) {
+    vendorCompanyInput.addEventListener('input', () => {
+      vendorCompanyInput.setCustomValidity('');
+    });
+  }
+
   if (vendorForm) {
     vendorForm.addEventListener('reset', () => {
       resetVendorFormState();
@@ -2438,7 +2481,54 @@ document.addEventListener('DOMContentLoaded', () => {
 
     vendorForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      
       const id = vendorIdInput.value;
+      if (vendorPhone1Input) vendorPhone1Input.setCustomValidity('');
+      if (vendorEmailInput) vendorEmailInput.setCustomValidity('');
+      if (vendorCompanyInput) vendorCompanyInput.setCustomValidity('');
+
+      let isValid = true;
+      const companyVal = vendorCompanyInput ? vendorCompanyInput.value.trim().toLowerCase() : '';
+      const phoneVal = vendorPhone1Input ? vendorPhone1Input.value.trim() : '';
+      const emailVal = vendorEmailInput ? vendorEmailInput.value.trim().toLowerCase() : '';
+
+      if (vendorPhone1Input && phoneVal.length !== 10) {
+        vendorPhone1Input.setCustomValidity('Primary phone must be exactly 10 digits');
+        isValid = false;
+      }
+
+      const emailReg = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+      if (vendorEmailInput && emailVal && !emailReg.test(emailVal)) {
+        vendorEmailInput.setCustomValidity('Enter a valid email address');
+        isValid = false;
+      }
+
+      if (!isValid) {
+        vendorForm.reportValidity();
+        return;
+      }
+
+      // Check duplicates on frontend
+      const duplicate = allVendors.find(v => v.vendor_id != id && (
+        (companyVal && v.company && v.company.trim().toLowerCase() === companyVal) ||
+        (phoneVal && v.phone_1 && v.phone_1.trim() === phoneVal) ||
+        (emailVal && v.email && v.email.trim().toLowerCase() === emailVal)
+      ));
+
+      if (duplicate) {
+        if (companyVal && duplicate.company && duplicate.company.trim().toLowerCase() === companyVal) {
+          vendorCompanyInput.setCustomValidity('Vendor with this company name already exists.');
+        }
+        if (phoneVal && duplicate.phone_1 && duplicate.phone_1.trim() === phoneVal) {
+          vendorPhone1Input.setCustomValidity('Vendor with this mobile number already exists.');
+        }
+        if (emailVal && duplicate.email && duplicate.email.trim().toLowerCase() === emailVal) {
+          vendorEmailInput.setCustomValidity('Vendor with this email ID already exists.');
+        }
+        vendorForm.reportValidity();
+        return;
+      }
+
       const formData = new FormData(vendorForm);
       const data = Object.fromEntries(formData.entries());
       const url = id ? getApiUrl(`/api/vendors/${id}`) : getApiUrl('/api/vendors');
@@ -2450,7 +2540,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to save vendor details.');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to save vendor details.');
+        }
         alert(`Vendor ${id ? 'updated' : 'registered'} successfully!`);
         closeVendorModal();
         fetchVendors();

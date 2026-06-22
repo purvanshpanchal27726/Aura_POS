@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
@@ -77,9 +78,61 @@ class _VendorListingScreenState extends State<VendorListingScreen> {
     }
   }
 
-  /// Performs creation (POST) or update (PUT) operations on the vendor endpoints.
   Future<bool> saveVendor() async {
     if (!_formKey.currentState!.validate()) return false;
+
+    final companyVal = companyCtrl.text.trim().toLowerCase();
+    final phoneVal = phone1Ctrl.text.trim();
+    final emailVal = emailCtrl.text.trim().toLowerCase();
+
+    final duplicate = vendors.any((v) {
+      if (v['vendor_id'] == editingVendorId) return false;
+      final existingCompany = (v['company'] ?? '').toString().trim().toLowerCase();
+      final existingPhone = (v['phone_1'] ?? '').toString().trim();
+      final existingEmail = (v['email'] ?? '').toString().trim().toLowerCase();
+
+      final companyMatches = companyVal.isNotEmpty && existingCompany == companyVal;
+      final phoneMatches = phoneVal.isNotEmpty && existingPhone == phoneVal;
+      final emailMatches = emailVal.isNotEmpty && existingEmail == emailVal;
+
+      return companyMatches || phoneMatches || emailMatches;
+    });
+
+    if (duplicate) {
+      String duplicateMsg = 'A duplicate vendor record already exists.';
+      final matchedDup = vendors.firstWhere((v) {
+        if (v['vendor_id'] == editingVendorId) return false;
+        final existingCompany = (v['company'] ?? '').toString().trim().toLowerCase();
+        final existingPhone = (v['phone_1'] ?? '').toString().trim();
+        final existingEmail = (v['email'] ?? '').toString().trim().toLowerCase();
+
+        return (companyVal.isNotEmpty && existingCompany == companyVal) ||
+               (phoneVal.isNotEmpty && existingPhone == phoneVal) ||
+               (emailVal.isNotEmpty && existingEmail == emailVal);
+      });
+
+      final existingCompany = (matchedDup['company'] ?? '').toString().trim().toLowerCase();
+      final existingPhone = (matchedDup['phone_1'] ?? '').toString().trim();
+      final existingEmail = (matchedDup['email'] ?? '').toString().trim().toLowerCase();
+
+      if (companyVal.isNotEmpty && existingCompany == companyVal) {
+        duplicateMsg = 'Vendor with this company name already exists.';
+      } else if (phoneVal.isNotEmpty && existingPhone == phoneVal) {
+        duplicateMsg = 'Vendor with this mobile number already exists.';
+      } else if (emailVal.isNotEmpty && existingEmail == emailVal) {
+        duplicateMsg = 'Vendor with this email ID already exists.';
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(duplicateMsg),
+            backgroundColor: const Color(0xFFDC2626),
+          ),
+        );
+      }
+      return false;
+    }
 
     final vendorData = {
       'first_name': firstNameCtrl.text.trim(),
@@ -402,7 +455,7 @@ class _VendorListingScreenState extends State<VendorListingScreen> {
                                     keyboardType: TextInputType.phone,
                                     validator: (val) {
                                       if (val == null || val.isEmpty) return 'Primary phone is required';
-                                      if (val.trim().length < 8) return 'Enter a valid phone number';
+                                      if (val.trim().length != 10) return 'Primary phone must be exactly 10 digits';
                                       return null;
                                     },
                                   ),
@@ -872,6 +925,12 @@ class _VendorListingScreenState extends State<VendorListingScreen> {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: keyboardType == TextInputType.phone
+          ? [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10),
+            ]
+          : null,
       style: GoogleFonts.inter(fontSize: 13.5, color: isDark ? Colors.white : const Color(0xFF0F172A)),
       decoration: InputDecoration(
         labelText: isRequired ? '$labelText *' : labelText,

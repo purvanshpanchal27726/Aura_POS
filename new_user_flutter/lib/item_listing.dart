@@ -155,9 +155,34 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
     }
   }
 
-  /// Performs creation (POST) or update (PUT) on the items endpoint.
   Future<bool> saveItem() async {
     if (!_formKey.currentState!.validate()) return false;
+
+    final nameTrimmed = _nameController.text.trim().toLowerCase();
+    final codeTrimmed = _codeController.text.trim().toLowerCase();
+
+    final isDuplicate = items.any((item) {
+      if (item['item_id'] == editingItemId) return false;
+      final existingName = (item['name'] ?? '').toString().trim().toLowerCase();
+      final existingCode = (item['code'] ?? '').toString().trim().toLowerCase();
+      
+      final nameMatches = nameTrimmed.isNotEmpty && existingName == nameTrimmed;
+      final codeMatches = codeTrimmed.isNotEmpty && existingCode == codeTrimmed;
+      
+      return nameMatches || codeMatches;
+    });
+
+    if (isDuplicate) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('This item is already added.'),
+            backgroundColor: Color(0xFFDC2626),
+          ),
+        );
+      }
+      return false;
+    }
 
     final salesPrice = double.tryParse(_salesPriceController.text) ?? 0.0;
     final purchasePrice = AppConfig.isRestaurantMode
@@ -579,7 +604,7 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                 fetchData();
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
-                    content: Text('Item ${editingItemId == null ? "registered" : "updated"} successfully!'),
+                    content: Text(editingItemId == null ? 'item has been successfully added' : 'Item updated successfully!'),
                     backgroundColor: const Color(0xFF16A34A),
                   ),
                 );

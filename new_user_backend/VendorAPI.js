@@ -16,6 +16,31 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields for Vendor creation.' });
     }
 
+    // Check duplicate vendor records (Company, Mobile, Email)
+    const companyCheck = company ? company.trim().toLowerCase() : '';
+    const phoneCheck = phone_1.trim();
+    const emailCheck = email.trim().toLowerCase();
+
+    let queryDup = 'SELECT * FROM vendors WHERE phone_1 = ? OR LOWER(email) = ?';
+    let paramsDup = [phoneCheck, emailCheck];
+    if (companyCheck) {
+      queryDup += ' OR LOWER(company) = ?';
+      paramsDup.push(companyCheck);
+    }
+    const [existing] = await db.execute(queryDup, paramsDup);
+    if (existing.length > 0) {
+      const dup = existing[0];
+      if (companyCheck && dup.company && dup.company.trim().toLowerCase() === companyCheck) {
+        return res.status(400).json({ error: 'Vendor with this company name already exists.' });
+      }
+      if (dup.phone_1 === phoneCheck) {
+        return res.status(400).json({ error: 'Vendor with this mobile number already exists.' });
+      }
+      if (dup.email && dup.email.trim().toLowerCase() === emailCheck) {
+        return res.status(400).json({ error: 'Vendor with this email ID already exists.' });
+      }
+    }
+
     const query = `
       INSERT INTO vendors (
         first_name, last_name, company, address_1, address_2, 
@@ -99,6 +124,34 @@ router.put('/:id', async (req, res) => {
     const p1 = phone_1 !== undefined ? phone_1 : existing.phone_1;
     const p2 = phone_2 !== undefined ? phone_2 : existing.phone_2;
     const mail = email !== undefined ? email : existing.email;
+
+    // Check duplicate vendor records (Company, Mobile, Email)
+    const f_company = comp ? comp.trim().toLowerCase() : '';
+    const f_phone = p1.trim();
+    const f_email = mail.trim().toLowerCase();
+
+    let queryDup = '(phone_1 = ? OR LOWER(email) = ?';
+    let paramsDup = [f_phone, f_email];
+    if (f_company) {
+      queryDup += ' OR LOWER(company) = ?';
+      paramsDup.push(f_company);
+    }
+    queryDup += ') AND vendor_id != ?';
+    paramsDup.push(vendorId);
+
+    const [existingDup] = await db.execute(`SELECT * FROM vendors WHERE ${queryDup}`, paramsDup);
+    if (existingDup.length > 0) {
+      const dup = existingDup[0];
+      if (f_company && dup.company && dup.company.trim().toLowerCase() === f_company) {
+        return res.status(400).json({ error: 'Vendor with this company name already exists.' });
+      }
+      if (dup.phone_1 === f_phone) {
+        return res.status(400).json({ error: 'Vendor with this mobile number already exists.' });
+      }
+      if (dup.email && dup.email.trim().toLowerCase() === f_email) {
+        return res.status(400).json({ error: 'Vendor with this email ID already exists.' });
+      }
+    }
 
     const query = `
       UPDATE vendors SET 

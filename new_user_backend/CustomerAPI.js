@@ -30,6 +30,13 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Check duplicate mobile number
+    const phoneCheck = phone_1.trim();
+    const [existing] = await db.execute('SELECT * FROM customers WHERE phone_1 = ?', [phoneCheck]);
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Customer with this mobile number already exists.' });
+    }
+
     const query = `
       INSERT INTO customers (
         first_name, last_name, address_1, address_2, city, country, 
@@ -127,6 +134,14 @@ router.put('/:id', async (req, res) => {
     const finalPhone1 = phone_1 !== undefined ? phone_1 : existingCustomer.phone_1;
     const finalPhone2 = phone_2 !== undefined ? phone_2 : existingCustomer.phone_2;
     const finalEmail = email !== undefined ? email : existingCustomer.email;
+
+    // Check duplicate mobile number
+    if (finalPhone1) {
+      const [existing] = await db.execute('SELECT * FROM customers WHERE phone_1 = ? AND customer_id != ?', [finalPhone1.trim(), customerId]);
+      if (existing.length > 0) {
+        return res.status(400).json({ error: 'Customer with this mobile number already exists.' });
+      }
+    }
 
     const query = `
       UPDATE customers SET 
