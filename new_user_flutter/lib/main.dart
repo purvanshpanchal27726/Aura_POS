@@ -29,25 +29,33 @@ void main() async {
   
   String themeMode = 'light';
   String accentColor = 'blue';
+  String? savedUser;
   try {
     final prefs = await SharedPreferences.getInstance();
     themeMode = prefs.getString('theme_mode') ?? 'light';
     accentColor = prefs.getString('accent_color') ?? 'blue';
+    savedUser = prefs.getString('active_user');
   } catch (e) {
     debugPrint('Error loading initial theme settings: $e');
   }
 
-  runApp(MyApp(initialThemeMode: themeMode, initialAccentColor: accentColor));
+  runApp(MyApp(
+    initialThemeMode: themeMode, 
+    initialAccentColor: accentColor,
+    initialUser: savedUser,
+  ));
 }
 
 class MyApp extends StatefulWidget {
   final String initialThemeMode;
   final String initialAccentColor;
+  final String? initialUser;
 
   const MyApp({
     super.key,
     required this.initialThemeMode,
     required this.initialAccentColor,
+    this.initialUser,
   });
 
   @override
@@ -175,6 +183,7 @@ class _MyAppState extends State<MyApp> {
         currentThemeMode: _themeMode,
         currentAccent: _accentColor,
         onThemeChanged: _changeTheme,
+        initialUser: widget.initialUser,
       ),
     );
   }
@@ -184,12 +193,14 @@ class MainLayout extends StatefulWidget {
   final ThemeMode currentThemeMode;
   final String currentAccent;
   final Function(ThemeMode, String) onThemeChanged;
+  final String? initialUser;
 
   const MainLayout({
     super.key,
     required this.currentThemeMode,
     required this.currentAccent,
     required this.onThemeChanged,
+    this.initialUser,
   });
 
   @override
@@ -212,8 +223,33 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialUser != null) {
+      try {
+        activeUser = json.decode(widget.initialUser!);
+      } catch (e) {
+        debugPrint('Error parsing initial user: $e');
+      }
+    }
     fetchUsersAndPermissions();
     _startKeepAlive();
+  }
+
+  Future<void> _saveUser(Map<String, dynamic> user) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('active_user', json.encode(user));
+    } catch (e) {
+      debugPrint('Error saving user session: $e');
+    }
+  }
+
+  Future<void> _clearUser() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('active_user');
+    } catch (e) {
+      debugPrint('Error clearing user session: $e');
+    }
   }
 
   @override
@@ -387,7 +423,7 @@ class _MainLayoutState extends State<MainLayout> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
+    if (isLoading && activeUser == null) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
       return Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
@@ -431,7 +467,7 @@ class _MainLayoutState extends State<MainLayout> {
       );
     }
 
-    if (isConnectionFailed) {
+    if (isConnectionFailed && activeUser == null) {
       return ConnectionSetupScreen(
         onRetry: fetchUsersAndPermissions,
       );
@@ -444,6 +480,7 @@ class _MainLayoutState extends State<MainLayout> {
             activeUser = user;
             _currentIndex = 0; // Go to dashboard
           });
+          _saveUser(user);
         },
       );
     }
@@ -769,13 +806,14 @@ class _MainLayoutState extends State<MainLayout> {
                                 child: Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
                               ),
                               ElevatedButton(
-                                onPressed: () {
-                                  Navigator.pop(ctx);
-                                  setState(() {
-                                    activeUser = null;
-                                    _currentIndex = 0;
-                                  });
-                                },
+                                  onPressed: () {
+                                    Navigator.pop(ctx);
+                                    setState(() {
+                                      activeUser = null;
+                                      _currentIndex = 0;
+                                    });
+                                    _clearUser();
+                                  },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Color(0xFFEF4444),
                                   foregroundColor: Colors.white,

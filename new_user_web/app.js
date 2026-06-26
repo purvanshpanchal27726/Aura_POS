@@ -1445,6 +1445,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const name = document.getElementById('unit_name').value;
       const active = document.getElementById('unit_active').checked;
 
+      // Check duplicate unit name
+      const duplicate = allUnits.find(u => u.unit_id != id && u.name.trim().toLowerCase() === name.trim().toLowerCase());
+      if (duplicate) {
+        alert('This unit is already added.');
+        return;
+      }
+
       const data = {
         name,
         active

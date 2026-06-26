@@ -23,6 +23,12 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Check if unit already exists
+    const [existing] = await db.execute('SELECT * FROM units WHERE LOWER(name) = ?', [name.trim().toLowerCase()]);
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'This unit is already added.' });
+    }
+
     const query = `
       INSERT INTO units (name, active, created_by)
       VALUES (?, ?, ?)
@@ -102,6 +108,14 @@ router.put('/:id', async (req, res) => {
     const existingUnit = rows[0];
     const finalName = name !== undefined ? name : existingUnit.name;
     const finalActive = active !== undefined ? (active ? 1 : 0) : existingUnit.active;
+
+    // Check if unit already exists (excluding the current one)
+    if (name !== undefined) {
+      const [existing] = await db.execute('SELECT * FROM units WHERE LOWER(name) = ? AND unit_id != ?', [finalName.trim().toLowerCase(), unitId]);
+      if (existing.length > 0) {
+        return res.status(400).json({ error: 'This unit is already added.' });
+      }
+    }
 
     const query = `
       UPDATE units SET name = ?, active = ?

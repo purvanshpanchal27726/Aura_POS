@@ -59,9 +59,25 @@ class _UnitListingScreenState extends State<UnitListingScreen> {
     }
   }
 
-  /// Performs creation (POST) or update (PUT) operations on the units endpoints.
   Future<bool> saveUnit() async {
     if (!_formKey.currentState!.validate()) return false;
+
+    final nameVal = nameCtrl.text.trim().toLowerCase();
+    final isDuplicate = units.any((u) =>
+        u['unit_id'] != editingUnitId &&
+        (u['name'] ?? '').toString().trim().toLowerCase() == nameVal);
+
+    if (isDuplicate) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('This unit is already added.'),
+            backgroundColor: Color(0xFFDC2626),
+          ),
+        );
+      }
+      return false;
+    }
 
     final unitData = {
       'name': nameCtrl.text.trim(),
