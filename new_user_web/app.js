@@ -432,6 +432,11 @@ document.addEventListener('DOMContentLoaded', () => {
       view: document.getElementById('screenRoleListing'),
       title: 'Role Master',
       onTransition: () => fetchRoles()
+    },
+    'support': {
+      menu: document.getElementById('menuSupport'),
+      view: document.getElementById('screenSupport'),
+      title: 'Support & Contact'
     }
   };
 

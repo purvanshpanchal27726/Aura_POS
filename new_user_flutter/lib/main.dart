@@ -20,6 +20,7 @@ import 'sales_billing.dart';
 import 'purchase_billing.dart';
 import 'reports_screen.dart';
 import 'connection_setup_screen.dart';
+import 'support_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -384,6 +385,7 @@ class _MainLayoutState extends State<MainLayout> {
     const ReceiptListingScreen(), // 11
     const ReportsScreen(), // 12
     RoleListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(1)), // 13
+    const SupportScreen(), // 14
   ];
 
   String _getAppBarTitle() {
@@ -416,6 +418,8 @@ class _MainLayoutState extends State<MainLayout> {
         return 'Reports';
       case 13:
         return 'Role Master';
+      case 14:
+        return 'Support & Contact Us';
       default:
         return 'POS System';
     }
@@ -697,6 +701,16 @@ class _MainLayoutState extends State<MainLayout> {
                           Navigator.pop(context);
                         },
                       ),
+
+                    ListTile(
+                      leading: Icon(Icons.contact_support_outlined, color: Color(0xFF64748B)),
+                      title: Text('Support & Contact'),
+                      selected: _currentIndex == 14,
+                      onTap: () {
+                        setState(() => _currentIndex = 14);
+                        Navigator.pop(context);
+                      },
+                    ),
 
                   ],
                 ),
