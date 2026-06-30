@@ -284,6 +284,44 @@ db.initDb = async function() {
   const path = require('path');
   
   try {
+    // Run incremental migrations first
+    try {
+      await this.query(`
+        ALTER TABLE sales_master ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';
+      `);
+      console.log('[DB Migrate] Verified sales_master.payment_method column.');
+    } catch (err) {
+      console.log('[DB Migrate] sales_master ALTER statement noticed:', err.message);
+    }
+
+    try {
+      await this.query(`
+        CREATE TABLE IF NOT EXISTS license_info (
+          license_id SERIAL PRIMARY KEY,
+          license_key VARCHAR(255) NOT NULL,
+          valid_from DATE NOT NULL,
+          valid_to DATE NOT NULL,
+          amc_start_date DATE NOT NULL,
+          amc_end_date DATE NOT NULL,
+          status VARCHAR(50) DEFAULT 'Active',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+      `);
+      
+      // Seed default license row if empty
+      const [licenseCount] = await this.query('SELECT COUNT(*) AS count FROM license_info');
+      if (parseInt(licenseCount[0].count) === 0) {
+        await this.query(`
+          INSERT INTO license_info (license_key, valid_from, valid_to, amc_start_date, amc_end_date, status)
+          VALUES ('VANSHEE-POS-LICENSE-KEY-2026', '2026-01-01', '2026-08-31', '2026-01-01', '2026-08-31', 'Active');
+        `);
+        console.log('[DB Seed] Seeded default software license key.');
+      }
+      console.log('[DB Migrate] Verified license_info table.');
+    } catch (err) {
+      console.error('[DB Migrate] license_info migrations failed:', err.message);
+    }
+
     // Check if the 'users' table exists
     const [result] = await this.query(`
       SELECT EXISTS (

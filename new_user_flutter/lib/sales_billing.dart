@@ -23,6 +23,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
   int? selectedCustomerId;
   DateTime invoiceDate = DateTime.now();
   int billNo = 1;
+  String selectedPaymentMethod = 'Cash';
   
   // Cart lines state list
   List<Map<String, dynamic>> cartLines = [];
@@ -174,6 +175,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
       cartLines.clear();
       searchQuery = '';
       selectedCategoryIdFilter = null;
+      selectedPaymentMethod = 'Cash';
     });
     fetchSetupData();
   }
@@ -215,6 +217,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
       'tax': taxTotal,
       'total': netTotal,
       'created_by': 'System',
+      'payment_method': selectedPaymentMethod,
       'items': cartLines.map((line) => {
         'item_id': line['item_id'],
         'rate': line['rate'],
@@ -313,8 +316,10 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
                     ),
                     const SizedBox(height: 6),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text('Customer: ${invoice['customer_name'] ?? 'Walk-in'}', style: GoogleFonts.inter(fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF334155))),
+                        Text('Pay Mode: ${invoice['payment_method'] ?? 'Cash'}', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF6366F1))),
                       ],
                     ),
                     const Divider(height: 24, thickness: 1),
@@ -766,6 +771,29 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
               );
               if (picked != null) {
                 setState(() => invoiceDate = picked);
+              }
+            },
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            initialValue: selectedPaymentMethod,
+            style: GoogleFonts.inter(color: isDark ? Colors.white : const Color(0xFF0F172A), fontSize: 13.5),
+            decoration: InputDecoration(
+              labelText: 'Payment Method',
+              labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              filled: true,
+              fillColor: isDark ? const Color(0xFF0B0F19) : const Color(0xFFF8FAFC),
+            ),
+            items: const [
+              DropdownMenuItem(value: 'Cash', child: Text('Cash')),
+              DropdownMenuItem(value: 'UPI', child: Text('UPI')),
+              DropdownMenuItem(value: 'Half Cash + Half UPI', child: Text('Half Cash + Half UPI (Split)')),
+            ],
+            onChanged: (val) {
+              if (val != null) {
+                setState(() => selectedPaymentMethod = val);
               }
             },
           ),

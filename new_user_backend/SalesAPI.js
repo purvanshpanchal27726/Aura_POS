@@ -13,7 +13,7 @@ router.post('/', async (req, res) => {
     await connection.beginTransaction();
 
     const data = req.body || {};
-    const { customer_id, sales_date, sales_bill_no, gross, tax, total, created_by, items } = data;
+    const { customer_id, sales_date, sales_bill_no, gross, tax, total, created_by, items, payment_method } = data;
 
     if (!customer_id || !sales_date || !sales_bill_no || !items || !Array.isArray(items) || items.length === 0) {
       await connection.rollback();
@@ -23,8 +23,8 @@ router.post('/', async (req, res) => {
     // Insert into sales_master
     const masterQuery = `
       INSERT INTO sales_master (
-        customer_id, sales_date, sales_bill_no, gross, tax, total, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        customer_id, sales_date, sales_bill_no, gross, tax, total, created_by, payment_method
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [masterResult] = await connection.execute(masterQuery, [
@@ -34,7 +34,8 @@ router.post('/', async (req, res) => {
       gross || 0.00,
       tax || 0.00,
       total || 0.00,
-      created_by || 'System'
+      created_by || 'System',
+      payment_method || 'Cash'
     ]);
 
     const salesId = masterResult.insertId;

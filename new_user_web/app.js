@@ -437,6 +437,12 @@ document.addEventListener('DOMContentLoaded', () => {
       menu: document.getElementById('menuSupport'),
       view: document.getElementById('screenSupport'),
       title: 'Support & Contact'
+    },
+    'license': {
+      menu: document.getElementById('menuLicense'),
+      view: document.getElementById('screenLicense'),
+      title: 'License & AMC Management',
+      onTransition: () => fetchLicenseDetails()
     }
   };
 
@@ -2875,8 +2881,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const tax = parseFloat(summaryTax.textContent.replace('Rs.', ''));
       const total = parseFloat(summaryNet.textContent.replace('Rs.', ''));
       const created_by = activeUser ? activeUser.username : 'System';
+      const payment_method = document.getElementById('invoicePaymentMethod').value;
 
-      const data = { customer_id, sales_date, sales_bill_no, gross, tax, total, created_by, items: invoiceLines };
+      const data = { customer_id, sales_date, sales_bill_no, gross, tax, total, created_by, payment_method, items: invoiceLines };
 
       try {
         const response = await fetch(getApiUrl('/api/sales'), {
@@ -2914,6 +2921,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const dateStr = `${dateVal.getDate()}/${dateVal.getMonth()+1}/${dateVal.getFullYear()}`;
       document.getElementById('rDate').textContent = dateStr;
       document.getElementById('rBillNo').textContent = invoice.sales_bill_no;
+      document.getElementById('rPaymentMethod').textContent = invoice.payment_method || 'Cash';
       
       const barNoEl = document.getElementById('rBarcodeNo');
       if (barNoEl) barNoEl.textContent = invoice.sales_bill_no;
@@ -3303,6 +3311,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fetchPermissionsAndUsers();
       fetchDashboardStats();
       fetchUsers();
+      fetchLicenseDetails();
       switchScreen('dashboard');
     } else {
       activeUser = null;
@@ -3740,6 +3749,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let chartSalesPurchasesObj = null;
   let chartCategorySalesObj = null;
+  let chartCFWaterfallObj = null;
+  let chartCFPieObj = null;
+  let chartCFBarObj = null;
 
   const destroyCharts = () => {
     if (chartSalesPurchasesObj) {
@@ -3749,6 +3761,18 @@ document.addEventListener('DOMContentLoaded', () => {
     if (chartCategorySalesObj) {
       chartCategorySalesObj.destroy();
       chartCategorySalesObj = null;
+    }
+    if (chartCFWaterfallObj) {
+      chartCFWaterfallObj.destroy();
+      chartCFWaterfallObj = null;
+    }
+    if (chartCFPieObj) {
+      chartCFPieObj.destroy();
+      chartCFPieObj = null;
+    }
+    if (chartCFBarObj) {
+      chartCFBarObj.destroy();
+      chartCFBarObj = null;
     }
   };
 
@@ -4006,6 +4030,35 @@ document.addEventListener('DOMContentLoaded', () => {
           </select>
         </div>
       `;
+    } else if (['sales_by_date', 'purchase_by_date', 'category_wise', 'cash_flow'].includes(reportType)) {
+      html = `
+        <div class="form-field">
+          <label for="filterStartDate">Start Date</label>
+          <input type="date" id="filterStartDate" value="${today}">
+        </div>
+        <div class="form-field">
+          <label for="filterEndDate">End Date</label>
+          <input type="date" id="filterEndDate" value="${today}">
+        </div>
+      `;
+    } else if (reportType === 'item_wise') {
+      html = `
+        <div class="form-field">
+          <label for="filterStartDate">Start Date</label>
+          <input type="date" id="filterStartDate" value="${today}">
+        </div>
+        <div class="form-field">
+          <label for="filterEndDate">End Date</label>
+          <input type="date" id="filterEndDate" value="${today}">
+        </div>
+        <div class="form-field">
+          <label for="filterCategory">Category</label>
+          <select id="filterCategory">
+            <option value="">All Categories</option>
+            ${reportsCategories.map(c => `<option value="${c.category_id}">${c.name}</option>`).join('')}
+          </select>
+        </div>
+      `;
     }
     reportsFiltersContainer.innerHTML = html;
   };
@@ -4049,6 +4102,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const reportType = reportTypeSelect.value;
     reportsResultBody.innerHTML = `<tr><td colspan="10" class="empty-state">Generating report table...</td></tr>`;
     destroyCharts();
+    
+    const cashflowSection = document.getElementById('cashflowReportSection');
+    if (cashflowSection) cashflowSection.style.display = 'none';
     
     try {
       if (reportType === 'sales') {
@@ -4372,13 +4428,28 @@ document.addEventListener('DOMContentLoaded', () => {
         
       } else if (reportType === 'customer') {
         reportsChartsPanel.style.display = 'none';
-        reportsTableTitle.textContent = 'Registered Customers Listing';
+        reportsTableTitle.textContent = 'Registered Customers Details & Sales Summary';
         
         const city = document.getElementById('filterCity')?.value?.toLowerCase()?.trim();
         
-        const res = await fetch(getApiUrl('/api/customers'));
-        if (!res.ok) throw new Error('Failed to load customers.');
-        const customers = await res.json();
+        const [custRes, salesRes] = await Promise.all([
+          fetch(getApiUrl('/api/customers')),
+          fetch(getApiUrl('/api/sales'))
+        ]);
+        
+        if (!custRes.ok) throw new Error('Failed to load customers.');
+        const customers = await custRes.json();
+        const salesList = salesRes.ok ? await salesRes.json() : [];
+        
+        // Group sales by customer ID
+        const customerSales = {};
+        salesList.forEach(s => {
+          if (!customerSales[s.customer_id]) {
+            customerSales[s.customer_id] = { count: 0, spent: 0 };
+          }
+          customerSales[s.customer_id].count++;
+          customerSales[s.customer_id].spent += parseFloat(s.total || 0);
+        });
         
         const filtered = customers.filter(c => {
           if (city && c.city?.toLowerCase()?.indexOf(city) === -1) return false;
@@ -4391,30 +4462,45 @@ document.addEventListener('DOMContentLoaded', () => {
           <tr>
             <th>Cust ID</th>
             <th>Full Name</th>
-            <th>Address Details</th>
-            <th>City & Country</th>
             <th>Contact Details</th>
+            <th>City & Country</th>
+            <th style="text-align: right;">Total Bills</th>
+            <th style="text-align: right;">Total Purchase Amt</th>
           </tr>
         `;
         
         if (filtered.length === 0) {
-          reportsResultBody.innerHTML = `<tr><td colspan="5" class="empty-state">No matching customers found.</td></tr>`;
+          reportsResultBody.innerHTML = `<tr><td colspan="6" class="empty-state">No matching customers found.</td></tr>`;
         } else {
+          let grandSpent = 0;
+          let grandBills = 0;
+          
           reportsResultBody.innerHTML = filtered.map(c => {
             const name = [c.first_name, c.middle_name, c.last_name].filter(p => p && p.trim() !== '').join(' ');
-            const address = [c.address_1, c.address_2, c.address_3].filter(p => p && p.trim() !== '').join(', ') || 'N/A';
             const loc = [c.city, c.country].filter(p => p && p.trim() !== '').join(', ') || 'N/A';
             const contacts = [c.phone_1, c.email_1].filter(p => p && p.trim() !== '').join(' | ') || 'N/A';
+            
+            const stats = customerSales[c.customer_id] || { count: 0, spent: 0 };
+            grandSpent += stats.spent;
+            grandBills += stats.count;
+            
             return `
               <tr>
                 <td>${c.customer_id}</td>
                 <td><strong>${name}</strong></td>
-                <td>${address}</td>
-                <td>${loc}</td>
                 <td>${contacts}</td>
+                <td>${loc}</td>
+                <td style="text-align: right;">${stats.count}</td>
+                <td style="text-align: right; font-weight: bold; color: var(--primary-color);">₹${stats.spent.toFixed(2)}</td>
               </tr>
             `;
-          }).join('');
+          }).join('') + `
+            <tr style="background-color: var(--input-bg); font-weight: bold;">
+              <td colspan="4" style="text-align: right;">TOTAL:</td>
+              <td style="text-align: right;">${grandBills}</td>
+              <td style="text-align: right; color: var(--primary-color);">₹${grandSpent.toFixed(2)}</td>
+            </tr>
+          `;
         }
         
       } else if (reportType === 'user') {
@@ -4468,6 +4554,507 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
           }).join('');
         }
+
+      } else if (reportType === 'sales_by_date') {
+        reportsChartsPanel.style.display = 'none';
+        reportsTableTitle.textContent = 'Sales by Date Summary';
+        
+        const startDate = document.getElementById('filterStartDate')?.value;
+        const endDate = document.getElementById('filterEndDate')?.value;
+        
+        const res = await fetch(getApiUrl('/api/sales'));
+        if (!res.ok) throw new Error('Failed to load sales master records.');
+        const sales = await res.json();
+        
+        const filtered = sales.filter(s => {
+          const sDate = s.sales_date.split('T')[0];
+          if (startDate && sDate < startDate) return false;
+          if (endDate && sDate > endDate) return false;
+          return true;
+        });
+        
+        // Group by Date
+        const grouped = {};
+        filtered.forEach(s => {
+          const sDate = s.sales_date.split('T')[0];
+          if (!grouped[sDate]) {
+            grouped[sDate] = { count: 0, gross: 0, tax: 0, total: 0 };
+          }
+          grouped[sDate].count++;
+          grouped[sDate].gross += parseFloat(s.gross || 0);
+          grouped[sDate].tax += parseFloat(s.tax || 0);
+          grouped[sDate].total += parseFloat(s.total || 0);
+        });
+        
+        const dates = Object.keys(grouped).sort();
+        reportsRowCount.textContent = `${dates.length} days found`;
+        
+        reportsResultHeader.innerHTML = `
+          <tr>
+            <th>Sales Date</th>
+            <th style="text-align: right;">Total Invoices</th>
+            <th style="text-align: right;">Gross Total</th>
+            <th style="text-align: right;">Tax Total</th>
+            <th style="text-align: right;">Net Total Revenue</th>
+          </tr>
+        `;
+        
+        if (dates.length === 0) {
+          reportsResultBody.innerHTML = `<tr><td colspan="5" class="empty-state">No matching sales records found in selected range.</td></tr>`;
+        } else {
+          let sumCount = 0;
+          let sumGross = 0;
+          let sumTax = 0;
+          let sumTotal = 0;
+          
+          reportsResultBody.innerHTML = dates.map(d => {
+            const dateObj = new Date(d);
+            const dateStr = `${dateObj.getDate()}/${dateObj.getMonth()+1}/${dateObj.getFullYear()}`;
+            const info = grouped[d];
+            sumCount += info.count;
+            sumGross += info.gross;
+            sumTax += info.tax;
+            sumTotal += info.total;
+            
+            return `
+              <tr>
+                <td><strong>${dateStr}</strong></td>
+                <td style="text-align: right;">${info.count}</td>
+                <td style="text-align: right;">₹${info.gross.toFixed(2)}</td>
+                <td style="text-align: right;">₹${info.tax.toFixed(2)}</td>
+                <td style="text-align: right; font-weight: bold; color: var(--primary-color);">₹${info.total.toFixed(2)}</td>
+              </tr>
+            `;
+          }).join('') + `
+            <tr style="background-color: var(--input-bg); font-weight: bold;">
+              <td style="text-align: right;">TOTAL:</td>
+              <td style="text-align: right;">${sumCount}</td>
+              <td style="text-align: right;">₹${sumGross.toFixed(2)}</td>
+              <td style="text-align: right;">₹${sumTax.toFixed(2)}</td>
+              <td style="text-align: right; color: var(--primary-color);">₹${sumTotal.toFixed(2)}</td>
+            </tr>
+          `;
+        }
+        
+      } else if (reportType === 'purchase_by_date') {
+        reportsChartsPanel.style.display = 'none';
+        reportsTableTitle.textContent = 'Purchase by Date Summary';
+        
+        const startDate = document.getElementById('filterStartDate')?.value;
+        const endDate = document.getElementById('filterEndDate')?.value;
+        
+        const res = await fetch(getApiUrl('/api/purchase'));
+        if (!res.ok) throw new Error('Failed to load purchase master records.');
+        const purchases = await res.json();
+        
+        const filtered = purchases.filter(p => {
+          const pDate = p.purchase_date.split('T')[0];
+          if (startDate && pDate < startDate) return false;
+          if (endDate && pDate > endDate) return false;
+          return true;
+        });
+        
+        // Group by Date
+        const grouped = {};
+        filtered.forEach(p => {
+          const pDate = p.purchase_date.split('T')[0];
+          if (!grouped[pDate]) {
+            grouped[pDate] = { count: 0, gross: 0, tax: 0, total: 0 };
+          }
+          grouped[pDate].count++;
+          grouped[pDate].gross += parseFloat(p.gross || 0);
+          grouped[pDate].tax += parseFloat(p.tax || 0);
+          grouped[pDate].total += parseFloat(p.total || 0);
+        });
+        
+        const dates = Object.keys(grouped).sort();
+        reportsRowCount.textContent = `${dates.length} days found`;
+        
+        reportsResultHeader.innerHTML = `
+          <tr>
+            <th>Purchase Date</th>
+            <th style="text-align: right;">Total Purchases</th>
+            <th style="text-align: right;">Gross Total</th>
+            <th style="text-align: right;">Tax Total</th>
+            <th style="text-align: right;">Net Total Inward</th>
+          </tr>
+        `;
+        
+        if (dates.length === 0) {
+          reportsResultBody.innerHTML = `<tr><td colspan="5" class="empty-state">No matching purchase records found in selected range.</td></tr>`;
+        } else {
+          let sumCount = 0;
+          let sumGross = 0;
+          let sumTax = 0;
+          let sumTotal = 0;
+          
+          reportsResultBody.innerHTML = dates.map(d => {
+            const dateObj = new Date(d);
+            const dateStr = `${dateObj.getDate()}/${dateObj.getMonth()+1}/${dateObj.getFullYear()}`;
+            const info = grouped[d];
+            sumCount += info.count;
+            sumGross += info.gross;
+            sumTax += info.tax;
+            sumTotal += info.total;
+            
+            return `
+              <tr>
+                <td><strong>${dateStr}</strong></td>
+                <td style="text-align: right;">${info.count}</td>
+                <td style="text-align: right;">₹${info.gross.toFixed(2)}</td>
+                <td style="text-align: right;">₹${info.tax.toFixed(2)}</td>
+                <td style="text-align: right; font-weight: bold; color: #0d9488;">₹${info.total.toFixed(2)}</td>
+              </tr>
+            `;
+          }).join('') + `
+            <tr style="background-color: var(--input-bg); font-weight: bold;">
+              <td style="text-align: right;">TOTAL:</td>
+              <td style="text-align: right;">${sumCount}</td>
+              <td style="text-align: right;">₹${sumGross.toFixed(2)}</td>
+              <td style="text-align: right;">₹${sumTax.toFixed(2)}</td>
+              <td style="text-align: right; color: #0d9488;">₹${sumTotal.toFixed(2)}</td>
+            </tr>
+          `;
+        }
+        
+      } else if (reportType === 'category_wise') {
+        reportsChartsPanel.style.display = 'none';
+        reportsTableTitle.textContent = 'Category-wise Sales Revenue';
+        
+        const startDate = document.getElementById('filterStartDate')?.value;
+        const endDate = document.getElementById('filterEndDate')?.value;
+        
+        const res = await fetch(getApiUrl('/api/sales/details/all'));
+        if (!res.ok) throw new Error('Failed to load sales detail records.');
+        const details = await res.json();
+        
+        const filtered = details.filter(d => {
+          const sDate = d.sales_date.split('T')[0];
+          if (startDate && sDate < startDate) return false;
+          if (endDate && sDate > endDate) return false;
+          return true;
+        });
+        
+        // Group by category name
+        const grouped = {};
+        filtered.forEach(d => {
+          const catName = d.category_name || 'Uncategorized';
+          if (!grouped[catName]) {
+            grouped[catName] = { qty: 0, total: 0 };
+          }
+          grouped[catName].qty += parseFloat(d.quantity || 0);
+          grouped[catName].total += parseFloat(d.item_amount || 0);
+        });
+        
+        const cats = Object.keys(grouped).sort();
+        reportsRowCount.textContent = `${cats.length} categories sold`;
+        
+        reportsResultHeader.innerHTML = `
+          <tr>
+            <th>Category Name</th>
+            <th style="text-align: right;">Total Quantity Sold</th>
+            <th style="text-align: right;">Total Revenue Amount</th>
+          </tr>
+        `;
+        
+        if (cats.length === 0) {
+          reportsResultBody.innerHTML = `<tr><td colspan="3" class="empty-state">No category sales found in selected range.</td></tr>`;
+        } else {
+          let sumQty = 0;
+          let sumTotal = 0;
+          
+          reportsResultBody.innerHTML = cats.map(c => {
+            const info = grouped[c];
+            sumQty += info.qty;
+            sumTotal += info.total;
+            
+            return `
+              <tr>
+                <td><strong>${c}</strong></td>
+                <td style="text-align: right;">${info.qty.toFixed(2)}</td>
+                <td style="text-align: right; font-weight: bold; color: var(--primary-color);">₹${info.total.toFixed(2)}</td>
+              </tr>
+            `;
+          }).join('') + `
+            <tr style="background-color: var(--input-bg); font-weight: bold;">
+              <td style="text-align: right;">TOTAL:</td>
+              <td style="text-align: right;">${sumQty.toFixed(2)}</td>
+              <td style="text-align: right; color: var(--primary-color);">₹${sumTotal.toFixed(2)}</td>
+            </tr>
+          `;
+        }
+        
+      } else if (reportType === 'item_wise') {
+        reportsChartsPanel.style.display = 'none';
+        reportsTableTitle.textContent = 'Item-wise Sales Breakdown';
+        
+        const startDate = document.getElementById('filterStartDate')?.value;
+        const endDate = document.getElementById('filterEndDate')?.value;
+        const catId = document.getElementById('filterCategory')?.value;
+        
+        const res = await fetch(getApiUrl('/api/sales/details/all'));
+        if (!res.ok) throw new Error('Failed to load sales detail records.');
+        const details = await res.json();
+        
+        const filtered = details.filter(d => {
+          const sDate = d.sales_date.split('T')[0];
+          if (startDate && sDate < startDate) return false;
+          if (endDate && sDate > endDate) return false;
+          if (catId && d.category_id != catId) return false;
+          return true;
+        });
+        
+        // Group by item name
+        const grouped = {};
+        filtered.forEach(d => {
+          const itemKey = d.item_name;
+          if (!grouped[itemKey]) {
+            grouped[itemKey] = { category: d.category_name || 'N/A', rateSum: 0, rateCount: 0, qty: 0, total: 0 };
+          }
+          grouped[itemKey].rateSum += parseFloat(d.rate || 0);
+          grouped[itemKey].rateCount++;
+          grouped[itemKey].qty += parseFloat(d.quantity || 0);
+          grouped[itemKey].total += parseFloat(d.item_amount || 0);
+        });
+        
+        const items = Object.keys(grouped).sort();
+        reportsRowCount.textContent = `${items.length} items sold`;
+        
+        reportsResultHeader.innerHTML = `
+          <tr>
+            <th>Item Name</th>
+            <th>Category</th>
+            <th style="text-align: right;">Avg Rate</th>
+            <th style="text-align: right;">Quantity Sold</th>
+            <th style="text-align: right;">Total Sales Amount</th>
+          </tr>
+        `;
+        
+        if (items.length === 0) {
+          reportsResultBody.innerHTML = `<tr><td colspan="5" class="empty-state">No item sales found in selected range.</td></tr>`;
+        } else {
+          let sumQty = 0;
+          let sumTotal = 0;
+          
+          reportsResultBody.innerHTML = items.map(name => {
+            const info = grouped[name];
+            sumQty += info.qty;
+            sumTotal += info.total;
+            const avgRate = info.rateSum / info.rateCount;
+            
+            return `
+              <tr>
+                <td><strong>${name}</strong></td>
+                <td>${info.category}</td>
+                <td style="text-align: right;">₹${avgRate.toFixed(2)}</td>
+                <td style="text-align: right;">${info.qty.toFixed(2)}</td>
+                <td style="text-align: right; font-weight: bold; color: var(--primary-color);">₹${info.total.toFixed(2)}</td>
+              </tr>
+            `;
+          }).join('') + `
+            <tr style="background-color: var(--input-bg); font-weight: bold;">
+              <td colspan="3" style="text-align: right;">TOTAL:</td>
+              <td style="text-align: right;">${sumQty.toFixed(2)}</td>
+              <td style="text-align: right; color: var(--primary-color);">₹${sumTotal.toFixed(2)}</td>
+            </tr>
+          `;
+        }
+        
+      } else if (reportType === 'cash_flow') {
+        reportsChartsPanel.style.display = 'none';
+        if (cashflowSection) cashflowSection.style.display = 'block';
+        reportsTableTitle.textContent = 'Cash Flow Analysis Ledger';
+        
+        const startDate = document.getElementById('filterStartDate')?.value;
+        const endDate = document.getElementById('filterEndDate')?.value;
+        
+        const [salesRes, purchaseRes] = await Promise.all([
+          fetch(getApiUrl('/api/sales')),
+          fetch(getApiUrl('/api/purchase'))
+        ]);
+        
+        const sales = salesRes.ok ? await salesRes.json() : [];
+        const purchases = purchaseRes.ok ? await purchaseRes.json() : [];
+        
+        // Filter transactions in date range
+        const fSales = sales.filter(s => {
+          const sDate = s.sales_date.split('T')[0];
+          if (startDate && sDate < startDate) return false;
+          if (endDate && sDate > endDate) return false;
+          return true;
+        });
+        const fPurchases = purchases.filter(p => {
+          const pDate = p.purchase_date.split('T')[0];
+          if (startDate && pDate < startDate) return false;
+          if (endDate && pDate > endDate) return false;
+          return true;
+        });
+        
+        const salesTotal = fSales.reduce((sum, s) => sum + parseFloat(s.total || 0), 0);
+        const purchasesTotal = fPurchases.reduce((sum, p) => sum + parseFloat(p.total || 0), 0);
+        
+        // Mock Cash Inflow/Outflow from investments
+        const openingBalance = 2500000.00;
+        const investmentInflow = 1000000.00;
+        const investmentOutflow = 500000.00;
+        
+        const totalInflow = salesTotal + investmentInflow;
+        const totalOutflow = purchasesTotal + investmentOutflow;
+        const netCashFlow = totalInflow - totalOutflow;
+        const closingBalance = openingBalance + netCashFlow;
+        
+        // Populate Summary metrics
+        document.getElementById('cfTotalInflow').textContent = `₹${totalInflow.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        document.getElementById('cfTotalOutflow').textContent = `₹${totalOutflow.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        document.getElementById('cfNetCashFlow').textContent = `${netCashFlow >= 0 ? '+' : ''}₹${netCashFlow.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        document.getElementById('cfOpeningBalance').textContent = `₹${openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        document.getElementById('cfClosingBalance').textContent = `₹${closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        
+        const netColor = netCashFlow >= 0 ? '#10b981' : '#ef4444';
+        document.getElementById('cfNetCashFlow').style.color = netColor;
+        
+        reportsRowCount.textContent = `5 Cash Flow segments active`;
+        
+        // Draw Waterfall Floating Bar chart
+        const ctxWaterfall = document.getElementById('chartCashflowWaterfall')?.getContext('2d');
+        if (ctxWaterfall) {
+          chartCFWaterfallObj = new Chart(ctxWaterfall, {
+            type: 'bar',
+            data: {
+              labels: ['Opening', 'Sales (Ops)', 'Investment In', 'Purchases (Ops)', 'Investment Out', 'Closing'],
+              datasets: [{
+                label: 'Cash Position',
+                data: [
+                  [0, openingBalance],
+                  [openingBalance, openingBalance + salesTotal],
+                  [openingBalance + salesTotal, openingBalance + salesTotal + investmentInflow],
+                  [openingBalance + salesTotal + investmentInflow - purchasesTotal, openingBalance + salesTotal + investmentInflow],
+                  [closingBalance, openingBalance + salesTotal + investmentInflow - purchasesTotal],
+                  [0, closingBalance]
+                ],
+                backgroundColor: [
+                  '#6366f1', // Indigo
+                  '#10b981', // Emerald green
+                  '#34d399', // Light emerald green
+                  '#f87171', // Light red
+                  '#ef4444', // Red
+                  '#4f46e5'  // Dark Indigo
+                ],
+                borderWidth: 1,
+                borderRadius: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false }
+              },
+              scales: {
+                x: { grid: { display: false } },
+                y: { ticks: { callback: value => '₹' + value.toLocaleString('en-IN') } }
+              }
+            }
+          });
+        }
+        
+        // Draw Pie Chart for Breakdown
+        const ctxPie = document.getElementById('chartCashflowPie')?.getContext('2d');
+        if (ctxPie) {
+          chartCFPieObj = new Chart(ctxPie, {
+            type: 'pie',
+            data: {
+              labels: ['Sales (Ops)', 'Investment In', 'Purchases (Ops)', 'Investment Out'],
+              datasets: [{
+                data: [salesTotal, investmentInflow, purchasesTotal, investmentOutflow],
+                backgroundColor: ['#10b981', '#34d399', '#f87171', '#ef4444']
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { position: 'right' }
+              }
+            }
+          });
+        }
+        
+        // Draw Bar Chart comparing Inflows vs Outflows
+        const ctxBar = document.getElementById('chartCashflowBar')?.getContext('2d');
+        if (ctxBar) {
+          chartCFBarObj = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+              labels: ['Inflows', 'Outflows'],
+              datasets: [{
+                label: 'Inflows vs Outflows',
+                data: [totalInflow, totalOutflow],
+                backgroundColor: ['#10b981', '#ef4444'],
+                borderRadius: 6
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: { display: false }
+              },
+              scales: {
+                y: { ticks: { callback: value => '₹' + value.toLocaleString('en-IN') } }
+              }
+            }
+          });
+        }
+        
+        // Populate Result Table
+        reportsResultHeader.innerHTML = `
+          <tr>
+            <th>Cash Flow Activity Segment</th>
+            <th>Type</th>
+            <th style="text-align: right;">Inflow Amount</th>
+            <th style="text-align: right;">Outflow Amount</th>
+            <th style="text-align: right;">Net Movement</th>
+          </tr>
+        `;
+        
+        reportsResultBody.innerHTML = `
+          <tr>
+            <td><strong>Cash Inflow from Operations (Sales Total)</strong></td>
+            <td><span class="status-badge status-active" style="background:#dcfce7; color:#15803d; border-radius:20px; padding:3px 10px;">Operations In</span></td>
+            <td style="text-align: right; color:#10b981; font-weight:600;">₹${salesTotal.toFixed(2)}</td>
+            <td style="text-align: right; color:var(--text-secondary);">₹0.00</td>
+            <td style="text-align: right; color:#10b981; font-weight:600;">+₹${salesTotal.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td><strong>Cash Inflow from Capital Investments</strong></td>
+            <td><span class="status-badge status-active" style="background:#dbeafe; color:#1d4ed8; border-radius:20px; padding:3px 10px;">Investment In</span></td>
+            <td style="text-align: right; color:#10b981; font-weight:600;">₹${investmentInflow.toFixed(2)}</td>
+            <td style="text-align: right; color:var(--text-secondary);">₹0.00</td>
+            <td style="text-align: right; color:#10b981; font-weight:600;">+₹${investmentInflow.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td><strong>Cash Outflow for Operations (Purchases Total)</strong></td>
+            <td><span class="status-badge status-inactive" style="background:#fee2e2; color:#b91c1c; border-radius:20px; padding:3px 10px;">Operations Out</span></td>
+            <td style="text-align: right; color:var(--text-secondary);">₹0.00</td>
+            <td style="text-align: right; color:#ef4444; font-weight:600;">₹${purchasesTotal.toFixed(2)}</td>
+            <td style="text-align: right; color:#ef4444; font-weight:600;">-₹${purchasesTotal.toFixed(2)}</td>
+          </tr>
+          <tr>
+            <td><strong>Cash Outflow for Capital Purchases</strong></td>
+            <td><span class="status-badge status-inactive" style="background:#fef3c7; color:#b45309; border-radius:20px; padding:3px 10px;">Investment Out</span></td>
+            <td style="text-align: right; color:var(--text-secondary);">₹0.00</td>
+            <td style="text-align: right; color:#ef4444; font-weight:600;">₹${investmentOutflow.toFixed(2)}</td>
+            <td style="text-align: right; color:#ef4444; font-weight:600;">-₹${investmentOutflow.toFixed(2)}</td>
+          </tr>
+          <tr style="background-color: var(--input-bg); font-weight: bold; border-top: 2px solid var(--border-color);">
+            <td>NET SUMMARY POSITION:</td>
+            <td></td>
+            <td style="text-align: right; color:#10b981;">₹${totalInflow.toFixed(2)}</td>
+            <td style="text-align: right; color:#ef4444;">₹${totalOutflow.toFixed(2)}</td>
+            <td style="text-align: right; color:${netColor}; font-size:1.05rem;">${netCashFlow >= 0 ? '+' : ''}₹${netCashFlow.toFixed(2)}</td>
+          </tr>
+        `;
       }
     } catch (err) {
       console.error(err);
@@ -4527,19 +5114,24 @@ document.addEventListener('DOMContentLoaded', () => {
     const isRestaurant = appMode === 'restaurant';
     
     let html = `
-      <option value="sales">Sales Report</option>
-      ${isRestaurant ? '' : '<option value="purchase">Purchase Report</option>'}
-      <option value="item">Item Report</option>
-      <option value="category">Item Category Report</option>
       <option value="customer">Customer Report</option>
-      <option value="user">User Report</option>
+      <option value="sales">Sales Ledger (Detail)</option>
+      ${isRestaurant ? '' : '<option value="purchase">Purchase Ledger (Detail)</option>'}
+      <option value="sales_by_date">Sales by Date Report</option>
+      ${isRestaurant ? '' : '<option value="purchase_by_date">Purchase by Date Report</option>'}
+      <option value="category_wise">Category-wise Report</option>
+      <option value="item_wise">Item-wise Report</option>
+      ${isRestaurant ? '' : '<option value="cash_flow">Cash Flow Analysis</option>'}
+      <option value="item">Item Master List</option>
+      <option value="category">Category Master List</option>
+      <option value="user">User Master List</option>
     `;
     reportTypeSelect.innerHTML = html;
     
     if (currentVal && (currentVal !== 'purchase' || !isRestaurant)) {
       reportTypeSelect.value = currentVal;
     } else {
-      reportTypeSelect.value = 'sales';
+      reportTypeSelect.value = 'customer';
     }
   };
 
@@ -4595,6 +5187,139 @@ document.addEventListener('DOMContentLoaded', () => {
     await fetchReportsOverviewMetrics();
     await generateReport();
   };
+
+  // --- LICENSE & AMC MANAGEMENT SECTION ---
+  const fetchLicenseDetails = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/license'));
+      if (!response.ok) throw new Error('Failed to load license details.');
+      const data = await response.json();
+      
+      // Update UI elements
+      document.getElementById('licValKey').textContent = data.license_key;
+      
+      const valFrom = new Date(data.valid_from);
+      const valTo = new Date(data.valid_to);
+      const amcStart = new Date(data.amc_start_date);
+      const amcEnd = new Date(data.amc_end_date);
+      
+      document.getElementById('licValFrom').textContent = `${valFrom.getDate()}/${valFrom.getMonth()+1}/${valFrom.getFullYear()}`;
+      document.getElementById('licValTo').textContent = `${valTo.getDate()}/${valTo.getMonth()+1}/${valTo.getFullYear()}`;
+      document.getElementById('licAmcValidity').textContent = `${amcStart.getDate()}/${amcStart.getMonth()+1}/${amcStart.getFullYear()} to ${amcEnd.getDate()}/${amcEnd.getMonth()+1}/${amcEnd.getFullYear()}`;
+      
+      const remainingDaysText = document.getElementById('licValDays');
+      remainingDaysText.textContent = `${data.remaining_days} days`;
+      
+      const badge = document.getElementById('licenseStatusBadge');
+      badge.textContent = data.status;
+      badge.className = 'license-status-badge'; // reset
+      
+      const alertBanner = document.getElementById('licenseAlertBanner');
+      const alertText = document.getElementById('licenseAlertText');
+      
+      if (data.status === 'Expired') {
+        badge.classList.add('expired');
+        alertBanner.style.display = 'flex';
+        alertBanner.style.background = '#fee2e2';
+        alertBanner.style.color = '#991b1b';
+        alertBanner.style.borderLeft = '5px solid #ef4444';
+        alertText.textContent = `Your software license and AMC support expired on ${valTo.getDate()}/${valTo.getMonth()+1}/${valTo.getFullYear()}. Please renew online instantly to restore all operations.`;
+      } else if (data.status === 'Renewal Due') {
+        badge.classList.add('due');
+        alertBanner.style.display = 'flex';
+        alertBanner.style.background = '#fef3c7';
+        alertBanner.style.color = '#92400e';
+        alertBanner.style.borderLeft = '5px solid #d97706';
+        alertText.textContent = `Your Annual Maintenance Contract is expiring in ${data.remaining_days} days. Please renew online instantly to prevent system disruption.`;
+      } else {
+        badge.classList.add('active');
+        alertBanner.style.display = 'none';
+      }
+    } catch (err) {
+      console.error('License fetch failed:', err);
+    }
+  };
+
+  // Bind License Renewal portal elements
+  const licenseRenewalForm = document.getElementById('licenseRenewalForm');
+  const licensePaymentModal = document.getElementById('licensePaymentModal');
+  const licensePaymentClose = document.getElementById('licensePaymentClose');
+  const btnCancelPayment = document.getElementById('btnCancelPayment');
+  const btnConfirmPayment = document.getElementById('btnConfirmPayment');
+  const spinnerPayment = document.getElementById('spinnerPayment');
+  const payOptionUPI = document.getElementById('payOptionUPI');
+  const payOptionCard = document.getElementById('payOptionCard');
+  const paymentUPIView = document.getElementById('paymentUPIView');
+  const paymentCardView = document.getElementById('paymentCardView');
+  const upiMockQrImage = document.getElementById('upiMockQrImage');
+  const renewPlanSelect = document.getElementById('renewPlanSelect');
+
+  if (licenseRenewalForm) {
+    licenseRenewalForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const plan = renewPlanSelect.value;
+      const amt = plan === '1' ? '5000' : '9000';
+      upiMockQrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=vansheeinfotech@okaxis%26pn=Vanshee%20Infotech%26am=${amt}%26cu=INR`;
+      licensePaymentModal.style.display = 'flex';
+    });
+  }
+
+  const closeLicensePaymentModal = () => {
+    licensePaymentModal.style.display = 'none';
+    spinnerPayment.style.display = 'none';
+  };
+
+  if (licensePaymentClose) licensePaymentClose.addEventListener('click', closeLicensePaymentModal);
+  if (btnCancelPayment) btnCancelPayment.addEventListener('click', closeLicensePaymentModal);
+
+  if (payOptionUPI) {
+    payOptionUPI.addEventListener('click', () => {
+      payOptionUPI.classList.add('active');
+      payOptionCard.classList.remove('active');
+      payOptionUPI.style.borderColor = 'var(--primary-color)';
+      payOptionCard.style.borderColor = 'var(--border-color)';
+      paymentUPIView.style.display = 'block';
+      paymentCardView.style.display = 'none';
+    });
+  }
+
+  if (payOptionCard) {
+    payOptionCard.addEventListener('click', () => {
+      payOptionCard.classList.add('active');
+      payOptionUPI.classList.remove('active');
+      payOptionCard.style.borderColor = 'var(--primary-color)';
+      payOptionUPI.style.borderColor = 'var(--border-color)';
+      paymentCardView.style.display = 'block';
+      paymentUPIView.style.display = 'none';
+    });
+  }
+
+  if (btnConfirmPayment) {
+    btnConfirmPayment.addEventListener('click', async () => {
+      try {
+        spinnerPayment.style.display = 'inline-block';
+        btnConfirmPayment.disabled = true;
+        
+        const response = await fetch(getApiUrl('/api/license/renew'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (!response.ok) throw new Error('Failed to complete online renewal.');
+        
+        alert('Renewal payment processed successfully! Your software license validity and AMC support contract have been extended by 1 year.');
+        closeLicensePaymentModal();
+        await fetchLicenseDetails();
+      } catch (err) {
+        alert(`Renewal Error: ${err.message}`);
+      } finally {
+        btnConfirmPayment.disabled = false;
+        spinnerPayment.style.display = 'none';
+      }
+    });
+  }
+
+  window.fetchLicenseDetails = fetchLicenseDetails;
 
   // Session Check initialization
   checkAuthSession();

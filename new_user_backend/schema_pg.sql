@@ -161,6 +161,7 @@ CREATE TABLE IF NOT EXISTS sales_master (
     gross DECIMAL(10,2) NOT NULL,
     tax DECIMAL(10,2) NOT NULL,
     total DECIMAL(10,2) NOT NULL,
+    payment_method VARCHAR(50) DEFAULT 'Cash',
     created_by VARCHAR(255) DEFAULT 'System',
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE ON UPDATE CASCADE
@@ -230,3 +231,22 @@ INSERT INTO users (user_id, username, password, first_name, middle_name, last_na
 SELECT setval(pg_get_serial_sequence('roles','role_id'), MAX(role_id)) FROM roles;
 SELECT setval(pg_get_serial_sequence('modules','module_id'), MAX(module_id)) FROM modules;
 SELECT setval(pg_get_serial_sequence('users','user_id'), MAX(user_id)) FROM users;
+
+-- 15. License Info Table
+CREATE TABLE IF NOT EXISTS license_info (
+    license_id SERIAL PRIMARY KEY,
+    license_key VARCHAR(255) NOT NULL,
+    valid_from DATE NOT NULL,
+    valid_to DATE NOT NULL,
+    amc_start_date DATE NOT NULL,
+    amc_end_date DATE NOT NULL,
+    status VARCHAR(50) DEFAULT 'Active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Seed default license row
+INSERT INTO license_info (license_key, valid_from, valid_to, amc_start_date, amc_end_date, status)
+VALUES ('VANSHEE-POS-LICENSE-KEY-2026', '2026-01-01', '2026-08-31', '2026-01-01', '2026-08-31', 'Active')
+ON CONFLICT DO NOTHING;
+
+SELECT setval(pg_get_serial_sequence('license_info','license_id'), COALESCE((SELECT MAX(license_id) FROM license_info), 1));

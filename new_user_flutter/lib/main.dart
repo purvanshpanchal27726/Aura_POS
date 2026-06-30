@@ -21,6 +21,7 @@ import 'purchase_billing.dart';
 import 'reports_screen.dart';
 import 'connection_setup_screen.dart';
 import 'support_screen.dart';
+import 'license_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -386,6 +387,7 @@ class _MainLayoutState extends State<MainLayout> {
     const ReportsScreen(), // 12
     RoleListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(1)), // 13
     const SupportScreen(), // 14
+    const LicenseScreen(), // 15
   ];
 
   String _getAppBarTitle() {
@@ -420,6 +422,8 @@ class _MainLayoutState extends State<MainLayout> {
         return 'Role Master';
       case 14:
         return 'Support & Contact Us';
+      case 15:
+        return 'AMC & License Management';
       default:
         return 'POS System';
     }
@@ -708,6 +712,16 @@ class _MainLayoutState extends State<MainLayout> {
                       selected: _currentIndex == 14,
                       onTap: () {
                         setState(() => _currentIndex = 14);
+                        Navigator.pop(context);
+                      },
+                    ),
+
+                    ListTile(
+                      leading: Icon(Icons.badge_outlined, color: Color(0xFF64748B)),
+                      title: Text('License & AMC'),
+                      selected: _currentIndex == 15,
+                      onTap: () {
+                        setState(() => _currentIndex = 15);
                         Navigator.pop(context);
                       },
                     ),

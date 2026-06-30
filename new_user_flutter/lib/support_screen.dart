@@ -102,7 +102,7 @@ class SupportScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'Feel free to contact us',
+                        'Feel free to contact us / How may I help you?',
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,

@@ -1491,3 +1491,113 @@ body.print-report-active th, body.print-report-active td {
   text-decoration: underline;
 }
 
+/* License & AMC Management Styles */
+.license-status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+}
+.license-status-badge.active {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+.license-status-badge.due {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+.license-status-badge.expired {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Pay options in checkout */
+.pay-option {
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  background: var(--input-bg);
+  transition: all 0.2s ease;
+}
+.pay-option.active {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px var(--primary-color) inset;
+}
+
+/* Cash Flow Dashboard styling */
+.cashflow-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+.cashflow-card {
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  text-align: center;
+}
+.cashflow-card .label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+.cashflow-card .value {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.cashflow-card.inflow .value {
+  color: #10b981;
+}
+.cashflow-card.outflow .value {
+  color: #ef4444;
+}
+.cashflow-card.net .value {
+  color: var(--primary-color);
+}
+.cashflow-card.balance .value {
+  color: var(--text-main);
+}
+
+.cashflow-charts-container {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+@media (max-width: 900px) {
+  .cashflow-charts-container {
+    grid-template-columns: 1fr;
+  }
+}
+.cashflow-chart-wrapper {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.cashflow-chart-wrapper h4 {
+  margin: 0 0 1rem 0;
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+

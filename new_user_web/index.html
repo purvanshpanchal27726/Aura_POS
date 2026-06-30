@@ -140,6 +140,10 @@
           <span class="material-icons">contact_support</span>
           <span>Support & Contact</span>
         </li>
+        <li class="drawer-item" id="menuLicense">
+          <span class="material-icons">vpn_key</span>
+          <span>License & AMC</span>
+        </li>
         <li class="drawer-item" id="menuExit">
           <span class="material-icons">exit_to_app</span>
           <span>Exit</span>
@@ -492,6 +496,14 @@
             <label for="invoiceDate">Sales Date <span class="required-star">*</span></label>
             <input type="date" id="invoiceDate" required>
           </div>
+          <div class="form-field">
+            <label for="invoicePaymentMethod">Payment Method</label>
+            <select id="invoicePaymentMethod" style="padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-weight: 500;">
+              <option value="Cash">Cash</option>
+              <option value="UPI">UPI</option>
+              <option value="Half Cash + Half UPI">Half Cash + Half UPI</option>
+            </select>
+          </div>
           <div class="form-field pos-bill-field">
             <label>Bill No</label>
             <strong id="invoiceBillNo">--</strong>
@@ -704,12 +716,17 @@
           <div class="form-field">
             <label for="reportTypeSelect">Report Module</label>
             <select id="reportTypeSelect" style="padding: 0.6rem 0.85rem; border-radius: 8px;">
-              <option value="sales">Sales Report</option>
-              <option value="purchase">Purchase Report</option>
-              <option value="item">Item Report</option>
-              <option value="category">Item Category Report</option>
               <option value="customer">Customer Report</option>
-              <option value="user">User Report</option>
+              <option value="sales">Sales Ledger (Detail)</option>
+              <option value="purchase">Purchase Ledger (Detail)</option>
+              <option value="sales_by_date">Sales by Date Report</option>
+              <option value="purchase_by_date">Purchase by Date Report</option>
+              <option value="category_wise">Category-wise Report</option>
+              <option value="item_wise">Item-wise Report</option>
+              <option value="cash_flow">Cash Flow Analysis</option>
+              <option value="item">Item Master List</option>
+              <option value="category">Category Master List</option>
+              <option value="user">User Master List</option>
             </select>
           </div>
         </div>
@@ -739,6 +756,57 @@
           <h3 style="margin-bottom: 0.75rem; color: var(--text-main); font-size: 0.95rem; font-weight: 700; width: 100%; text-align: left;">Revenue by Item Category</h3>
           <div style="position: relative; width: 100%; height: 220px; display: flex; justify-content: center;">
             <canvas id="chartCategorySales" style="max-height: 220px; width: 100%;"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cash Flow Report Section [NEW] -->
+      <div id="cashflowReportSection" style="display: none; margin-bottom: 2rem;">
+        <!-- Metrics Row -->
+        <div class="cashflow-metrics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+          <div class="cashflow-card inflow" style="padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg); text-align: center;">
+            <span class="label" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; display: block;">Total Inflow</span>
+            <span class="value" id="cfTotalInflow" style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: #10b981;">₹0.00</span>
+          </div>
+          <div class="cashflow-card outflow" style="padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg); text-align: center;">
+            <span class="label" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; display: block;">Total Outflow</span>
+            <span class="value" id="cfTotalOutflow" style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: #ef4444;">₹0.00</span>
+          </div>
+          <div class="cashflow-card net" style="padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg); text-align: center;">
+            <span class="label" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; display: block;">Net Cash Flow</span>
+            <span class="value" id="cfNetCashFlow" style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: var(--primary-color);">₹0.00</span>
+          </div>
+          <div class="cashflow-card balance" style="padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg); text-align: center;">
+            <span class="label" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; display: block;">Opening Balance</span>
+            <span class="value" id="cfOpeningBalance" style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: var(--text-main);">₹2,500,000.00</span>
+          </div>
+          <div class="cashflow-card balance" style="padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg); text-align: center;">
+            <span class="label" style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; display: block;">Closing Balance</span>
+            <span class="value" id="cfClosingBalance" style="font-family: var(--font-heading); font-size: 1.4rem; font-weight: 800; color: var(--text-main);">₹0.00</span>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="cashflow-charts-container" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+          <div class="cashflow-chart-wrapper" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+            <h4 style="margin: 0 0 1rem 0; color: var(--text-main); font-weight: 700; font-size: 1rem;">Cash Flow Waterfall Chart</h4>
+            <div style="position: relative; height: 280px; width: 100%;">
+              <canvas id="chartCashflowWaterfall" style="height: 280px; width: 100%;"></canvas>
+            </div>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="cashflow-chart-wrapper" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+              <h4 style="margin: 0 0 1rem 0; color: var(--text-main); font-weight: 700; font-size: 1rem;">Cash Flow Breakdown (Pie Chart)</h4>
+              <div style="position: relative; height: 180px; display: flex; justify-content: center; width: 100%;">
+                <canvas id="chartCashflowPie" style="max-height: 180px; width: 100%;"></canvas>
+              </div>
+            </div>
+            <div class="cashflow-chart-wrapper" style="background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+              <h4 style="margin: 0 0 1rem 0; color: var(--text-main); font-weight: 700; font-size: 1rem;">Cash Flow Comparison (Bar Chart)</h4>
+              <div style="position: relative; height: 180px; display: flex; justify-content: center; width: 100%;">
+                <canvas id="chartCashflowBar" style="max-height: 180px; width: 100%;"></canvas>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -974,6 +1042,127 @@
           </div>
         </div>
       </section>
+    </div>
+
+    <!-- Screen 17: License & AMC Management [NEW] -->
+    <div id="screenLicense" class="screen-view" style="display: none;">
+      <!-- Validity Status Banner Alert -->
+      <div id="licenseAlertBanner" class="license-alert-banner" style="display: none; background: #fee2e2; border-left: 5px solid #ef4444; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; color: #991b1b;">
+        <span class="material-icons" style="font-size: 28px; color: #ef4444;">warning</span>
+        <div class="alert-content">
+          <h4 style="margin: 0; font-size: 1rem; font-weight: 700;">AMC Renewal Warning</h4>
+          <p id="licenseAlertText" style="margin: 2px 0 0 0; font-size: 0.85rem; color: #7f1d1d;">Your Annual Maintenance Contract is expiring soon. Please renew online instantly to prevent system lock.</p>
+        </div>
+      </div>
+
+      <div class="license-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+        <!-- License Details Card -->
+        <div class="card license-details-card" style="padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg);">
+          <div class="card-icon-header" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            <span class="material-icons" style="color: var(--primary-color);">verified_user</span>
+            <h3 style="margin: 0; color: var(--text-main); font-size: 1.1rem; font-weight: 700;">License Information</h3>
+          </div>
+          <div class="license-status-badge" id="licenseStatusBadge" style="display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; margin-bottom: 1.25rem;">Active</div>
+          
+          <div class="license-meta-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <div class="license-meta-item" style="display: flex; justify-content: space-between; font-size: 0.9rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.5rem;">
+              <span class="label" style="color: var(--text-secondary);">License Key</span>
+              <span class="value" id="licValKey" style="font-weight: 700; color: var(--text-main);">--</span>
+            </div>
+            <div class="license-meta-item" style="display: flex; justify-content: space-between; font-size: 0.9rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.5rem;">
+              <span class="label" style="color: var(--text-secondary);">Valid From</span>
+              <span class="value" id="licValFrom" style="font-weight: 500; color: var(--text-main);">--</span>
+            </div>
+            <div class="license-meta-item" style="display: flex; justify-content: space-between; font-size: 0.9rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.5rem;">
+              <span class="label" style="color: var(--text-secondary);">Valid To (Expiry)</span>
+              <span class="value" id="licValTo" style="font-weight: 500; color: var(--text-main);">--</span>
+            </div>
+            <div class="license-meta-item" style="display: flex; justify-content: space-between; font-size: 0.9rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 0.5rem;">
+              <span class="label" style="color: var(--text-secondary);">AMC Validity Range</span>
+              <span class="value" id="licAmcValidity" style="font-weight: 500; color: var(--text-main);">--</span>
+            </div>
+            <div class="license-meta-item" style="display: flex; justify-content: space-between; font-size: 0.9rem; padding-bottom: 0.25rem;">
+              <span class="label" style="color: var(--text-secondary);">Remaining Days</span>
+              <span class="value highlight" id="licValDays" style="font-weight: 700; color: var(--primary-color);">-- days</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Online Renewal Form Card -->
+        <div class="card license-renewal-card" style="padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg);">
+          <div class="card-icon-header" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+            <span class="material-icons" style="color: var(--primary-color);">payment</span>
+            <h3 style="margin: 0; color: var(--text-main); font-size: 1.1rem; font-weight: 700;">Online Renewal Portal</h3>
+          </div>
+          <p class="description" style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.4; margin: 0;">Select your annual plan and make payment online to extend your software license & AMC support validity instantly.</p>
+          
+          <form id="licenseRenewalForm" style="margin-top: 1.25rem;">
+            <div class="form-field" style="margin-bottom: 1.25rem;">
+              <label for="renewPlanSelect" style="font-weight: 600; color: var(--text-main); font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">Choose Duration Plan</label>
+              <select id="renewPlanSelect" style="width: 100%; padding: 0.75rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-weight: 500;">
+                <option value="1">1 Year Subscription Plan — ₹5,000</option>
+                <option value="2">2 Years Subscription Plan — ₹9,000 (Save 10%)</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: bold; font-size: 0.95rem; border-radius: 8px;">Proceed to Secure Checkout</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- License Payment Modal Overlay -->
+    <div id="licensePaymentModal" class="modal-overlay" style="display: none;">
+      <div class="modal-card" style="max-width: 450px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; position: relative;">
+        <span class="close-modal" id="licensePaymentClose" style="position: absolute; top: 1rem; right: 1rem; cursor: pointer; font-size: 1.5rem; color: var(--text-secondary);">&times;</span>
+        <section class="form-section">
+          <h2 style="margin: 0 0 4px 0; font-family: var(--font-heading); color: var(--text-main); font-size: 1.3rem;">Secure Renewal Checkout</h2>
+          <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0 0 1.5rem 0;">Choose a mock payment method to proceed with renewal extension.</p>
+          
+          <div class="payment-options-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div class="pay-option active" id="payOptionUPI" style="border: 2px solid var(--primary-color); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer; background: var(--input-bg);">
+              <span class="material-icons" style="font-size: 32px; color: var(--primary-color);">qr_code_2</span>
+              <div style="font-weight: bold; margin-top: 0.5rem; color: var(--text-main); font-size: 0.85rem;">UPI QR Scan</div>
+            </div>
+            <div class="pay-option" id="payOptionCard" style="border: 1.5px solid var(--border-color); border-radius: 12px; padding: 1rem; text-align: center; cursor: pointer;">
+              <span class="material-icons" style="font-size: 32px; color: var(--text-secondary);">credit_card</span>
+              <div style="font-weight: bold; margin-top: 0.5rem; color: var(--text-secondary); font-size: 0.85rem;">Credit / Debit Card</div>
+            </div>
+          </div>
+
+          <!-- UPI Option View -->
+          <div id="paymentUPIView" style="text-align: center; margin-bottom: 1.5rem;">
+            <div style="background: white; padding: 1rem; display: inline-block; border-radius: 12px; border: 1px solid var(--border-color);">
+              <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=vansheeinfotech@okaxis%26pn=Vanshee%20Infotech%26am=5000%26cu=INR" alt="UPI QR" id="upiMockQrImage" style="width: 150px; height: 150px; display: block; margin: 0 auto;">
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.75rem; line-height: 1.4; padding: 0 10px;">Scan this QR code using any UPI app (BHIM, Google Pay, PhonePe, Paytm) to make the mock payment.</p>
+          </div>
+
+          <!-- Card Option View -->
+          <div id="paymentCardView" style="display: none; margin-bottom: 1.5rem; text-align: left;">
+            <div class="form-field" style="margin-bottom: 0.75rem;">
+              <label style="font-size: 0.8rem; margin-bottom: 4px; display: block; font-weight: 600; color: var(--text-main);">Card Number</label>
+              <input type="text" placeholder="4111 2222 3333 4444" style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <div class="form-field">
+                <label style="font-size: 0.8rem; margin-bottom: 4px; display: block; font-weight: 600; color: var(--text-main);">Expiry Date</label>
+                <input type="text" placeholder="12/28" style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main);">
+              </div>
+              <div class="form-field">
+                <label style="font-size: 0.8rem; margin-bottom: 4px; display: block; font-weight: 600; color: var(--text-main);">CVV</label>
+                <input type="password" placeholder="***" style="width: 100%; padding: 0.65rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main);">
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 0.75rem; justify-content: flex-end; border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+            <button type="button" class="btn btn-secondary" id="btnCancelPayment" style="border-radius: 8px; padding: 0.6rem 1.25rem; font-weight: 600;">Cancel</button>
+            <button type="button" class="btn btn-primary" id="btnConfirmPayment" style="border-radius: 8px; padding: 0.6rem 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem;">
+              <span id="spinnerPayment" class="material-icons spinner" style="font-size: 18px; display: none; animation: spin 1s linear infinite;">sync</span> Confirm Payment
+            </button>
+          </div>
+        </section>
+      </div>
     </div>
 
   </div> <!-- Closes main-content -->
@@ -1435,6 +1624,7 @@
           <div><strong>Customer:</strong> <span id="rCustName">--</span></div>
           <div><strong>Date:</strong> <span id="rDate">--/--/----</span></div>
           <div><strong>Bill No:</strong> <span id="rBillNo">--</span></div>
+          <div><strong>Pay Method:</strong> <span id="rPaymentMethod">--</span></div>
         </div>
         <table class="receipt-table">
           <thead>

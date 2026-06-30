@@ -89,6 +89,10 @@ const permissionRoutes = require('./PermissionAPI');
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/Permission', permissionRoutes);
 
+const licenseRoutes = require('./LicenseAPI');
+app.use('/api/license', licenseRoutes);
+app.use('/api/License', licenseRoutes);
+
 const eventBus = require('./eventBus');
 
 // Real-Time Server-Sent Events Stream
