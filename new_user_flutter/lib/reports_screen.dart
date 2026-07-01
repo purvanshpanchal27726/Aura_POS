@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
@@ -420,14 +421,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
                   _buildFilterConfigPanel(primaryColor, isDark),
                   const SizedBox(height: 24),
 
-                  // Charts Section (Sales/Purchase only)
-                  if (_selectedReportType == 'sales' || _selectedReportType == 'purchase') ...[
-                    _buildChartsSection(primaryColor, isDark),
-                    const SizedBox(height: 24),
-                  ] else if (_selectedReportType == 'cash_flow') ...[
-                    _buildCashFlowChartsSection(isDark),
-                    const SizedBox(height: 24),
-                  ],
+                  // Charts Section for all reports
+                  _buildDynamicChartsSection(primaryColor, isDark),
+                  const SizedBox(height: 24),
 
                   // Reports Data Table Card
                   _buildReportTableCard(primaryColor, isDark),
@@ -1174,8 +1170,278 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
+  Widget _buildDynamicChartsSection(Color primaryColor, bool isDark) {
+    if (_filteredRecords.isEmpty && _selectedReportType != 'cash_flow') {
+      return const SizedBox.shrink();
+    }
+
+    if (_selectedReportType == 'sales' || _selectedReportType == 'purchase') {
+      return _buildChartsSection(primaryColor, isDark);
+    } else if (_selectedReportType == 'cash_flow') {
+      return _buildCashFlowChartsSection(isDark);
+    } else if (_selectedReportType == 'sales_by_date') {
+      final Map<String, double> dateMap = {};
+      final Map<String, double> countMap = {};
+      for (var r in _filteredRecords) {
+        final d = r['date']?.toString() ?? '';
+        final parts = d.split('-');
+        final displayDate = parts.length > 2 ? '${parts[2]}/${parts[1]}' : d;
+        dateMap[displayDate] = double.tryParse(r['total']?.toString() ?? '0') ?? 0.0;
+        countMap[displayDate] = (r['count'] as int).toDouble();
+      }
+      return Column(
+        children: [
+          _buildGenericBarChart(dateMap, primaryColor, 'Daily Sales Revenue Trend (₹)', isDark),
+          const SizedBox(height: 16),
+          _buildGenericBarChart(countMap, const Color(0xFF8B5CF6), 'Daily Invoices Count', isDark),
+        ],
+      );
+    } else if (_selectedReportType == 'purchase_by_date') {
+      final Map<String, double> dateMap = {};
+      final Map<String, double> countMap = {};
+      for (var r in _filteredRecords) {
+        final d = r['date']?.toString() ?? '';
+        final parts = d.split('-');
+        final displayDate = parts.length > 2 ? '${parts[2]}/${parts[1]}' : d;
+        dateMap[displayDate] = double.tryParse(r['total']?.toString() ?? '0') ?? 0.0;
+        countMap[displayDate] = (r['count'] as int).toDouble();
+      }
+      return Column(
+        children: [
+          _buildGenericBarChart(dateMap, const Color(0xFFEF4444), 'Daily Purchase Cost Trend (₹)', isDark),
+          const SizedBox(height: 16),
+          _buildGenericBarChart(countMap, const Color(0xFFEC4899), 'Daily Orders Count', isDark),
+        ],
+      );
+    } else if (_selectedReportType == 'category_wise') {
+      final Map<String, double> catRevMap = {};
+      final Map<String, double> catQtyMap = {};
+      for (var r in _filteredRecords) {
+        final name = r['category_name']?.toString() ?? '';
+        catRevMap[name] = double.tryParse(r['total_amount']?.toString() ?? '0') ?? 0.0;
+        catQtyMap[name] = double.tryParse(r['quantity']?.toString() ?? '0') ?? 0.0;
+      }
+      return Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            height: 260,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF151D30) : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: isDark ? const Color(0xFF1F2937) : const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Revenue Share by Category', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : const Color(0xFF334155))),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _buildPieChartWidget(primaryColor, catRevMap),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildGenericBarChart(catQtyMap, const Color(0xFF10B981), 'Total Quantity Sold by Category', isDark),
+        ],
+      );
+    } else if (_selectedReportType == 'item_wise') {
+      final Map<String, double> itemRevMap = {};
+      final Map<String, double> itemQtyMap = {};
+      
+      final sortedByRev = List<dynamic>.from(_filteredRecords)
+        ..sort((a, b) => (double.tryParse(b['total_amount']?.toString() ?? '0') ?? 0.0)
+            .compareTo(double.tryParse(a['total_amount']?.toString() ?? '0') ?? 0.0));
+      for (var r in sortedByRev.take(8)) {
+        itemRevMap[r['item_name']?.toString() ?? ''] = double.tryParse(r['total_amount']?.toString() ?? '0') ?? 0.0;
+      }
+
+      final sortedByQty = List<dynamic>.from(_filteredRecords)
+        ..sort((a, b) => (double.tryParse(b['quantity']?.toString() ?? '0') ?? 0.0)
+            .compareTo(double.tryParse(a['quantity']?.toString() ?? '0') ?? 0.0));
+      for (var r in sortedByQty.take(8)) {
+        itemQtyMap[r['item_name']?.toString() ?? ''] = double.tryParse(r['quantity']?.toString() ?? '0') ?? 0.0;
+      }
+
+      return Column(
+        children: [
+          _buildGenericBarChart(itemRevMap, primaryColor, 'Top 8 Items by Revenue (₹)', isDark),
+          const SizedBox(height: 16),
+          _buildGenericBarChart(itemQtyMap, const Color(0xFF06B6D4), 'Top 8 Items by Quantity Sold', isDark),
+        ],
+      );
+    } else if (_selectedReportType == 'customer') {
+      final Map<String, double> custSpentMap = {};
+      final Map<String, double> custBillsMap = {};
+
+      final sortedBySpent = List<dynamic>.from(_filteredRecords)
+        ..sort((a, b) => (double.tryParse(b['total_spent']?.toString() ?? '0') ?? 0.0)
+            .compareTo(double.tryParse(a['total_spent']?.toString() ?? '0') ?? 0.0));
+      for (var r in sortedBySpent.take(8)) {
+        final name = '${r['first_name']} ${r['last_name']}';
+        custSpentMap[name] = double.tryParse(r['total_spent']?.toString() ?? '0') ?? 0.0;
+      }
+
+      final sortedByBills = List<dynamic>.from(_filteredRecords)
+        ..sort((a, b) => (b['bills_count'] as int).compareTo(a['bills_count'] as int));
+      for (var r in sortedByBills.take(8)) {
+        final name = '${r['first_name']} ${r['last_name']}';
+        custBillsMap[name] = (r['bills_count'] as int).toDouble();
+      }
+
+      return Column(
+        children: [
+          _buildGenericBarChart(custSpentMap, primaryColor, 'Top 8 Customers by Purchase Amount (₹)', isDark),
+          const SizedBox(height: 16),
+          _buildGenericBarChart(custBillsMap, const Color(0xFFF59E0B), 'Top 8 Customers by Invoices Count', isDark),
+        ],
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _buildGenericBarChart(Map<String, double> labelValues, Color barColor, String title, bool isDark) {
+    final sortedKeys = labelValues.keys.toList();
+    if (sortedKeys.isEmpty) {
+      return Center(child: Text('No Data Found', style: GoogleFonts.inter(color: const Color(0xFF94A3B8))));
+    }
+
+    double maxVal = labelValues.values.fold(0.0, (max, val) => val > max ? val : max);
+    if (maxVal == 0) maxVal = 1.0;
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      height: 260,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF151D30) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isDark ? const Color(0xFF1F2937) : const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : const Color(0xFF334155))),
+          const SizedBox(height: 16),
+          Expanded(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: sortedKeys.length,
+              itemBuilder: (context, index) {
+                final label = sortedKeys[index];
+                final val = labelValues[label] ?? 0.0;
+                final height = (val / maxVal) * 120.0;
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Text(
+                        val >= 1000 ? '₹${(val / 1000).toStringAsFixed(1)}k' : '₹${val.toStringAsFixed(0)}',
+                        style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.bold, color: isDark ? Colors.white60 : const Color(0xFF64748B)),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                         width: 18,
+                         height: height > 2 ? height : 2,
+                         decoration: BoxDecoration(
+                           color: barColor,
+                           borderRadius: const BorderRadius.only(
+                             topLeft: Radius.circular(4),
+                             topRight: Radius.circular(4),
+                           ),
+                         ),
+                       ),
+                       const SizedBox(height: 6),
+                       SizedBox(
+                         width: 55,
+                         child: Text(
+                           label,
+                           textAlign: TextAlign.center,
+                           maxLines: 1,
+                           overflow: TextOverflow.ellipsis,
+                           style: GoogleFonts.inter(fontSize: 9, fontWeight: FontWeight.bold, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                         ),
+                       ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _exportCSVToClipboard() {
+    final Map<String, String> reportNames = {
+      'sales': 'Sales Ledger',
+      'purchase': 'Purchase Ledger',
+      'item': 'Item Master List',
+      'category': 'Category Master List',
+      'customer': 'Customer List',
+      'user': 'Operator User List',
+      'sales_by_date': 'Sales by Date Report',
+      'purchase_by_date': 'Purchase by Date Report',
+      'category_wise': 'Category-wise Report',
+      'item_wise': 'Item-wise Report',
+      'cash_flow': 'Cash Flow Analysis'
+    };
+
+    final name = reportNames[_selectedReportType] ?? 'POS Report';
+
+    final buffer = StringBuffer();
+    
+    // Headers
+    final cols = _getReportTableColumns();
+    final headerList = cols.map((col) {
+      final child = col.label;
+      String val = '';
+      if (child is Text) {
+        val = child.data ?? '';
+      }
+      return '"${val.replaceAll('"', '""')}"';
+    }).join(',');
+    buffer.writeln(headerList);
+
+    // Rows
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final rows = _getReportTableRows(isDark);
+    for (final row in rows) {
+      final rowList = row.cells.map((cell) {
+        final child = cell.child;
+        String val = '';
+        if (child is Text) {
+          val = child.data ?? '';
+        } else if (child is Container) {
+          final containerChild = child.child;
+          if (containerChild is Text) {
+            val = containerChild.data ?? '';
+          }
+        }
+        return '"${val.replaceAll('"', '""')}"';
+      }).join(',');
+      buffer.writeln(rowList);
+    }
+
+    Clipboard.setData(ClipboardData(text: buffer.toString()));
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('"$name" data copied to clipboard in CSV format!', style: GoogleFonts.inter()),
+        backgroundColor: const Color(0xFF10B981),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   Widget _buildChartsSection(Color primaryColor, bool isDark) {
     final Map<String, Map<String, double>> barChartMap = {};
+    final Map<String, double> catMap = {};
     
     for (var s in _salesDetails) {
       final sDate = s['sales_date']?.toString().split('T')[0];
@@ -1186,6 +1452,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
         barChartMap[sDate]!['sales'] = (barChartMap[sDate]!['sales'] ?? 0.0) +
             (double.tryParse(s['item_amount']?.toString() ?? '0') ?? 0.0);
       }
+      
+      final catName = s['category_name']?.toString() ?? 'Uncategorized';
+      final amt = double.tryParse(s['item_amount']?.toString() ?? '0') ?? 0.0;
+      catMap[catName] = (catMap[catName] ?? 0.0) + amt;
     }
     
     for (var p in _purchaseDetails) {
@@ -1244,7 +1514,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 Text('Revenue by Item Category', style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white70 : const Color(0xFF334155))),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: _buildPieChartWidget(primaryColor),
+                  child: _buildPieChartWidget(primaryColor, catMap),
                 ),
               ],
             ),
@@ -1354,16 +1624,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
     );
   }
 
-  Widget _buildPieChartWidget(Color primaryColor) {
-    final Map<String, double> catMap = {};
-    for (var d in _salesDetails) {
-      final catName = d['category_name']?.toString() ?? 'Uncategorized';
-      final amt = double.tryParse(d['item_amount']?.toString() ?? '0') ?? 0.0;
-      catMap[catName] = (catMap[catName] ?? 0.0) + amt;
-    }
-
+  Widget _buildPieChartWidget(Color primaryColor, Map<String, double> catMap) {
     if (catMap.isEmpty) {
-      return Center(child: Text('No Category Sales Logged', style: GoogleFonts.inter(color: const Color(0xFF94A3B8))));
+      return Center(child: Text('No Category Data Found', style: GoogleFonts.inter(color: const Color(0xFF94A3B8))));
     }
 
     final categories = catMap.keys.toList();
@@ -1998,6 +2261,20 @@ class _ReportsScreenState extends State<ReportsScreen> {
             TextButton(
               onPressed: () => Navigator.pop(ctx),
               child: Text('Cancel', style: GoogleFonts.inter(color: const Color(0xFF64748B), fontWeight: FontWeight.bold)),
+            ),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.download_rounded, size: 16),
+              label: Text('Export CSV', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF10B981),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _exportCSVToClipboard();
+              },
             ),
             ElevatedButton.icon(
               icon: const Icon(Icons.print_rounded, size: 16),

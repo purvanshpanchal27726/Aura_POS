@@ -505,7 +505,7 @@ class _MainLayoutState extends State<MainLayout> {
               ),
         title: Text(
           _getAppBarTitle(),
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
           if (MediaQuery.of(context).size.width > 800) ...[
@@ -514,7 +514,7 @@ class _MainLayoutState extends State<MainLayout> {
             Text(
               '${activeUser!['username']} (${activeUser!['role_name'] ?? 'User'})',
               style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Color(0xFF1E293B),
+                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF1E293B),
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
               ),
@@ -522,6 +522,44 @@ class _MainLayoutState extends State<MainLayout> {
             const SizedBox(width: 16),
           ]
         ],
+        bottom: isConnectionFailed
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(40),
+                child: Container(
+                  color: const Color(0xFFFEF2F2),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.signal_wifi_off_rounded, color: Color(0xFFDC2626), size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Offline: Cannot connect to server.',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFF991B1B),
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      InkWell(
+                        onTap: fetchUsersAndPermissions,
+                        child: Text(
+                          'Retry Connection',
+                          style: GoogleFonts.inter(
+                            color: Theme.of(context).primaryColor,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : null,
       ),
       drawer: Drawer(
         backgroundColor: Theme.of(context).cardColor,

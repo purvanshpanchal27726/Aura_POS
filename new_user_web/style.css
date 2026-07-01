@@ -1140,13 +1140,26 @@ tr:hover td {
 
 /* Printing styles for Receipt / Reports */
 @media print {
-  body * {
+  body:not(.print-report-active) * {
     visibility: hidden;
   }
-  #printReceiptContent, #printReceiptContent * {
+  body:not(.print-report-active) #printReceiptContent, 
+  body:not(.print-report-active) #printReceiptContent * {
     visibility: visible;
   }
-  #printReceiptContent {
+  body:not(.print-report-active) #printReceiptContent {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
+  /* When printing reports */
+  body.print-report-active #screenReports,
+  body.print-report-active #screenReports * {
+    visibility: visible;
+  }
+  body.print-report-active #screenReports {
     position: absolute;
     left: 0;
     top: 0;
@@ -1158,9 +1171,14 @@ body.print-report-active .app-bar,
 body.print-report-active #sideDrawer,
 body.print-report-active .container > *:not(.main-content),
 body.print-report-active .main-content > *:not(#screenReports),
-body.print-report-active #screenReports > *:not(#reportResultCard),
-body.print-report-active #reportResultCard .list-header .list-actions {
+body.print-report-active .report-toolbar,
+body.print-report-active .btn,
+body.print-report-active .form-actions,
+body.print-report-active .list-actions {
   display: none !important;
+}
+body.print-report-active .print-header-only {
+  display: block !important;
 }
 body.print-report-active {
   background-color: #ffffff !important;
@@ -1170,6 +1188,12 @@ body.print-report-active .container {
   padding: 0 !important;
   margin: 0 !important;
   max-width: 100% !important;
+}
+body.print-report-active .card {
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: none !important;
+  background-color: #ffffff !important;
+  color: #000000 !important;
 }
 body.print-report-active #reportResultCard {
   border: none !important;
@@ -1181,9 +1205,9 @@ body.print-report-active table {
   width: 100% !important;
 }
 body.print-report-active th, body.print-report-active td {
-  border: 1px solid #000000 !important;
+  border: 1px solid #94a3b8 !important;
   color: #000000 !important;
-  padding: 6px 10px !important;
+  padding: 8px 12px !important;
 }
 
 /* Glassmorphic Toast Notifications Container */

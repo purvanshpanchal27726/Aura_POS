@@ -3734,12 +3734,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const reportTypeSelect = document.getElementById('reportTypeSelect');
   const btnGenerateReport = document.getElementById('btnGenerateReport');
   const btnPrintReport = document.getElementById('btnPrintReport');
+  const btnExportCSV = document.getElementById('btnExportCSV');
   const reportsFiltersContainer = document.getElementById('reportFiltersContainer');
   const reportsResultHeader = document.getElementById('reportResultHeader');
   const reportsResultBody = document.getElementById('reportResultBody');
   const reportsRowCount = document.getElementById('reportRowCount');
   const reportsTableTitle = document.getElementById('reportTableTitle');
   const reportsChartsPanel = document.getElementById('reportChartsPanel');
+  const reportChart1Title = document.getElementById('reportChart1Title');
+  const reportChart2Title = document.getElementById('reportChart2Title');
 
   let reportsCategories = [];
   let reportsItems = [];
@@ -3896,6 +3899,335 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       }
     });
+  };
+
+  const drawDateGroupedCharts = (dates, totalData, countData, isSales) => {
+    destroyCharts();
+    const ctxBar = document.getElementById('chartSalesPurchases')?.getContext('2d');
+    const ctxPie = document.getElementById('chartCategorySales')?.getContext('2d');
+    if (!ctxBar || !ctxPie) return;
+
+    if (reportChart1Title) reportChart1Title.textContent = isSales ? 'Daily Sales Revenue Trend (₹)' : 'Daily Purchase Cost Trend (₹)';
+    if (reportChart2Title) reportChart2Title.textContent = isSales ? 'Invoices Issued Count' : 'Purchase Orders Count';
+
+    const accent = document.body.getAttribute('data-accent') || 'blue';
+    const accentColorMap = {
+      blue: '#2563eb', green: '#10b981', purple: '#6366f1', red: '#ef4444', orange: '#f97316'
+    };
+    const primaryColor = accentColorMap[accent] || '#2563eb';
+    const color = isSales ? primaryColor : '#ef4444';
+
+    const dateLabels = dates.map(d => {
+      const parts = d.split('-');
+      return parts.length > 2 ? `${parts[2]}/${parts[1]}` : d;
+    });
+
+    chartSalesPurchasesObj = new Chart(ctxBar, {
+      type: 'line',
+      data: {
+        labels: dateLabels.length > 0 ? dateLabels : ['No Data'],
+        datasets: [{
+          label: isSales ? 'Sales Revenue (₹)' : 'Purchase Cost (₹)',
+          data: totalData.length > 0 ? totalData : [0],
+          borderColor: color,
+          backgroundColor: color + '22',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: 'var(--text-main)' } } },
+        scales: {
+          x: { ticks: { color: 'var(--text-secondary)' }, grid: { display: false } },
+          y: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'var(--border-color)' } }
+        }
+      }
+    });
+
+    chartCategorySalesObj = new Chart(ctxPie, {
+      type: 'bar',
+      data: {
+        labels: dateLabels.length > 0 ? dateLabels : ['No Data'],
+        datasets: [{
+          label: isSales ? 'Invoices Count' : 'Orders Count',
+          data: countData.length > 0 ? countData : [0],
+          backgroundColor: '#a855f7',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: 'var(--text-main)' } } },
+        scales: {
+          x: { ticks: { color: 'var(--text-secondary)' }, grid: { display: false } },
+          y: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'var(--border-color)' } }
+        }
+      }
+    });
+  };
+
+  const drawCategoryWiseCharts = (groupedData) => {
+    destroyCharts();
+    const ctxBar = document.getElementById('chartSalesPurchases')?.getContext('2d');
+    const ctxPie = document.getElementById('chartCategorySales')?.getContext('2d');
+    if (!ctxBar || !ctxPie) return;
+
+    if (reportChart1Title) reportChart1Title.textContent = 'Revenue Share by Category';
+    if (reportChart2Title) reportChart2Title.textContent = 'Total Quantity Sold by Category';
+
+    const accent = document.body.getAttribute('data-accent') || 'blue';
+    const accentColorMap = {
+      blue: '#2563eb', green: '#10b981', purple: '#6366f1', red: '#ef4444', orange: '#f97316'
+    };
+    const primaryColor = accentColorMap[accent] || '#2563eb';
+
+    const labels = Object.keys(groupedData);
+    const amounts = labels.map(k => groupedData[k].total_amount);
+    const quantities = labels.map(k => groupedData[k].quantity);
+
+    const pieColors = [
+      primaryColor, '#10b981', '#6366f1', '#ef4444', '#f97316', '#06b6d4', '#eab308', '#ec4899', '#14b8a6'
+    ];
+
+    chartSalesPurchasesObj = new Chart(ctxBar, {
+      type: 'pie',
+      data: {
+        labels: labels.length > 0 ? labels : ['No Data'],
+        datasets: [{
+          data: amounts.length > 0 ? amounts : [0],
+          backgroundColor: pieColors.slice(0, labels.length || 1),
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { color: 'var(--text-main)' } }
+        }
+      }
+    });
+
+    chartCategorySalesObj = new Chart(ctxPie, {
+      type: 'bar',
+      data: {
+        labels: labels.length > 0 ? labels : ['No Data'],
+        datasets: [{
+          label: 'Quantity Sold',
+          data: quantities.length > 0 ? quantities : [0],
+          backgroundColor: '#3b82f6',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: 'var(--text-main)' } } },
+        scales: {
+          x: { ticks: { color: 'var(--text-secondary)' }, grid: { display: false } },
+          y: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'var(--border-color)' } }
+        }
+      }
+    });
+  };
+
+  const drawItemWiseCharts = (groupedData) => {
+    destroyCharts();
+    const ctxBar = document.getElementById('chartSalesPurchases')?.getContext('2d');
+    const ctxPie = document.getElementById('chartCategorySales')?.getContext('2d');
+    if (!ctxBar || !ctxPie) return;
+
+    if (reportChart1Title) reportChart1Title.textContent = 'Top 8 Items by Revenue (₹)';
+    if (reportChart2Title) reportChart2Title.textContent = 'Top 8 Items by Quantity Sold';
+
+    const accent = document.body.getAttribute('data-accent') || 'blue';
+    const accentColorMap = {
+      blue: '#2563eb', green: '#10b981', purple: '#6366f1', red: '#ef4444', orange: '#f97316'
+    };
+    const primaryColor = accentColorMap[accent] || '#2563eb';
+
+    // Sort items by revenue
+    const sortedByRevenue = Object.values(groupedData).sort((a, b) => b.total_amount - a.total_amount).slice(0, 8);
+    const revLabels = sortedByRevenue.map(i => i.item_name);
+    const revData = sortedByRevenue.map(i => i.total_amount);
+
+    // Sort items by quantity
+    const sortedByQty = Object.values(groupedData).sort((a, b) => b.quantity - a.quantity).slice(0, 8);
+    const qtyLabels = sortedByQty.map(i => i.item_name);
+    const qtyData = sortedByQty.map(i => i.quantity);
+
+    chartSalesPurchasesObj = new Chart(ctxBar, {
+      type: 'bar',
+      data: {
+        labels: revLabels.length > 0 ? revLabels : ['No Data'],
+        datasets: [{
+          label: 'Revenue (₹)',
+          data: revData.length > 0 ? revData : [0],
+          backgroundColor: primaryColor,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: 'var(--text-main)' } } },
+        scales: {
+          x: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'var(--border-color)' } },
+          y: { ticks: { color: 'var(--text-secondary)' }, grid: { display: false } }
+        }
+      }
+    });
+
+    chartCategorySalesObj = new Chart(ctxPie, {
+      type: 'bar',
+      data: {
+        labels: qtyLabels.length > 0 ? qtyLabels : ['No Data'],
+        datasets: [{
+          label: 'Quantity Sold',
+          data: qtyData.length > 0 ? qtyData : [0],
+          backgroundColor: '#10b981',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: 'var(--text-main)' } } },
+        scales: {
+          x: { ticks: { color: 'var(--text-secondary)' }, grid: { display: false } },
+          y: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'var(--border-color)' } }
+        }
+      }
+    });
+  };
+
+  const drawCustomerCharts = (filteredCustomers, customerSales) => {
+    destroyCharts();
+    const ctxBar = document.getElementById('chartSalesPurchases')?.getContext('2d');
+    const ctxPie = document.getElementById('chartCategorySales')?.getContext('2d');
+    if (!ctxBar || !ctxPie) return;
+
+    if (reportChart1Title) reportChart1Title.textContent = 'Top 8 Customers by Total Purchase (₹)';
+    if (reportChart2Title) reportChart2Title.textContent = 'Top 8 Customers by Invoice Volume';
+
+    const accent = document.body.getAttribute('data-accent') || 'blue';
+    const accentColorMap = {
+      blue: '#2563eb', green: '#10b981', purple: '#6366f1', red: '#ef4444', orange: '#f97316'
+    };
+    const primaryColor = accentColorMap[accent] || '#2563eb';
+
+    // Map customers with sales info
+    const customerStats = filteredCustomers.map(c => {
+      const stats = customerSales[c.customer_id] || { count: 0, spent: 0 };
+      return {
+        name: `${c.first_name} ${c.last_name}`,
+        spent: stats.spent,
+        count: stats.count
+      };
+    });
+
+    // Sort by spent descending
+    const topBySpent = customerStats.filter(c => c.spent > 0).sort((a, b) => b.spent - a.spent).slice(0, 8);
+    const spentLabels = topBySpent.map(c => c.name);
+    const spentData = topBySpent.map(c => c.spent);
+
+    // Sort by count descending
+    const topByCount = customerStats.filter(c => c.count > 0).sort((a, b) => b.count - a.count).slice(0, 8);
+    const countLabels = topByCount.map(c => c.name);
+    const countData = topByCount.map(c => c.count);
+
+    chartSalesPurchasesObj = new Chart(ctxBar, {
+      type: 'bar',
+      data: {
+        labels: spentLabels.length > 0 ? spentLabels : ['No Data'],
+        datasets: [{
+          label: 'Total Spent (₹)',
+          data: spentData.length > 0 ? spentData : [0],
+          backgroundColor: primaryColor,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: 'var(--text-main)' } } },
+        scales: {
+          x: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'var(--border-color)' } },
+          y: { ticks: { color: 'var(--text-secondary)' }, grid: { display: false } }
+        }
+      }
+    });
+
+    chartCategorySalesObj = new Chart(ctxPie, {
+      type: 'bar',
+      data: {
+        labels: countLabels.length > 0 ? countLabels : ['No Data'],
+        datasets: [{
+          label: 'Total Invoices',
+          data: countData.length > 0 ? countData : [0],
+          backgroundColor: '#f59e0b',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: 'var(--text-main)' } } },
+        scales: {
+          x: { ticks: { color: 'var(--text-secondary)' }, grid: { display: false } },
+          y: { ticks: { color: 'var(--text-secondary)' }, grid: { color: 'var(--border-color)' } }
+        }
+      }
+    });
+  };
+
+  const exportReportToCSV = () => {
+    if (!reportsResultHeader || !reportsResultBody) return;
+    
+    let csvContent = '';
+    
+    // Get headers
+    const headers = Array.from(reportsResultHeader.querySelectorAll('th')).map(th => {
+      return '"' + th.textContent.replace(/"/g, '""').trim() + '"';
+    });
+    if (headers.length === 0) {
+      showToast('Export Error', 'No report data available to export.', 'warning');
+      return;
+    }
+    csvContent += headers.join(',') + '\r\n';
+    
+    // Get rows
+    const rows = reportsResultBody.querySelectorAll('tr');
+    if (rows.length === 0) {
+      showToast('Export Error', 'No report data rows available to export.', 'warning');
+      return;
+    }
+    rows.forEach(tr => {
+      const cells = Array.from(tr.querySelectorAll('td')).map(td => {
+        let val = td.textContent.trim();
+        return '"' + val.replace(/"/g, '""') + '"';
+      });
+      csvContent += cells.join(',') + '\r\n';
+    });
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const reportType = reportTypeSelect ? reportTypeSelect.value : 'report';
+    const dateStr = new Date().toISOString().split('T')[0];
+    
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute('download', `Vanshee_POS_${reportType}_${dateStr}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('Export Success', 'Report successfully exported to CSV!', 'success');
   };
 
   const renderReportFilters = (reportType) => {
@@ -4427,7 +4759,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
       } else if (reportType === 'customer') {
-        reportsChartsPanel.style.display = 'none';
+        reportsChartsPanel.style.display = 'grid';
         reportsTableTitle.textContent = 'Registered Customers Details & Sales Summary';
         
         const city = document.getElementById('filterCity')?.value?.toLowerCase()?.trim();
@@ -4502,6 +4834,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </tr>
           `;
         }
+        drawCustomerCharts(filtered, customerSales);
         
       } else if (reportType === 'user') {
         reportsChartsPanel.style.display = 'none';
@@ -4556,7 +4889,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
       } else if (reportType === 'sales_by_date') {
-        reportsChartsPanel.style.display = 'none';
+        reportsChartsPanel.style.display = 'grid';
         reportsTableTitle.textContent = 'Sales by Date Summary';
         
         const startDate = document.getElementById('filterStartDate')?.value;
@@ -4635,9 +4968,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </tr>
           `;
         }
+        drawDateGroupedCharts(dates, dates.map(d => grouped[d].total), dates.map(d => grouped[d].count), true);
         
       } else if (reportType === 'purchase_by_date') {
-        reportsChartsPanel.style.display = 'none';
+        reportsChartsPanel.style.display = 'grid';
         reportsTableTitle.textContent = 'Purchase by Date Summary';
         
         const startDate = document.getElementById('filterStartDate')?.value;
@@ -4716,9 +5050,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </tr>
           `;
         }
+        drawDateGroupedCharts(dates, dates.map(d => grouped[d].total), dates.map(d => grouped[d].count), false);
         
       } else if (reportType === 'category_wise') {
-        reportsChartsPanel.style.display = 'none';
+        reportsChartsPanel.style.display = 'grid';
         reportsTableTitle.textContent = 'Category-wise Sales Revenue';
         
         const startDate = document.getElementById('filterStartDate')?.value;
@@ -4783,9 +5118,10 @@ document.addEventListener('DOMContentLoaded', () => {
             </tr>
           `;
         }
+        drawCategoryWiseCharts(grouped);
         
       } else if (reportType === 'item_wise') {
-        reportsChartsPanel.style.display = 'none';
+        reportsChartsPanel.style.display = 'grid';
         reportsTableTitle.textContent = 'Item-wise Sales Breakdown';
         
         const startDate = document.getElementById('filterStartDate')?.value;
@@ -4859,6 +5195,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </tr>
           `;
         }
+        drawItemWiseCharts(grouped);
         
       } else if (reportType === 'cash_flow') {
         reportsChartsPanel.style.display = 'none';
@@ -5098,10 +5435,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnPrintReport) {
     btnPrintReport.addEventListener('click', () => {
+      const metaDate = document.getElementById('printReportMetaDate');
+      if (metaDate) {
+        const start = document.getElementById('filterStartDate')?.value || 'Start';
+        const end = document.getElementById('filterEndDate')?.value || 'End';
+        const typeName = reportTypeSelect ? reportTypeSelect.options[reportTypeSelect.selectedIndex].text : 'Report';
+        metaDate.innerHTML = `Report: <strong>${typeName}</strong><br>Period: ${start} to ${end}<br>Printed: ${new Date().toLocaleString()}`;
+      }
       document.body.classList.add('print-report-active');
       window.print();
       document.body.classList.remove('print-report-active');
     });
+  }
+
+  if (btnExportCSV) {
+    btnExportCSV.addEventListener('click', exportReportToCSV);
   }
 
   // --- App Mode / Restaurant POS Mode State and Listeners ---

@@ -56,7 +56,7 @@ class SupportScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
+                        color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
                         blurRadius: 16,
                         offset: const Offset(0, 8),
                       ),
@@ -74,7 +74,7 @@ class SupportScreen extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.08),
+                              color: Colors.black.withValues(alpha: 0.08),
                               blurRadius: 10,
                               offset: const Offset(0, 4),
                             ),
@@ -197,11 +197,11 @@ class SupportScreen extends StatelessWidget {
           color: cardColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.04),
+            color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.04),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(isDark ? 0.2 : 0.02),
+              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -213,7 +213,7 @@ class SupportScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: primaryColor.withOpacity(0.1),
+                color: primaryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: primaryColor, size: 24),
@@ -254,7 +254,7 @@ class SupportScreen extends StatelessWidget {
             ),
             Icon(
               Icons.chevron_right,
-              color: subTextColor.withOpacity(0.5),
+              color: subTextColor.withValues(alpha: 0.5),
             ),
           ],
         ),

@@ -669,6 +669,23 @@
     </div>
     <!-- Screen 11: Reports & Analytics -->
     <div id="screenReports" class="screen-view" style="display: none;">
+      <!-- Print-Only Report Header -->
+      <div class="print-header-only" style="display: none; margin-bottom: 2.5rem; width: 100%;">
+        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 1rem; width: 100%;">
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="logo.png" alt="Logo" style="height: 50px; width: 50px; object-fit: contain;">
+            <div>
+              <h1 style="font-size: 1.55rem; font-weight: 800; margin: 0; color: #0f172a; font-family: 'Outfit', sans-serif;">Vanshee Infotech</h1>
+              <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #64748b; font-family: 'Inter', sans-serif;">903, Orchid Blues, Shela, Ahmedabad, Gujarat 380058</p>
+            </div>
+          </div>
+          <div style="text-align: right; font-family: 'Inter', sans-serif;">
+            <h2 style="font-size: 1.2rem; font-weight: 800; margin: 0; color: #2563eb; text-transform: uppercase; letter-spacing: 0.5px;">POS SYSTEM REPORT</h2>
+            <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #64748b;" id="printReportMetaDate">Printed on: --</p>
+          </div>
+        </div>
+      </div>
+
       <!-- Stats Dashboard cards -->
       <div class="dashboard-grid" style="margin-bottom: 2rem;">
         <div class="stat-card card">
@@ -741,19 +758,22 @@
           <button type="button" id="btnPrintReport" class="btn btn-secondary" style="padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
             <span class="material-icons" style="font-size: 18px;">print</span> Print Report
           </button>
+          <button type="button" id="btnExportCSV" class="btn btn-success" style="padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; background-color: #10b981; color: white; border: none;">
+            <span class="material-icons" style="font-size: 18px;">download</span> Export CSV
+          </button>
         </div>
       </div>
 
       <!-- Interactive Chart Panel -->
       <div id="reportChartsPanel" class="form-grid col-2" style="margin-bottom: 2rem; gap: 1.5rem;">
         <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 280px; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;">
-          <h3 style="margin-bottom: 0.75rem; color: var(--text-main); font-size: 0.95rem; font-weight: 700; width: 100%; text-align: left;">Transaction Ledger Overview</h3>
+          <h3 id="reportChart1Title" style="margin-bottom: 0.75rem; color: var(--text-main); font-size: 0.95rem; font-weight: 700; width: 100%; text-align: left;">Transaction Ledger Overview</h3>
           <div style="position: relative; width: 100%; height: 220px; display: flex; justify-content: center;">
             <canvas id="chartSalesPurchases" style="max-height: 220px; width: 100%;"></canvas>
           </div>
         </div>
         <div class="card" style="padding: 1.25rem; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 280px; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;">
-          <h3 style="margin-bottom: 0.75rem; color: var(--text-main); font-size: 0.95rem; font-weight: 700; width: 100%; text-align: left;">Revenue by Item Category</h3>
+          <h3 id="reportChart2Title" style="margin-bottom: 0.75rem; color: var(--text-main); font-size: 0.95rem; font-weight: 700; width: 100%; text-align: left;">Revenue by Item Category</h3>
           <div style="position: relative; width: 100%; height: 220px; display: flex; justify-content: center;">
             <canvas id="chartCategorySales" style="max-height: 220px; width: 100%;"></canvas>
           </div>
