@@ -5605,9 +5605,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (licenseRenewalForm) {
     licenseRenewalForm.addEventListener('submit', (e) => {
       e.preventDefault();
-      const plan = renewPlanSelect.value;
-      const amt = plan === '1' ? '5000' : '9000';
-      upiMockQrImage.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=vansheeinfotech@okaxis%26pn=Vanshee%20Infotech%26am=${amt}%26cu=INR`;
+      upiMockQrImage.src = 'scanner.png';
       licensePaymentModal.style.display = 'flex';
     });
   }

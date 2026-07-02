@@ -106,8 +106,6 @@ class _LicenseScreenState extends State<LicenseScreen> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             final amt = selectedPlan == '1' ? '₹5,000' : '₹9,000';
-            final amtRaw = selectedPlan == '1' ? '5000' : '9000';
-            final qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=upi://pay?pa=vansheeinfotech@okaxis%26pn=Vanshee%20Infotech%26am=$amtRaw%26cu=INR';
 
             return Padding(
               padding: EdgeInsets.only(
@@ -268,15 +266,11 @@ class _LicenseScreenState extends State<LicenseScreen> {
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: Colors.grey.shade300),
                               ),
-                              child: Image.network(
-                                qrUrl,
-                                width: 140,
-                                height: 140,
-                                errorBuilder: (context, error, stackTrace) => const Icon(
-                                  Icons.qr_code_2_rounded,
-                                  size: 140,
-                                  color: Colors.grey,
-                                ),
+                              child: Image.asset(
+                                'assets/scanner.png',
+                                width: 220,
+                                height: 300,
+                                fit: BoxFit.contain,
                               ),
                             ),
                             const SizedBox(height: 6),
