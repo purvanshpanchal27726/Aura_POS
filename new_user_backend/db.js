@@ -347,10 +347,11 @@ db.initDb = async function() {
     const schemaSql = fs.readFileSync(schemaPath, 'utf8');
     
     // Split statements by semicolon, removing comments
-    const statements = schemaSql
+    const cleanedSql = schemaSql.replace(/--.*$/gm, '');
+    const statements = cleanedSql
       .split(';')
       .map(s => s.trim())
-      .filter(s => s.length > 0 && !s.startsWith('--'));
+      .filter(s => s.length > 0);
       
     console.log(`[DB] Executing ${statements.length} schema statements...`);
     
