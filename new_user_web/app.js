@@ -478,6 +478,18 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Room Bookings & Check-in',
       onTransition: () => fetchHotelBookings()
     },
+    'inventory': {
+      menu: document.getElementById('menuInventory'),
+      view: document.getElementById('screenInventory'),
+      title: 'Stock Inventory',
+      onTransition: () => fetchInventory()
+    },
+    'purchase_orders': {
+      menu: document.getElementById('menuPurchaseOrders'),
+      view: document.getElementById('screenPurchaseOrders'),
+      title: 'Purchase Orders & GRN',
+      onTransition: () => fetchPurchaseOrders()
+    },
     'role_listing': {
       menu: document.getElementById('menuRoleListing'),
       view: document.getElementById('screenRoleListing'),
@@ -620,6 +632,17 @@ document.addEventListener('DOMContentLoaded', () => {
     hotelMenus.forEach(menuEl => {
       if (menuEl) {
         menuEl.style.display = hasHotel ? 'flex' : 'none';
+      }
+    });
+
+    // Gate Inventory & PO menu items
+    const invMenus = [
+      document.getElementById('menuInventory'),
+      document.getElementById('menuPurchaseOrders')
+    ];
+    invMenus.forEach(menuEl => {
+      if (menuEl) {
+        menuEl.style.display = hasKirana ? 'flex' : 'none';
       }
     });
 
@@ -7508,6 +7531,464 @@ document.addEventListener('DOMContentLoaded', () => {
       alert(err.message);
     }
   };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 📦 INVENTORY & PURCHASE ORDER CLIENT LOGIC [NEW]
+  // ─────────────────────────────────────────────────────────────────────────
+  let allInventory = [];
+  let allPOs = [];
+  let poCartItems = [];
+
+  // --- INVENTORY MANAGEMENT ---
+  const fetchInventory = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/inventory'));
+      if (!response.ok) throw new Error('Failed to fetch stock inventory');
+      allInventory = await response.json();
+      renderInventory();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderInventory = () => {
+    const tbody = document.getElementById('inventoryTableBody');
+    if (!tbody) return;
+
+    if (allInventory.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" class="empty-state">No items registered in stock inventory yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = allInventory.map(i => {
+      const current = parseFloat(i.current_stock || 0);
+      const minStock = parseFloat(i.min_stock || 0);
+      const isLow = current <= minStock;
+      const expDate = i.expiry_date ? new Date(i.expiry_date).toLocaleDateString() : 'N/A';
+
+      return `
+        <tr style="${isLow ? 'background: rgba(239, 68, 68, 0.08);' : ''}">
+          <td><strong>#INV-${i.inventory_id}</strong></td>
+          <td><strong>${i.item_name}</strong></td>
+          <td>${i.sku || 'N/A'}</td>
+          <td>${i.barcode || 'N/A'}</td>
+          <td style="text-align: right; font-weight: bold; color: ${isLow ? 'red' : 'inherit'};">${current.toFixed(2)} ${i.unit || 'pcs'}</td>
+          <td style="text-align: right; color: var(--text-muted);">${minStock.toFixed(2)}</td>
+          <td>${i.batch_no || 'N/A'}</td>
+          <td>${expDate}</td>
+          <td style="text-align: center;">
+            <div class="table-actions" style="justify-content: center;">
+              <button class="btn btn-secondary btn-inv-edit" data-id="${i.inventory_id}" style="padding: 0.25rem 0.5rem;"><span class="material-icons" style="font-size: 1rem;">edit</span></button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-inv-edit').forEach(btn => {
+      btn.addEventListener('click', () => openInvItemModal(btn.getAttribute('data-id')));
+    });
+  };
+
+  const invItemModal = document.getElementById('invItemModal');
+  const btnNewInvItem = document.getElementById('btnNewInvItem');
+  const invItemForm = document.getElementById('invItemForm');
+
+  const openInvItemModal = (id = null) => {
+    if (!invItemModal) return;
+    invItemForm.reset();
+    document.getElementById('inventory_id').value = id || '';
+    if (id) {
+      const item = allInventory.find(i => i.inventory_id == id);
+      if (item) {
+        document.getElementById('inv_item_name').value = item.item_name;
+        document.getElementById('inv_sku').value = item.sku || '';
+        document.getElementById('inv_barcode').value = item.barcode || '';
+        document.getElementById('inv_unit').value = item.unit || 'pcs';
+        document.getElementById('inv_min_stock').value = item.min_stock;
+        document.getElementById('inv_batch').value = item.batch_no || '';
+        document.getElementById('inv_expiry').value = item.expiry_date ? item.expiry_date.slice(0, 10) : '';
+      }
+    }
+    invItemModal.style.display = 'flex';
+  };
+
+  if (btnNewInvItem) btnNewInvItem.addEventListener('click', () => openInvItemModal());
+  if (document.getElementById('invItemModalClose')) {
+    document.getElementById('invItemModalClose').addEventListener('click', () => { invItemModal.style.display = 'none'; });
+  }
+  if (document.getElementById('btnInvItemCancel')) {
+    document.getElementById('btnInvItemCancel').addEventListener('click', () => { invItemModal.style.display = 'none'; });
+  }
+
+  if (invItemForm) {
+    invItemForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('inventory_id').value;
+      const data = {
+        item_name: document.getElementById('inv_item_name').value.trim(),
+        sku: document.getElementById('inv_sku').value.trim() || null,
+        barcode: document.getElementById('inv_barcode').value.trim() || null,
+        unit: document.getElementById('inv_unit').value.trim(),
+        min_stock: parseFloat(document.getElementById('inv_min_stock').value) || 0,
+        batch_no: document.getElementById('inv_batch').value.trim() || null,
+        expiry_date: document.getElementById('inv_expiry').value || null
+      };
+
+      try {
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/inventory/${id}` : '/api/inventory';
+        const response = await fetch(getApiUrl(url), {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to save inventory item');
+        invItemModal.style.display = 'none';
+        showToast('Inventory Updated', 'Stock ledger item saved successfully!', 'success');
+        fetchInventory();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+  // --- MANUAL STOCK MOVEMENTS ADJUSTMENT ---
+  const stockMovementModal = document.getElementById('stockMovementModal');
+  const btnStockAdjust = document.getElementById('btnStockAdjust');
+  const stockMovementForm = document.getElementById('stockMovementForm');
+
+  const openStockMovementModal = () => {
+    if (!stockMovementModal) return;
+    stockMovementForm.reset();
+    
+    document.getElementById('move_inv_id').innerHTML = allInventory.map(i => 
+      `<option value="${i.inventory_id}">${i.item_name} (Current: ${parseFloat(i.current_stock).toFixed(2)} ${i.unit})</option>`
+    ).join('');
+    
+    stockMovementModal.style.display = 'flex';
+  };
+
+  if (btnStockAdjust) btnStockAdjust.addEventListener('click', openStockMovementModal);
+  if (document.getElementById('stockMovementModalClose')) {
+    document.getElementById('stockMovementModalClose').addEventListener('click', () => { stockMovementModal.style.display = 'none'; });
+  }
+  if (document.getElementById('btnMoveCancel')) {
+    document.getElementById('btnMoveCancel').addEventListener('click', () => { stockMovementModal.style.display = 'none'; });
+  }
+
+  if (stockMovementForm) {
+    stockMovementForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        inventory_id: parseInt(document.getElementById('move_inv_id').value),
+        type: document.getElementById('move_type').value,
+        quantity: parseFloat(document.getElementById('move_qty').value) || 0,
+        reference: document.getElementById('move_ref').value.trim() || null,
+        notes: document.getElementById('move_notes').value.trim() || null,
+        created_by: activeUser?.first_name || 'System'
+      };
+
+      try {
+        const response = await fetch(getApiUrl('/api/inventory/movement'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to post stock transaction');
+        stockMovementModal.style.display = 'none';
+        showToast('Stock Posted', 'Ledger balances updated successfully!', 'success');
+        fetchInventory();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+
+  // --- PURCHASE ORDERS (PO) MANAGEMENT ---
+  const fetchPurchaseOrders = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/purchase-orders'));
+      if (!response.ok) throw new Error('Failed to fetch purchase orders');
+      allPOs = await response.json();
+      renderPurchaseOrders();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderPurchaseOrders = () => {
+    const tbody = document.getElementById('poTableBody');
+    if (!tbody) return;
+
+    if (allPOs.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No Purchase Orders created yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = allPOs.map(po => {
+      const dateVal = new Date(po.created_date);
+      const dateStr = `${dateVal.getDate()}/${dateVal.getMonth()+1}/${dateVal.getFullYear()}`;
+      
+      let statusColor = '#64748B'; 
+      if (po.status === 'ordered') statusColor = '#F59E0B'; 
+      else if (po.status === 'received') statusColor = '#10B981'; 
+
+      const getActions = () => {
+        if (po.status === 'draft') {
+          return `
+            <button class="btn btn-primary btn-po-send" data-id="${po.po_id}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Send to Vendor</button>
+          `;
+        } else if (po.status === 'ordered') {
+          return `
+            <button class="btn btn-secondary btn-po-receive" data-id="${po.po_id}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Receive GRN</button>
+          `;
+        }
+        return `<span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">Received & Filed</span>`;
+      };
+
+      return `
+        <tr>
+          <td><strong>#PO-${po.po_id}</strong></td>
+          <td><strong>${po.vendor_company || 'N/A'}</strong><br><small>${po.vendor_name}</small></td>
+          <td>${po.created_by || 'System'}</td>
+          <td><strong>₹${parseFloat(po.total).toFixed(2)}</strong></td>
+          <td><span class="status-badge" style="background: ${statusColor}22; color: ${statusColor}; font-weight: bold; text-transform: uppercase;">${po.status}</span></td>
+          <td>${dateStr}</td>
+          <td style="text-align: center;">
+            <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+              ${getActions()}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-po-send').forEach(btn => {
+      btn.addEventListener('click', () => updatePoStatus(btn.getAttribute('data-id'), 'ordered'));
+    });
+    tbody.querySelectorAll('.btn-po-receive').forEach(btn => {
+      btn.addEventListener('click', () => openGrnModal(btn.getAttribute('data-id')));
+    });
+  };
+
+  const updatePoStatus = async (poId, status) => {
+    try {
+      const response = await fetch(getApiUrl(`/api/purchase-orders/${poId}/status`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (!response.ok) throw new Error('Failed to update PO status');
+      showToast('PO Updated', `Purchase order marked as ${status}!`, 'success');
+      fetchPurchaseOrders();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // --- CREATE PO FORM & CART ---
+  const purchaseOrderModal = document.getElementById('purchaseOrderModal');
+  const btnNewPO = document.getElementById('btnNewPO');
+  const poForm = document.getElementById('poForm');
+  const poItemsCartBody = document.getElementById('poItemsCartBody');
+
+  const openPoModal = async () => {
+    if (!purchaseOrderModal) return;
+    poForm.reset();
+    poCartItems = [];
+    renderPoCart();
+
+    try {
+      const responseV = await fetch(getApiUrl('/api/vendors'));
+      const listV = await responseV.json();
+      document.getElementById('po_vendor_id').innerHTML = '<option value="">Select Supply Vendor</option>' +
+        listV.map(v => `<option value="${v.vendor_id}">${v.company || ""} (${v.first_name} ${v.last_name})</option>`).join('');
+    } catch (err) {
+      console.error(err);
+    }
+
+    purchaseOrderModal.style.display = 'flex';
+  };
+
+  if (btnNewPO) btnNewPO.addEventListener('click', openPoModal);
+  if (document.getElementById('poModalClose')) {
+    document.getElementById('poModalClose').addEventListener('click', () => { purchaseOrderModal.style.display = 'none'; });
+  }
+  if (document.getElementById('btnPoCancel')) {
+    document.getElementById('btnPoCancel').addEventListener('click', () => { purchaseOrderModal.style.display = 'none'; });
+  }
+
+  const renderPoCart = () => {
+    if (!poItemsCartBody) return;
+    if (poCartItems.length === 0) {
+      poItemsCartBody.innerHTML = `<tr><td colspan="5" style="text-align: center;" class="empty-state">No line items in supply draft yet.</td></tr>`;
+      document.getElementById('poGrandTotalText').innerText = '₹0.00';
+      return;
+    }
+
+    let grand = 0;
+    poItemsCartBody.innerHTML = poCartItems.map((item, idx) => {
+      const total = item.quantity * item.price;
+      grand += total;
+      return `
+        <tr>
+          <td><strong>${item.item_name}</strong></td>
+          <td style="text-align: right;">₹${parseFloat(item.price).toFixed(2)}</td>
+          <td style="text-align: center;">${parseInt(item.quantity)}</td>
+          <td style="text-align: right; font-weight: bold; color: var(--primary-color);">₹${total.toFixed(2)}</td>
+          <td style="text-align: center;">
+            <button type="button" class="btn btn-danger btn-po-cart-del" data-idx="${idx}" style="padding: 0.15rem 0.35rem;"><span class="material-icons" style="font-size: 0.95rem;">delete</span></button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    document.getElementById('poGrandTotalText').innerText = `₹${grand.toFixed(2)}`;
+
+    poItemsCartBody.querySelectorAll('.btn-po-cart-del').forEach(btn => {
+      btn.addEventListener('click', () => {
+        poCartItems.splice(parseInt(btn.getAttribute('data-idx')), 1);
+        renderPoCart();
+      });
+    });
+  };
+
+  if (document.getElementById('btnAddPoItem')) {
+    document.getElementById('btnAddPoItem').addEventListener('click', () => {
+      const name = document.getElementById('poItemName').value.trim();
+      const qty = parseInt(document.getElementById('poItemQty').value) || 1;
+      const price = parseFloat(document.getElementById('poItemPrice').value) || 0;
+
+      if (!name || price <= 0) return;
+      poCartItems.push({ item_name: name, quantity: qty, price: price });
+      
+      document.getElementById('poItemName').value = '';
+      document.getElementById('poItemQty').value = '1';
+      document.getElementById('poItemPrice').value = '';
+      renderPoCart();
+    });
+  }
+
+  if (poForm) {
+    poForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (poCartItems.length === 0) {
+        alert('Please add at least one line item to this purchase order cart first!');
+        return;
+      }
+
+      let total = poCartItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+      const data = {
+        vendor_id: parseInt(document.getElementById('po_vendor_id').value),
+        items: poCartItems,
+        total: total,
+        created_by: activeUser?.first_name || 'System'
+      };
+
+      try {
+        const response = await fetch(getApiUrl('/api/purchase-orders'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to create purchase order');
+        purchaseOrderModal.style.display = 'none';
+        showToast('PO Draft Created', 'Vendor purchase order saved to ledger.', 'success');
+        fetchPurchaseOrders();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+  // --- GOODS RECEIVED NOTE (GRN) DIALOG ---
+  const grnModal = document.getElementById('grnModal');
+  const grnForm = document.getElementById('grnForm');
+  const grnItemsTableBody = document.getElementById('grnItemsTableBody');
+  let activePoDetails = null;
+
+  const openGrnModal = async (poId) => {
+    if (!grnModal) return;
+    grnForm.reset();
+    document.getElementById('grn_po_id').value = poId;
+
+    try {
+      const response = await fetch(getApiUrl(`/api/purchase-orders/${poId}`));
+      activePoDetails = await response.json();
+
+      document.getElementById('grnPoSummaryText').innerHTML = `
+        <strong>PO Reference:</strong> #PO-${activePoDetails.po_id} &nbsp;&nbsp;|&nbsp;&nbsp; 
+        <strong>Vendor:</strong> ${activePoDetails.vendor_company || ""} (${activePoDetails.vendor_name})
+      `;
+
+      if (grnItemsTableBody) {
+        grnItemsTableBody.innerHTML = activePoDetails.items.map((item, idx) => {
+          return `
+            <tr>
+              <td><strong>${item.item_name}</strong></td>
+              <td style="text-align: center;">${parseInt(item.quantity)}</td>
+              <td style="text-align: center;">
+                <input type="number" class="grn-recv-qty-input" data-idx="${idx}" value="${parseInt(item.quantity)}" min="0" max="${parseInt(item.quantity) * 2}" style="width: 80px; padding: 0.35rem; border: 1px solid var(--border-color); border-radius: 4px; text-align: center;">
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      grnModal.style.display = 'flex';
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  if (document.getElementById('grnModalClose')) {
+    document.getElementById('grnModalClose').addEventListener('click', () => { grnModal.style.display = 'none'; });
+  }
+  if (document.getElementById('btnGrnCancel')) {
+    document.getElementById('btnGrnCancel').addEventListener('click', () => { grnModal.style.display = 'none'; });
+  }
+
+  if (grnForm) {
+    grnForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const poId = document.getElementById('grn_po_id').value;
+      const grnItems = [];
+
+      const inputs = grnItemsTableBody.querySelectorAll('.grn-recv-qty-input');
+      inputs.forEach(inp => {
+        const idx = parseInt(inp.getAttribute('data-idx'));
+        const originalItem = activePoDetails.items[idx];
+        grnItems.push({
+          item_name: originalItem.item_name,
+          quantity_ordered: parseFloat(originalItem.quantity),
+          quantity_received: parseFloat(inp.value) || 0
+        });
+      });
+
+      const data = {
+        received_by: activeUser?.user_id || null,
+        notes: document.getElementById('grn_notes').value.trim() || '',
+        items: grnItems
+      };
+
+      try {
+        const response = await fetch(getApiUrl(`/api/purchase-orders/${poId}/grn`), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to submit GRN inventory receipt');
+        grnModal.style.display = 'none';
+        showToast('GRN Completed', 'Goods Received and stock ledger updated successfully!', 'success');
+        fetchPurchaseOrders();
+        fetchInventory();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
 
   window.fetchLicenseDetails = fetchLicenseDetails;
 

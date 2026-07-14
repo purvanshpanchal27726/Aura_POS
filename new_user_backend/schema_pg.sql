@@ -224,6 +224,7 @@ CREATE TABLE IF NOT EXISTS sales_details (
 -- 13. Purchase Master
 CREATE TABLE IF NOT EXISTS purchase_master (
     purchase_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     vendor_id INT NOT NULL,
     purchase_date DATE NOT NULL,
     purchase_bill_no VARCHAR(100) NOT NULL,
@@ -521,6 +522,24 @@ CREATE TABLE IF NOT EXISTS grn (
     received_by  INT REFERENCES users(user_id),
     notes        TEXT,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 33a. Purchase Order Items
+CREATE TABLE IF NOT EXISTS purchase_order_items (
+    id           SERIAL PRIMARY KEY,
+    po_id        INT REFERENCES purchase_orders(po_id) ON DELETE CASCADE,
+    item_name    VARCHAR(255) NOT NULL,
+    quantity     DECIMAL(10,3) NOT NULL,
+    price        DECIMAL(10,2) NOT NULL
+);
+
+-- 33b. GRN Items
+CREATE TABLE IF NOT EXISTS grn_items (
+    id                SERIAL PRIMARY KEY,
+    grn_id            INT REFERENCES grn(grn_id) ON DELETE CASCADE,
+    item_name         VARCHAR(255) NOT NULL,
+    quantity_ordered  DECIMAL(10,3) NOT NULL,
+    quantity_received DECIMAL(10,3) NOT NULL
 );
 
 -- 34. Employees

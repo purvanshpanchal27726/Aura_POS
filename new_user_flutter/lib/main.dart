@@ -31,6 +31,8 @@ import 'restaurant_kds_screen.dart';
 import 'hotel_rooms_screen.dart';
 import 'hotel_guests_screen.dart';
 import 'hotel_bookings_screen.dart';
+import 'inventory_screen.dart';
+import 'purchase_orders_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -421,6 +423,8 @@ class _MainLayoutState extends State<MainLayout> {
     const HotelRoomsScreen(), // 22
     const HotelGuestsScreen(), // 23
     const HotelBookingsScreen(), // 24
+    const InventoryScreen(), // 25
+    const PurchaseOrdersScreen(), // 26
   ];
 
   String _getAppBarTitle() {
@@ -475,6 +479,10 @@ class _MainLayoutState extends State<MainLayout> {
         return 'Hotel Guest Registry';
       case 24:
         return 'Hotel Stay Bookings';
+      case 25:
+        return 'Stock Inventory';
+      case 26:
+        return 'Purchase Orders';
       default:
         return 'POS System';
     }
@@ -848,6 +856,33 @@ class _MainLayoutState extends State<MainLayout> {
                             selected: _currentIndex == 24,
                             onTap: () {
                               setState(() => _currentIndex = 24);
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
+
+                    if (_hasModuleGroup('Kirana') || _hasModuleGroup('POS'))
+                      ExpansionTile(
+                        leading: const Icon(Icons.inventory_2_outlined, color: Color(0xFF64748B)),
+                        title: const Text('Inventory & PO', style: TextStyle(fontWeight: FontWeight.bold)),
+                        childrenPadding: const EdgeInsets.only(left: 16.0),
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.shelves, color: Color(0xFF64748B)),
+                            title: const Text('Stock Inventory'),
+                            selected: _currentIndex == 25,
+                            onTap: () {
+                              setState(() => _currentIndex = 25);
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.local_shipping_outlined, color: Color(0xFF64748B)),
+                            title: const Text('Purchase Orders'),
+                            selected: _currentIndex == 26,
+                            onTap: () {
+                              setState(() => _currentIndex = 26);
                               Navigator.pop(context);
                             },
                           ),

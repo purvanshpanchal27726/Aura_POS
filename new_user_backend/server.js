@@ -109,6 +109,12 @@ const hotelRoutes = require('./HotelAPI');
 app.use('/api/hotel', hotelRoutes);
 app.use('/api/Hotel', hotelRoutes);
 
+const inventoryRoutes = require('./InventoryAPI');
+app.use('/api/inventory', inventoryRoutes);
+
+const poRoutes = require('./PurchaseOrderAPI');
+app.use('/api/purchase-orders', poRoutes);
+
 const eventBus = require('./eventBus');
 
 // Real-Time Server-Sent Events Stream
