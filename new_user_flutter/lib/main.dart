@@ -28,6 +28,9 @@ import 'restaurant_tables_screen.dart';
 import 'restaurant_menu_screen.dart';
 import 'restaurant_orders_screen.dart';
 import 'restaurant_kds_screen.dart';
+import 'hotel_rooms_screen.dart';
+import 'hotel_guests_screen.dart';
+import 'hotel_bookings_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -415,6 +418,9 @@ class _MainLayoutState extends State<MainLayout> {
     const RestaurantMenuScreen(), // 19
     const RestaurantOrdersScreen(), // 20
     const RestaurantKdsScreen(), // 21
+    const HotelRoomsScreen(), // 22
+    const HotelGuestsScreen(), // 23
+    const HotelBookingsScreen(), // 24
   ];
 
   String _getAppBarTitle() {
@@ -463,6 +469,12 @@ class _MainLayoutState extends State<MainLayout> {
         return 'Restaurant Orders';
       case 21:
         return 'Kitchen Display (KDS)';
+      case 22:
+        return 'Hotel Rooms';
+      case 23:
+        return 'Hotel Guest Registry';
+      case 24:
+        return 'Hotel Stay Bookings';
       default:
         return 'POS System';
     }
@@ -800,6 +812,42 @@ class _MainLayoutState extends State<MainLayout> {
                             selected: _currentIndex == 21,
                             onTap: () {
                               setState(() => _currentIndex = 21);
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
+
+                    if (_hasModuleGroup('Hotel'))
+                      ExpansionTile(
+                        leading: const Icon(Icons.hotel_outlined, color: Color(0xFF64748B)),
+                        title: const Text('Hotel Management', style: TextStyle(fontWeight: FontWeight.bold)),
+                        childrenPadding: const EdgeInsets.only(left: 16.0),
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.bed_outlined, color: Color(0xFF64748B)),
+                            title: const Text('Hotel Rooms'),
+                            selected: _currentIndex == 22,
+                            onTap: () {
+                              setState(() => _currentIndex = 22);
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.person_pin_outlined, color: Color(0xFF64748B)),
+                            title: const Text('Guest Registry'),
+                            selected: _currentIndex == 23,
+                            onTap: () {
+                              setState(() => _currentIndex = 23);
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.bedroom_parent_outlined, color: Color(0xFF64748B)),
+                            title: const Text('Room Bookings'),
+                            selected: _currentIndex == 24,
+                            onTap: () {
+                              setState(() => _currentIndex = 24);
                               Navigator.pop(context);
                             },
                           ),

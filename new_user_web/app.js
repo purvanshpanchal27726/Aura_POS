@@ -460,6 +460,24 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Kitchen Queue (KDS)',
       onTransition: () => fetchKdsQueue()
     },
+    'hotel_rooms': {
+      menu: document.getElementById('menuHotelRooms'),
+      view: document.getElementById('screenHotelRooms'),
+      title: 'Hotel Rooms',
+      onTransition: () => fetchHotelRooms()
+    },
+    'hotel_guests': {
+      menu: document.getElementById('menuHotelGuests'),
+      view: document.getElementById('screenHotelGuests'),
+      title: 'Guest Registry',
+      onTransition: () => fetchHotelGuests()
+    },
+    'hotel_bookings': {
+      menu: document.getElementById('menuHotelBookings'),
+      view: document.getElementById('screenHotelBookings'),
+      title: 'Room Bookings & Check-in',
+      onTransition: () => fetchHotelBookings()
+    },
     'role_listing': {
       menu: document.getElementById('menuRoleListing'),
       view: document.getElementById('screenRoleListing'),
@@ -588,6 +606,20 @@ document.addEventListener('DOMContentLoaded', () => {
     restMenus.forEach(menuEl => {
       if (menuEl) {
         menuEl.style.display = hasRestaurant ? 'flex' : 'none';
+      }
+    });
+
+    // Gate Hotel menu items
+    const hasHotel = hasAll || clientModules.includes('Hotel');
+    const hotelMenus = [
+      document.getElementById('menuHotelRooms'),
+      document.getElementById('menuHotelGuests'),
+      document.getElementById('menuHotelBookings')
+    ];
+
+    hotelMenus.forEach(menuEl => {
+      if (menuEl) {
+        menuEl.style.display = hasHotel ? 'flex' : 'none';
       }
     });
 
@@ -6926,6 +6958,554 @@ document.addEventListener('DOMContentLoaded', () => {
     originalCheckAuthSession();
     if (activeUser) {
       initRealtimeSSE();
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 🏨 HOTEL MODULE CLIENT LOGIC [NEW]
+  // ─────────────────────────────────────────────────────────────────────────
+  let allRooms = [];
+  let allGuests = [];
+  let allBookings = [];
+  let activeBookingServices = [];
+
+  // --- ROOMS MANAGEMENT ---
+  const fetchHotelRooms = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/hotel/rooms'));
+      if (!response.ok) throw new Error('Failed to fetch rooms');
+      allRooms = await response.json();
+      renderHotelRooms();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderHotelRooms = () => {
+    const container = document.getElementById('roomGridContainer');
+    if (!container) return;
+
+    if (allRooms.length === 0) {
+      container.innerHTML = `<div style="grid-column: 1/-1;" class="empty-state">No rooms registered yet. Create one above!</div>`;
+      return;
+    }
+
+    container.innerHTML = allRooms.map(r => {
+      let statusColor = '#10B981'; // Available - Green
+      if (r.status === 'occupied') statusColor = '#EF4444'; // Occupied - Red
+      else if (r.status === 'dirty') statusColor = '#F59E0B'; // Dirty - Amber
+      else if (r.status === 'maintenance') statusColor = '#64748B'; // Maintenance - Grey
+
+      return `
+        <div class="card room-card" style="padding: 1.5rem; text-align: center; border-radius: 12px; border: 1.5px solid ${statusColor}; background: var(--card-bg);">
+          <span class="material-icons" style="font-size: 3rem; color: ${statusColor}; margin-bottom: 0.5rem;">bed</span>
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Room ${r.room_no}</h3>
+          <p style="margin: 4px 0; font-size: 0.85rem; color: var(--text-muted);">${r.room_type} • ₹${parseFloat(r.price_per_night).toFixed(2)}/night</p>
+          <div style="margin-top: 0.75rem; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; color: ${statusColor};">${r.status}</div>
+          
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center;">
+            <button class="btn btn-secondary btn-room-edit" data-id="${r.room_id}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; justify-content: center;"><span class="material-icons" style="font-size: 1rem;">edit</span></button>
+            <button class="btn btn-danger btn-room-delete" data-id="${r.room_id}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; justify-content: center;"><span class="material-icons" style="font-size: 1rem;">delete</span></button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.btn-room-edit').forEach(btn => {
+      btn.addEventListener('click', () => openRoomModal(btn.getAttribute('data-id')));
+    });
+    container.querySelectorAll('.btn-room-delete').forEach(btn => {
+      btn.addEventListener('click', () => deleteRoom(btn.getAttribute('data-id')));
+    });
+  };
+
+  const roomModal = document.getElementById('roomModal');
+  const btnNewRoom = document.getElementById('btnNewRoom');
+  const roomForm = document.getElementById('roomForm');
+
+  const openRoomModal = (id = null) => {
+    if (!roomModal) return;
+    roomForm.reset();
+    document.getElementById('room_id').value = id || '';
+    if (id) {
+      const room = allRooms.find(r => r.room_id == id);
+      if (room) {
+        document.getElementById('room_no').value = room.room_no;
+        document.getElementById('room_type').value = room.room_type;
+        document.getElementById('room_price').value = room.price_per_night;
+      }
+    }
+    roomModal.style.display = 'flex';
+  };
+
+  if (btnNewRoom) btnNewRoom.addEventListener('click', () => openRoomModal());
+  if (document.getElementById('roomModalClose')) {
+    document.getElementById('roomModalClose').addEventListener('click', () => { roomModal.style.display = 'none'; });
+  }
+  if (document.getElementById('btnRoomCancel')) {
+    document.getElementById('btnRoomCancel').addEventListener('click', () => { roomModal.style.display = 'none'; });
+  }
+
+  if (roomForm) {
+    roomForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('room_id').value;
+      const data = {
+        room_no: document.getElementById('room_no').value.trim(),
+        room_type: document.getElementById('room_type').value,
+        price_per_night: parseFloat(document.getElementById('room_price').value) || 0
+      };
+
+      try {
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/hotel/rooms/${id}` : '/api/hotel/rooms';
+        const response = await fetch(getApiUrl(url), {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to save room');
+        roomModal.style.display = 'none';
+        showToast('Room Saved', 'Hotel room registered successfully!', 'success');
+        fetchHotelRooms();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+  const deleteRoom = async (id) => {
+    if (!confirm('Are you sure you want to delete this room?')) return;
+    try {
+      const response = await fetch(getApiUrl(`/api/hotel/rooms/${id}`), { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete room');
+      showToast('Room Deleted', 'Room de-registered successfully', 'success');
+      fetchHotelRooms();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+
+  // --- GUESTS REGISTRY ---
+  const fetchHotelGuests = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/hotel/guests'));
+      if (!response.ok) throw new Error('Failed to fetch guests');
+      allGuests = await response.json();
+      renderHotelGuests();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderHotelGuests = () => {
+    const tbody = document.getElementById('hotelGuestsTableBody');
+    if (!tbody) return;
+
+    if (allGuests.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No guests registered in system yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = allGuests.map(g => {
+      const dateVal = new Date(g.created_date || Date.now());
+      const dateStr = `${dateVal.getDate()}/${dateVal.getMonth()+1}/${dateVal.getFullYear()}`;
+      return `
+        <tr>
+          <td><strong>#G-${g.guest_id}</strong></td>
+          <td><strong>${g.name}</strong></td>
+          <td>${g.phone}</td>
+          <td>${g.email || 'N/A'}</td>
+          <td>${g.id_proof_type || 'Aadhaar'}: ${g.id_proof_no || 'N/A'}</td>
+          <td>${dateStr}</td>
+          <td style="text-align: center;">
+            <div class="table-actions" style="justify-content: center;">
+              <button class="btn btn-secondary btn-guest-edit" data-id="${g.guest_id}" style="padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; justify-content: center;"><span class="material-icons" style="font-size: 1rem;">edit</span></button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-guest-edit').forEach(btn => {
+      btn.addEventListener('click', () => openGuestModal(btn.getAttribute('data-id')));
+    });
+  };
+
+  const guestModal = document.getElementById('guestModal');
+  const btnNewGuest = document.getElementById('btnNewGuest');
+  const guestForm = document.getElementById('guestForm');
+
+  const openGuestModal = (id = null) => {
+    if (!guestModal) return;
+    guestForm.reset();
+    document.getElementById('guest_id').value = id || '';
+    if (id) {
+      const guest = allGuests.find(g => g.guest_id == id);
+      if (guest) {
+        document.getElementById('guest_name').value = guest.name;
+        document.getElementById('guest_phone').value = guest.phone;
+        document.getElementById('guest_email').value = guest.email || '';
+        document.getElementById('guest_id_type').value = guest.id_proof_type || 'Aadhaar';
+        document.getElementById('guest_id_no').value = guest.id_proof_no || '';
+      }
+    }
+    guestModal.style.display = 'flex';
+  };
+
+  if (btnNewGuest) btnNewGuest.addEventListener('click', () => openGuestModal());
+  if (document.getElementById('guestModalClose')) {
+    document.getElementById('guestModalClose').addEventListener('click', () => { guestModal.style.display = 'none'; });
+  }
+  if (document.getElementById('btnGuestCancel')) {
+    document.getElementById('btnGuestCancel').addEventListener('click', () => { guestModal.style.display = 'none'; });
+  }
+
+  if (guestForm) {
+    guestForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('guest_id').value;
+      const data = {
+        name: document.getElementById('guest_name').value.trim(),
+        phone: document.getElementById('guest_phone').value.trim(),
+        email: document.getElementById('guest_email').value.trim() || null,
+        id_proof_type: document.getElementById('guest_id_type').value,
+        id_proof_no: document.getElementById('guest_id_no').value.trim() || null
+      };
+
+      try {
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/hotel/guests/${id}` : '/api/hotel/guests';
+        const response = await fetch(getApiUrl(url), {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to save guest details');
+        guestModal.style.display = 'none';
+        showToast('Guest Saved', 'Hotel guest details updated successfully!', 'success');
+        fetchHotelGuests();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+
+  // --- HOTEL STAY BOOKINGS ---
+  const fetchHotelBookings = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/hotel/bookings'));
+      if (!response.ok) throw new Error('Failed to fetch bookings');
+      allBookings = await response.json();
+      renderHotelBookings();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderHotelBookings = () => {
+    const tbody = document.getElementById('hotelBookingsTableBody');
+    if (!tbody) return;
+
+    if (allBookings.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No stay folios checked-in yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = allBookings.map(b => {
+      const inDate = new Date(b.check_in_date);
+      const inStr = `${inDate.getDate()}/${inDate.getMonth()+1} ${inDate.getHours().toString().padStart(2,'0')}:${inDate.getMinutes().toString().padStart(2,'0')}`;
+      
+      let outStr = 'Ongoing';
+      if (b.check_out_date && b.status === 'checked-out') {
+        const outDate = new Date(b.check_out_date);
+        outStr = `${outDate.getDate()}/${outDate.getMonth()+1} ${outDate.getHours().toString().padStart(2,'0')}:${outDate.getMinutes().toString().padStart(2,'0')}`;
+      }
+
+      let statusColor = '#F59E0B'; // Checked-in (Amber)
+      if (b.status === 'checked-out') statusColor = '#10B981'; // Green
+      else if (b.status === 'cancelled') statusColor = '#EF4444'; // Red
+
+      const getActions = () => {
+        if (b.status === 'checked-in') {
+          return `
+            <button class="btn btn-secondary btn-booking-service" data-id="${b.booking_id}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Room Service</button>
+            <button class="btn btn-primary btn-booking-checkout" data-id="${b.booking_id}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Checkout Bill</button>
+          `;
+        }
+        return `<span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">Settled Folio</span>`;
+      };
+
+      return `
+        <tr>
+          <td><strong>#BK-${b.booking_id}</strong></td>
+          <td><strong>Room ${b.room_no}</strong><br><small>${b.room_type}</small></td>
+          <td><strong>${b.guest_name}</strong></td>
+          <td>${b.guest_phone}</td>
+          <td>${inStr}</td>
+          <td>${outStr}</td>
+          <td><span class="status-badge" style="background: ${statusColor}22; color: ${statusColor}; font-weight: bold; text-transform: uppercase;">${b.status}</span></td>
+          <td style="text-align: center;">
+            <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+              ${getActions()}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-booking-service').forEach(btn => {
+      btn.addEventListener('click', () => openRoomServiceModal(btn.getAttribute('data-id')));
+    });
+    tbody.querySelectorAll('.btn-booking-checkout').forEach(btn => {
+      btn.addEventListener('click', () => checkoutHotelBooking(btn.getAttribute('data-id')));
+    });
+  };
+
+  const bookingModal = document.getElementById('bookingModal');
+  const btnNewBooking = document.getElementById('btnNewBooking');
+  const bookingForm = document.getElementById('bookingForm');
+
+  const openBookingModal = async () => {
+    if (!bookingModal) return;
+    bookingForm.reset();
+
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('booking_check_in').value = now.toISOString().slice(0, 16);
+
+    try {
+      const responseG = await fetch(getApiUrl('/api/hotel/guests'));
+      const listG = await responseG.json();
+      allGuests = listG;
+      document.getElementById('booking_guest_id').innerHTML = '<option value="">Select Stay Guest</option>' +
+        listG.map(g => `<option value="${g.guest_id}">${g.name} (${g.phone})</option>`).join('');
+
+      const responseR = await fetch(getApiUrl('/api/hotel/rooms'));
+      const listR = await responseR.json();
+      allRooms = listR;
+      const availRooms = listR.filter(r => r.status === 'available');
+      document.getElementById('booking_room_id').innerHTML = '<option value="">Select Available Room</option>' +
+        availRooms.map(r => `<option value="${r.room_id}">Room ${r.room_no} (${r.room_type} - ₹${parseFloat(r.price_per_night).toFixed(2)}/n)</option>`).join('');
+
+    } catch (err) {
+      console.error(err);
+    }
+
+    bookingModal.style.display = 'flex';
+  };
+
+  if (btnNewBooking) btnNewBooking.addEventListener('click', openBookingModal);
+  if (document.getElementById('bookingModalClose')) {
+    document.getElementById('bookingModalClose').addEventListener('click', () => { bookingModal.style.display = 'none'; });
+  }
+  if (document.getElementById('btnBookingCancel')) {
+    document.getElementById('btnBookingCancel').addEventListener('click', () => { bookingModal.style.display = 'none'; });
+  }
+
+  if (bookingForm) {
+    bookingForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const data = {
+        guest_id: parseInt(document.getElementById('booking_guest_id').value),
+        room_id: parseInt(document.getElementById('booking_room_id').value),
+        check_in_date: document.getElementById('booking_check_in').value,
+        check_out_date: document.getElementById('booking_check_out').value || null,
+        notes: document.getElementById('booking_notes').value.trim()
+      };
+
+      try {
+        const response = await fetch(getApiUrl('/api/hotel/bookings'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to create check-in folio');
+        bookingModal.style.display = 'none';
+        showToast('Guest Checked In', 'Stay folio created and room marked occupied.', 'success');
+        fetchHotelBookings();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+  // --- ROOM SERVICE BILLING FOLIO ---
+  const roomServiceModal = document.getElementById('roomServiceModal');
+  const roomServiceForm = document.getElementById('roomServiceForm');
+  const roomServiceItemsBody = document.getElementById('roomServiceItemsBody');
+
+  const openRoomServiceModal = async (bookingId) => {
+    if (!roomServiceModal) return;
+    roomServiceForm.reset();
+    document.getElementById('service_booking_id').value = bookingId;
+
+    const booking = allBookings.find(b => b.booking_id == bookingId);
+    if (booking) {
+      document.getElementById('serviceRoomDetails').innerHTML = `
+        <strong>Guest Name:</strong> ${booking.guest_name} &nbsp;&nbsp;|&nbsp;&nbsp; 
+        <strong>Room Allocated:</strong> Room ${booking.room_no} (${booking.room_type})
+      `;
+    }
+
+    await fetchRoomServices(bookingId);
+    roomServiceModal.style.display = 'flex';
+  };
+
+  const fetchRoomServices = async (bookingId) => {
+    try {
+      const response = await fetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`));
+      activeBookingServices = await response.json();
+      renderRoomServices();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderRoomServices = () => {
+    if (!roomServiceItemsBody) return;
+    if (activeBookingServices.length === 0) {
+      roomServiceItemsBody.innerHTML = `<tr><td colspan="4" style="text-align: center;" class="empty-state">No room services ordered for this stay yet.</td></tr>`;
+      return;
+    }
+
+    roomServiceItemsBody.innerHTML = activeBookingServices.map(s => {
+      const cost = s.price * s.quantity;
+      return `
+        <tr>
+          <td><strong>${s.item_name}</strong><br><small style="color: var(--text-muted); text-transform: uppercase;">${s.status}</small></td>
+          <td style="text-align: right;">₹${parseFloat(s.price).toFixed(2)}</td>
+          <td style="text-align: center;">${parseInt(s.quantity)}</td>
+          <td style="text-align: right; font-weight: bold; color: var(--primary-color);">₹${parseFloat(cost).toFixed(2)}</td>
+        </tr>
+      `;
+    }).join('');
+  };
+
+  if (document.getElementById('roomServiceModalClose')) {
+    document.getElementById('roomServiceModalClose').addEventListener('click', () => { roomServiceModal.style.display = 'none'; });
+  }
+
+  if (roomServiceForm) {
+    roomServiceForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const bookingId = document.getElementById('service_booking_id').value;
+      const data = {
+        item_name: document.getElementById('serviceItemName').value.trim(),
+        quantity: parseInt(document.getElementById('serviceQty').value) || 1,
+        price: parseFloat(document.getElementById('servicePrice').value) || 0
+      };
+
+      try {
+        const response = await fetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to order service');
+        showToast('Service Added', 'Room service charge appended to guest folio.', 'success');
+        roomServiceForm.reset();
+        fetchRoomServices(bookingId);
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+  // --- CHECKOUT & BILL GENERATION ---
+  const checkoutHotelBooking = async (bookingId) => {
+    const booking = allBookings.find(b => b.booking_id == bookingId);
+    if (!booking) return;
+
+    const inDate = new Date(booking.check_in_date);
+    const timeDiff = Math.abs(new Date() - inDate);
+    const nights = Math.ceil(timeDiff / (1000 * 60 * 60 * 24)) || 1;
+    const roomCost = nights * parseFloat(booking.price_per_night);
+
+    let servicesTotal = 0;
+    try {
+      const response = await fetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`));
+      const services = await response.json();
+      servicesTotal = services.reduce((sum, s) => sum + (parseFloat(s.price) * parseFloat(s.quantity)), 0);
+    } catch (err) {
+      console.error('Error fetching stay services:', err);
+    }
+
+    const subTotal = roomCost + servicesTotal;
+    const tax = subTotal * 0.12; 
+    const grandTotal = subTotal + tax;
+
+    const confirmMsg = `
+      Check-out summary for Room ${booking.room_no} (${booking.guest_name}):
+      -----------------------------------------------
+      Stay Duration: ${nights} night(s)
+      Room Charges: ₹${roomCost.toFixed(2)} (₹${parseFloat(booking.price_per_night).toFixed(2)}/n)
+      Room Service Charges: ₹${servicesTotal.toFixed(2)}
+      Tax (12% Hotel Tax): ₹${tax.toFixed(2)}
+      
+      Total check-out amount: ₹${grandTotal.toFixed(2)}
+      
+      Generate checkout invoice & release room?
+    `;
+
+    if (!confirm(confirmMsg)) return;
+
+    const salesInvoiceData = {
+      customer_id: null,
+      customer_name: booking.guest_name,
+      gross: subTotal,
+      tax: tax,
+      total: grandTotal,
+      payment_method: 'Cash',
+      items: [
+        {
+          item_id: null,
+          item_name: `Room Accommodation Charges (Room ${booking.room_no} - ${nights} Nights)`,
+          quantity: nights,
+          item_amount: parseFloat(booking.price_per_night),
+          tax_amount: parseFloat(booking.price_per_night) * nights * 0.12
+        }
+      ]
+    };
+
+    try {
+      const responseServ = await fetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`));
+      const servicesList = await responseServ.json();
+      servicesList.forEach(s => {
+        salesInvoiceData.items.push({
+          item_id: null,
+          item_name: `Room Service: ${s.item_name}`,
+          quantity: parseFloat(s.quantity),
+          item_amount: parseFloat(s.price),
+          tax_amount: parseFloat(s.price) * parseFloat(s.quantity) * 0.12
+        });
+      });
+    } catch (err) {
+      console.error(err);
+    }
+
+    try {
+      const response = await fetch(getApiUrl('/api/sales'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(salesInvoiceData)
+      });
+      if (!response.ok) throw new Error('Failed to checkout guest invoice.');
+      const result = await response.json();
+
+      await fetch(getApiUrl(`/api/hotel/bookings/${bookingId}/status`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'checked-out', total_amount: grandTotal })
+      });
+
+      showToast('Checkout Complete', 'Sales stay invoice generated and room released.', 'success');
+      fetchHotelBookings();
+      openPrintReceipt(result.sales_id);
+    } catch (err) {
+      alert(err.message);
     }
   };
 

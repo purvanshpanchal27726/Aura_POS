@@ -158,6 +158,19 @@
           <span class="material-icons">kitchen</span>
           <span>Kitchen Queue (KDS)</span>
         </li>
+        <!-- Hotel Module Menu Items -->
+        <li class="drawer-item" id="menuHotelRooms" style="display: none;">
+          <span class="material-icons">bed</span>
+          <span>Hotel Rooms</span>
+        </li>
+        <li class="drawer-item" id="menuHotelGuests" style="display: none;">
+          <span class="material-icons">assignment_ind</span>
+          <span>Hotel Guests</span>
+        </li>
+        <li class="drawer-item" id="menuHotelBookings" style="display: none;">
+          <span class="material-icons">bedroom_parent</span>
+          <span>Room Bookings</span>
+        </li>
 
         <li class="drawer-item" id="menuSupport">
           <span class="material-icons">contact_support</span>
@@ -1326,6 +1339,87 @@
       </section>
     </div>
 
+    <!-- Screen 22: Hotel Rooms [NEW] -->
+    <div id="screenHotelRooms" class="screen-view" style="display: none;">
+      <section class="list-section card">
+        <div class="list-header" style="margin-bottom: 1.5rem;">
+          <div>
+            <h2>Hotel Rooms</h2>
+            <p>Manage hotel room inventory, rates, statuses (Available, Occupied, Dirty, Maintenance).</p>
+          </div>
+          <button type="button" id="btnNewRoom" class="btn btn-primary">
+            <span class="material-icons">add</span> Add Room
+          </button>
+        </div>
+        <div id="roomGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+          <!-- Rooms cards rendered dynamically -->
+        </div>
+      </section>
+    </div>
+
+    <!-- Screen 23: Hotel Guests [NEW] -->
+    <div id="screenHotelGuests" class="screen-view" style="display: none;">
+      <section class="list-section card">
+        <div class="list-header" style="margin-bottom: 1.5rem;">
+          <div>
+            <h2>Guest Registry</h2>
+            <p>Maintain historical registers of checked-in guests, contact details, and ID verification logs.</p>
+          </div>
+          <button type="button" id="btnNewGuest" class="btn btn-primary">
+            <span class="material-icons">add</span> Register Guest
+          </button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Guest ID</th>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>ID Verification</th>
+                <th>Registered Date</th>
+                <th style="text-align: center; width: 120px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="hotelGuestsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Screen 24: Room Bookings [NEW] -->
+    <div id="screenHotelBookings" class="screen-view" style="display: none;">
+      <section class="list-section card">
+        <div class="list-header" style="margin-bottom: 1.5rem;">
+          <div>
+            <h2>Room Bookings & Stay Check-in</h2>
+            <p>Manage checked-in guest folios, stay durations, room service requests, and checkout billing.</p>
+          </div>
+          <button type="button" id="btnNewBooking" class="btn btn-primary">
+            <span class="material-icons">add</span> New Check-in
+          </button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Booking ID</th>
+                <th>Room</th>
+                <th>Guest Name</th>
+                <th>Guest Phone</th>
+                <th>Check-in Date</th>
+                <th>Checkout Date</th>
+                <th>Status</th>
+                <th style="text-align: center; width: 260px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="hotelBookingsTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
     <!-- Screen 17: License & AMC Management [NEW] -->
     <div id="screenLicense" class="screen-view" style="display: none;">
       <!-- Validity Status Banner Alert -->
@@ -2270,6 +2364,180 @@
             </div>
           </div>
         </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- Hotel Room Registration Modal -->
+  <div id="roomModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 500px;">
+      <span class="close-modal" id="roomModalClose">&times;</span>
+      <section class="form-section">
+        <h2>Register Hotel Room</h2>
+        <form id="roomForm">
+          <input type="hidden" id="room_id" name="room_id">
+          <div class="form-grid col-1">
+            <div class="form-field">
+              <label for="room_no">Room Number <span class="required-star">*</span></label>
+              <input type="text" id="room_no" name="room_no" required placeholder="e.g. 101, 305-A" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="room_type">Room Type <span class="required-star">*</span></label>
+              <select id="room_type" name="room_type" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+                <option value="Single">Single Bedroom</option>
+                <option value="Double">Double Bedroom</option>
+                <option value="Deluxe">Deluxe Suite</option>
+                <option value="Executive">Executive Suite</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="room_price">Price per Night (₹) <span class="required-star">*</span></label>
+              <input type="number" id="room_price" name="price_per_night" step="0.01" required placeholder="0.00" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top: 2rem;">
+            <button type="button" class="btn btn-secondary" id="btnRoomCancel">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnRoomSave">Save Room</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- Hotel Guest Registration Modal -->
+  <div id="guestModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 500px;">
+      <span class="close-modal" id="guestModalClose">&times;</span>
+      <section class="form-section">
+        <h2>Register Hotel Guest</h2>
+        <form id="guestForm">
+          <input type="hidden" id="guest_id" name="guest_id">
+          <div class="form-grid col-1">
+            <div class="form-field">
+              <label for="guest_name">Full Name <span class="required-star">*</span></label>
+              <input type="text" id="guest_name" name="name" required placeholder="Guest full name" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="guest_phone">Phone Number <span class="required-star">*</span></label>
+              <input type="tel" id="guest_phone" name="phone" required placeholder="10-digit phone number" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="guest_email">Email Address</label>
+              <input type="email" id="guest_email" name="email" placeholder="guest@example.com" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="guest_id_type">ID Proof Type</label>
+              <select id="guest_id_type" name="id_proof_type" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+                <option value="Aadhaar">Aadhaar Card</option>
+                <option value="Passport">Passport</option>
+                <option value="Driving License">Driving License</option>
+                <option value="Voter ID">Voter ID Card</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="guest_id_no">ID Proof Number</label>
+              <input type="text" id="guest_id_no" name="id_proof_no" placeholder="Verification ID number" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top: 2rem;">
+            <button type="button" class="btn btn-secondary" id="btnGuestCancel">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnGuestSave">Save Guest</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- Hotel Check-in / Booking Modal -->
+  <div id="bookingModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 600px;">
+      <span class="close-modal" id="bookingModalClose">&times;</span>
+      <section class="form-section">
+        <h2>Stay Booking / Check-in</h2>
+        <form id="bookingForm">
+          <input type="hidden" id="booking_id" name="booking_id">
+          <div class="form-grid col-1">
+            <div class="form-field">
+              <label for="booking_guest_id">Select Guest <span class="required-star">*</span></label>
+              <select id="booking_guest_id" name="guest_id" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);"></select>
+            </div>
+            <div class="form-field">
+              <label for="booking_room_id">Select Available Room <span class="required-star">*</span></label>
+              <select id="booking_room_id" name="room_id" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);"></select>
+            </div>
+          </div>
+          <div class="form-grid col-2" style="margin-top: 1rem;">
+            <div class="form-field">
+              <label for="booking_check_in">Check-in Date <span class="required-star">*</span></label>
+              <input type="datetime-local" id="booking_check_in" name="check_in_date" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="booking_check_out">Est. Checkout Date</label>
+              <input type="datetime-local" id="booking_check_out" name="check_out_date" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-grid col-1" style="margin-top: 1rem;">
+            <div class="form-field">
+              <label for="booking_notes">Booking Remarks / Special Requests</label>
+              <input type="text" id="booking_notes" name="notes" placeholder="e.g. Non-smoking, Double bed request" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top: 2rem;">
+            <button type="button" class="btn btn-secondary" id="btnBookingCancel">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnBookingSave">Check-in Guest</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- Hotel Room Service Billing Modal -->
+  <div id="roomServiceModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 650px; width: 90%;">
+      <span class="close-modal" id="roomServiceModalClose">&times;</span>
+      <section class="form-section">
+        <h2>Room Service Folio</h2>
+        <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem;" id="serviceRoomDetails">--</div>
+        
+        <form id="roomServiceForm">
+          <input type="hidden" id="service_booking_id" name="booking_id">
+          
+          <div class="form-grid col-3" style="align-items: flex-end;">
+            <div class="form-field" style="flex: 2;">
+              <label for="serviceItemName">Service / Item Description <span class="required-star">*</span></label>
+              <input type="text" id="serviceItemName" required placeholder="e.g. Laundry, Breakfast in Room" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field" style="width: 80px;">
+              <label for="serviceQty">Qty</label>
+              <input type="number" id="serviceQty" value="1" min="1" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field" style="width: 100px;">
+              <label for="servicePrice">Price (₹) <span class="required-star">*</span></label>
+              <input type="number" id="servicePrice" step="0.01" required placeholder="0.00" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div style="margin-top: 1rem; text-align: right;">
+            <button type="submit" class="btn btn-secondary" style="padding: 0.75rem 1.5rem;">
+              <span class="material-icons" style="font-size: 1.1rem; vertical-align: middle;">add</span> Order Service
+            </button>
+          </div>
+        </form>
+
+        <div class="table-container" style="margin-top: 1.5rem; max-height: 250px; overflow-y: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Service Item</th>
+                <th style="text-align: right; width: 100px;">Unit Price</th>
+                <th style="text-align: center; width: 80px;">Qty</th>
+                <th style="text-align: right; width: 120px;">Total</th>
+              </tr>
+            </thead>
+            <tbody id="roomServiceItemsBody">
+              <!-- Service orders loaded here -->
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   </div>
