@@ -61,6 +61,18 @@ router.post('/', async (req, res) => {
     }
 
     await connection.commit();
+
+    // Trigger automatic WhatsApp billing delivery
+    try {
+      const { sendWhatsAppInvoice } = require('./WhatsAppService');
+      const [custInfo] = await db.execute('SELECT client_id FROM customers WHERE customer_id = ?', [customer_id]);
+      if (custInfo.length > 0) {
+        const clientId = custInfo[0].client_id;
+        sendWhatsAppInvoice(clientId, customer_id, total, sales_bill_no);
+      }
+    } catch (wsErr) {
+      console.error('[WhatsApp Trigger Error]', wsErr.message);
+    }
     
     // Broadcast checkout event to all active real-time subscribers
     const eventBus = require('./eventBus');
