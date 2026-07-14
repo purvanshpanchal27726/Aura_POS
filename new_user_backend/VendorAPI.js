@@ -12,21 +12,26 @@ router.post('/', async (req, res) => {
     const data = req.body.VendorModel || req.body || {};
     const { first_name, last_name, company, address_1, address_2, city, country, phone_1, phone_2, email, created_by } = data;
 
-    if (!first_name || !last_name || !address_1 || !city || !country || !phone_1 || !email) {
+    if (!first_name || !last_name || !address_1 || !city || !country || !phone_1) {
       return res.status(400).json({ error: 'Missing required fields for Vendor creation.' });
     }
 
     // Check duplicate vendor records (Company, Mobile, Email)
     const companyCheck = company ? company.trim().toLowerCase() : '';
     const phoneCheck = phone_1.trim();
-    const emailCheck = email.trim().toLowerCase();
+    const emailCheck = email ? email.trim().toLowerCase() : '';
 
-    let queryDup = 'SELECT * FROM vendors WHERE phone_1 = ? OR LOWER(email) = ?';
-    let paramsDup = [phoneCheck, emailCheck];
+    let queryDup = 'SELECT * FROM vendors WHERE phone_1 = ?';
+    let paramsDup = [phoneCheck];
+    if (emailCheck) {
+      queryDup += ' OR LOWER(email) = ?';
+      paramsDup.push(emailCheck);
+    }
     if (companyCheck) {
       queryDup += ' OR LOWER(company) = ?';
       paramsDup.push(companyCheck);
     }
+    
     const [existing] = await db.execute(queryDup, paramsDup);
     if (existing.length > 0) {
       const dup = existing[0];
@@ -36,7 +41,7 @@ router.post('/', async (req, res) => {
       if (dup.phone_1 === phoneCheck) {
         return res.status(400).json({ error: 'Vendor with this mobile number already exists.' });
       }
-      if (dup.email && dup.email.trim().toLowerCase() === emailCheck) {
+      if (emailCheck && dup.email && dup.email.trim().toLowerCase() === emailCheck) {
         return res.status(400).json({ error: 'Vendor with this email ID already exists.' });
       }
     }
@@ -58,7 +63,7 @@ router.post('/', async (req, res) => {
       country,
       phone_1,
       phone_2 || null,
-      email,
+      email || null,
       created_by || 'System'
     ]);
 
@@ -128,10 +133,14 @@ router.put('/:id', async (req, res) => {
     // Check duplicate vendor records (Company, Mobile, Email)
     const f_company = comp ? comp.trim().toLowerCase() : '';
     const f_phone = p1.trim();
-    const f_email = mail.trim().toLowerCase();
+    const f_email = mail ? mail.trim().toLowerCase() : '';
 
-    let queryDup = '(phone_1 = ? OR LOWER(email) = ?';
-    let paramsDup = [f_phone, f_email];
+    let queryDup = '(phone_1 = ?';
+    let paramsDup = [f_phone];
+    if (f_email) {
+      queryDup += ' OR LOWER(email) = ?';
+      paramsDup.push(f_email);
+    }
     if (f_company) {
       queryDup += ' OR LOWER(company) = ?';
       paramsDup.push(f_company);
@@ -148,7 +157,7 @@ router.put('/:id', async (req, res) => {
       if (dup.phone_1 === f_phone) {
         return res.status(400).json({ error: 'Vendor with this mobile number already exists.' });
       }
-      if (dup.email && dup.email.trim().toLowerCase() === f_email) {
+      if (f_email && dup.email && dup.email.trim().toLowerCase() === f_email) {
         return res.status(400).json({ error: 'Vendor with this email ID already exists.' });
       }
     }

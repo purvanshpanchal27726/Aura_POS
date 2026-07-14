@@ -65,6 +65,7 @@ router.post('/', async (req, res) => {
       email_1,
       email_2,
       role_id,
+      client_id,
       created_by
     } = data;
 
@@ -85,8 +86,8 @@ router.post('/', async (req, res) => {
       INSERT INTO users (
         username, password, first_name, middle_name, last_name, 
         address_1, address_2, address_3, city, country, 
-        phone_1, phone_2, email_1, email_2, role_id, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        phone_1, phone_2, email_1, email_2, role_id, client_id, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -105,6 +106,7 @@ router.post('/', async (req, res) => {
       email_1,
       email_2 || null,
       finalRoleId,
+      client_id ? parseInt(client_id) : null,
       created_by || 'System'
     ];
 
@@ -126,9 +128,10 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const query = `
-      SELECT u.*, r.name AS role_name 
+      SELECT u.*, r.name AS role_name, c.name AS client_name 
       FROM users u 
       LEFT JOIN roles r ON u.role_id = r.role_id 
+      LEFT JOIN clients c ON u.client_id = c.client_id
       ORDER BY u.user_id ASC
     `;
     const [rows] = await db.query(query);
@@ -167,7 +170,8 @@ router.put('/:id', async (req, res) => {
       phone_1,
       phone_2,
       email_1,
-      email_2
+      email_2,
+      client_id
     } = data;
 
     const [rows] = await db.execute('SELECT * FROM users WHERE user_id = ?', [userId]);
@@ -197,6 +201,7 @@ router.put('/:id', async (req, res) => {
     const finalEmail2 = email_2 !== undefined ? email_2 : existingUser.email_2;
 
     const role_id = data.role_id !== undefined ? data.role_id : existingUser.role_id;
+    const finalClientId = client_id !== undefined ? (client_id ? parseInt(client_id) : null) : existingUser.client_id;
 
     const query = `
       UPDATE users SET 
@@ -214,7 +219,8 @@ router.put('/:id', async (req, res) => {
         phone_2 = ?, 
         email_1 = ?, 
         email_2 = ?,
-        role_id = ?
+        role_id = ?,
+        client_id = ?
       WHERE user_id = ?
     `;
 
@@ -234,6 +240,7 @@ router.put('/:id', async (req, res) => {
       finalEmail1,
       finalEmail2,
       role_id ? parseInt(role_id) : null,
+      finalClientId,
       userId
     ]);
 
@@ -275,13 +282,28 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
+    // Fetch client modules if client_id is set
+    let clientModules = [];
+    if (user.client_id) {
+      const [modulesRows] = await db.execute(`
+        SELECT mg.name 
+        FROM client_modules cm
+        JOIN module_groups mg ON cm.group_id = mg.group_id
+        WHERE cm.client_id = ? AND cm.enabled = 1
+      `, [user.client_id]);
+      clientModules = modulesRows.map(r => r.name);
+    } else {
+      clientModules = ['ALL']; // Super-Admin has all modules
+    }
+
     // Strip password before returning
     delete user.password;
     res.json({
       message: 'Login successful',
       user: {
         ...user,
-        id: user.user_id
+        id: user.user_id,
+        clientModules: clientModules
       }
     });
   } catch (err) {

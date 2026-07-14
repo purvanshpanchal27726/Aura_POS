@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 /// Stateful Customer Administration Screen.
 /// Renders registered customers in a responsive list (cards on mobile < 750, data table on desktop).
@@ -61,7 +62,7 @@ class _CustomerListingScreenState extends State<CustomerListingScreen> {
   Future<void> fetchCustomers() async {
     try {
       setState(() => isLoading = true);
-      final response = await http.get(Uri.parse(AppConfig.customersApiUrl));
+      final response = await ApiClient.get(Uri.parse(AppConfig.customersApiUrl));
       if (response.statusCode == 200) {
         setState(() {
           customers = json.decode(response.body);
@@ -115,13 +116,13 @@ class _CustomerListingScreenState extends State<CustomerListingScreen> {
       http.Response response;
 
       if (editingCustomerId == null) {
-        response = await http.post(
+        response = await ApiClient.post(
           Uri.parse(AppConfig.customersApiUrl),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(customerData),
         );
       } else {
-        response = await http.put(
+        response = await ApiClient.put(
           Uri.parse('${AppConfig.customersApiUrl}/$editingCustomerId'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(customerData),
@@ -205,7 +206,7 @@ class _CustomerListingScreenState extends State<CustomerListingScreen> {
 
     try {
       setState(() => isLoading = true);
-      final response = await http.delete(Uri.parse('${AppConfig.customersApiUrl}/$id'));
+      final response = await ApiClient.delete(Uri.parse('${AppConfig.customersApiUrl}/$id'));
       
       if (response.statusCode == 200) {
         if (mounted) {
@@ -423,12 +424,12 @@ class _CustomerListingScreenState extends State<CustomerListingScreen> {
                                   _buildTextField(
                                     context: context,
                                     controller: emailCtrl,
-                                    labelText: 'Primary Email',
+                                    labelText: 'Primary Email (Optional)',
                                     placeholder: 'Enter Email',
-                                    isRequired: true,
+                                    isRequired: false,
                                     keyboardType: TextInputType.emailAddress,
                                     validator: (val) {
-                                      if (val == null || val.isEmpty) return 'Primary email is required';
+                                      if (val == null || val.isEmpty) return null;
                                       final emailReg = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                                       if (!emailReg.hasMatch(val.trim())) return 'Enter a valid email address';
                                       return null;

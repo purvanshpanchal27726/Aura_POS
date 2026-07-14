@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 /// Stateful Vendor Administration Screen.
 /// Renders registered vendors in a responsive list (cards on mobile < 750, data table on desktop).
@@ -63,7 +64,7 @@ class _VendorListingScreenState extends State<VendorListingScreen> {
   Future<void> fetchVendors() async {
     try {
       setState(() => isLoading = true);
-      final response = await http.get(Uri.parse(AppConfig.vendorsApiUrl));
+      final response = await ApiClient.get(Uri.parse(AppConfig.vendorsApiUrl));
       if (response.statusCode == 200) {
         setState(() {
           vendors = json.decode(response.body);
@@ -153,13 +154,13 @@ class _VendorListingScreenState extends State<VendorListingScreen> {
       http.Response response;
 
       if (editingVendorId == null) {
-        response = await http.post(
+        response = await ApiClient.post(
           Uri.parse(AppConfig.vendorsApiUrl),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(vendorData),
         );
       } else {
-        response = await http.put(
+        response = await ApiClient.put(
           Uri.parse('${AppConfig.vendorsApiUrl}/$editingVendorId'),
           headers: {'Content-Type': 'application/json'},
           body: json.encode(vendorData),
@@ -244,7 +245,7 @@ class _VendorListingScreenState extends State<VendorListingScreen> {
 
     try {
       setState(() => isLoading = true);
-      final response = await http.delete(Uri.parse('${AppConfig.vendorsApiUrl}/$id'));
+      final response = await ApiClient.delete(Uri.parse('${AppConfig.vendorsApiUrl}/$id'));
       
       if (response.statusCode == 200) {
         if (mounted) {
@@ -476,12 +477,12 @@ class _VendorListingScreenState extends State<VendorListingScreen> {
                                   _buildTextField(
                                     context: context,
                                     controller: emailCtrl,
-                                    labelText: 'Email Address',
+                                    labelText: 'Email Address (Optional)',
                                     placeholder: 'Enter Email',
-                                    isRequired: true,
+                                    isRequired: false,
                                     keyboardType: TextInputType.emailAddress,
                                     validator: (val) {
-                                      if (val == null || val.isEmpty) return 'Email is required';
+                                      if (val == null || val.isEmpty) return null;
                                       final emailReg = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
                                       if (!emailReg.hasMatch(val.trim())) return 'Enter a valid email address';
                                       return null;

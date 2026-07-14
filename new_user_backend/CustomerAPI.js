@@ -24,9 +24,9 @@ router.post('/', async (req, res) => {
       created_by
     } = data;
 
-    if (!first_name || !last_name || !address_1 || !city || !country || !phone_1 || !email) {
+    if (!first_name || !last_name || !address_1 || !city || !country || !phone_1) {
       return res.status(400).json({ 
-        error: 'Missing required fields. Please ensure first_name, last_name, address_1, city, country, phone_1, email are provided.' 
+        error: 'Missing required fields. Please ensure first_name, last_name, address_1, city, country, phone_1 are provided.' 
       });
     }
 
@@ -53,7 +53,7 @@ router.post('/', async (req, res) => {
       country,
       phone_1,
       phone_2 || null,
-      email,
+      email || null,
       created_by || 'System'
     ];
 

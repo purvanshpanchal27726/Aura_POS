@@ -22,6 +22,7 @@ import 'reports_screen.dart';
 import 'connection_setup_screen.dart';
 import 'support_screen.dart';
 import 'license_screen.dart';
+import 'clients_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -228,6 +229,9 @@ class _MainLayoutState extends State<MainLayout> {
     if (widget.initialUser != null) {
       try {
         activeUser = json.decode(widget.initialUser!);
+        if (activeUser != null && activeUser!['client_id'] != null) {
+          AppConfig.setActiveUserClientId(activeUser!['client_id'].toString());
+        }
       } catch (e) {
         debugPrint('Error parsing initial user: $e');
       }
@@ -249,6 +253,7 @@ class _MainLayoutState extends State<MainLayout> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('active_user');
+      AppConfig.setActiveUserClientId(null);
     } catch (e) {
       debugPrint('Error clearing user session: $e');
     }
@@ -365,6 +370,17 @@ class _MainLayoutState extends State<MainLayout> {
     return perm['allowed'] == 1 || perm['allowed'] == true;
   }
 
+  bool _hasModuleGroup(String groupName) {
+    if (activeUser == null) return false;
+    final modules = activeUser!['clientModules'];
+    if (modules == null) return true; // Legacy support
+    if (modules is List) {
+      if (modules.contains('ALL')) return true;
+      return modules.any((m) => m.toString().toLowerCase() == groupName.toLowerCase());
+    }
+    return true;
+  }
+
   List<Widget> get _screens => [
     DashboardScreen(
       onNavigate: (index) {
@@ -388,6 +404,7 @@ class _MainLayoutState extends State<MainLayout> {
     RoleListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(1)), // 13
     const SupportScreen(), // 14
     const LicenseScreen(), // 15
+    ClientsScreen(canModify: activeUser?['client_id'] == null), // 16
   ];
 
   String _getAppBarTitle() {
@@ -424,6 +441,8 @@ class _MainLayoutState extends State<MainLayout> {
         return 'Support & Contact Us';
       case 15:
         return 'AMC & License Management';
+      case 16:
+        return 'Clients Company Management';
       default:
         return 'POS System';
     }
@@ -486,6 +505,11 @@ class _MainLayoutState extends State<MainLayout> {
         onLoginSuccess: (user) {
           setState(() {
             activeUser = user;
+            if (user['client_id'] != null) {
+              AppConfig.setActiveUserClientId(user['client_id'].toString());
+            } else {
+              AppConfig.setActiveUserClientId(null);
+            }
             _currentIndex = 0; // Go to dashboard
           });
           _saveUser(user);
@@ -600,7 +624,7 @@ class _MainLayoutState extends State<MainLayout> {
                       },
                     ),
                     
-                    if (_hasPermission(1) || _hasPermission(2) || _hasPermission(3))
+                    if ((_hasPermission(1) || _hasPermission(2) || _hasPermission(3)) && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
                       ExpansionTile(
                         leading: Icon(Icons.layers, color: Color(0xFF64748B)),
                         title: Text('Masters', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -689,7 +713,7 @@ class _MainLayoutState extends State<MainLayout> {
                         ],
                       ),
 
-                    if (_hasPermission(1))
+                    if (_hasPermission(1) && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
                       ListTile(
                         leading: Icon(Icons.settings_outlined, color: Color(0xFF64748B)),
                         title: Text('Setting'),
@@ -700,7 +724,7 @@ class _MainLayoutState extends State<MainLayout> {
                         },
                       ),
 
-                    if (_hasPermission(4))
+                    if (_hasPermission(4) && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
                       ListTile(
                         leading: Icon(Icons.shopping_cart_outlined, color: Color(0xFF64748B)),
                         title: Text('Sell'),
@@ -711,7 +735,7 @@ class _MainLayoutState extends State<MainLayout> {
                         },
                       ),
                     
-                    if (_hasPermission(5) && !AppConfig.isRestaurantMode)
+                    if (_hasPermission(5) && !AppConfig.isRestaurantMode && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
                       ListTile(
                         leading: Icon(Icons.receipt_long_outlined, color: Color(0xFF64748B)),
                         title: Text('Purchase'),
@@ -722,7 +746,7 @@ class _MainLayoutState extends State<MainLayout> {
                         },
                       ),
 
-                    if (_hasPermission(4))
+                    if (_hasPermission(4) && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
                       ListTile(
                         leading: Icon(Icons.receipt, color: Color(0xFF64748B)),
                         title: Text('Receipt'),
@@ -733,13 +757,24 @@ class _MainLayoutState extends State<MainLayout> {
                         },
                       ),
                     
-                    if (_hasPermission(6))
+                    if (_hasPermission(6) && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
                       ListTile(
                         leading: Icon(Icons.assessment_outlined, color: Color(0xFF64748B)),
                         title: Text('Reports'),
                         selected: _currentIndex == 12,
                         onTap: () {
                           setState(() => _currentIndex = 12);
+                          Navigator.pop(context);
+                        },
+                      ),
+
+                    if (activeUser?['client_id'] == null && _hasModuleGroup('ALL'))
+                      ListTile(
+                        leading: const Icon(Icons.business, color: Color(0xFF64748B)),
+                        title: const Text('Clients'),
+                        selected: _currentIndex == 16,
+                        onTap: () {
+                          setState(() => _currentIndex = 16);
                           Navigator.pop(context);
                         },
                       ),

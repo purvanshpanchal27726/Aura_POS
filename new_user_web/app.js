@@ -427,6 +427,12 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Setting',
       onTransition: () => fetchPermissionMatrix()
     },
+    'clients': {
+      menu: document.getElementById('menuClients'),
+      view: document.getElementById('screenClients'),
+      title: 'Client Management',
+      onTransition: () => fetchClients()
+    },
     'role_listing': {
       menu: document.getElementById('menuRoleListing'),
       view: document.getElementById('screenRoleListing'),
@@ -450,6 +456,17 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeUser = null;
   let allUsersList = [];
   let permissionsData = [];
+
+  // Global fetch interceptor to append activeUser's client_id in x-client-id header
+  const originalFetch = window.fetch;
+  window.fetch = function(url, options) {
+    options = options || {};
+    options.headers = options.headers || {};
+    if (activeUser && activeUser.client_id) {
+      options.headers['x-client-id'] = activeUser.client_id.toString();
+    }
+    return originalFetch(url, options);
+  };
 
   const moduleForScreen = (screenName) => {
     if (['user_listing', 'settings', 'role_listing'].includes(screenName)) return 1;
@@ -507,15 +524,50 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    const masterGroup = document.getElementById('groupMasters');
-    if (masterGroup) {
-      const visibleChild = Array.from(masterGroup.querySelectorAll('.drawer-submenu .drawer-item'))
-        .some(item => item.style.display !== 'none');
-      masterGroup.style.display = visibleChild ? 'block' : 'none';
+    // Client-level module group gating
+    const clientModules = activeUser.clientModules || ['ALL'];
+    const hasAll = clientModules.includes('ALL');
+    const hasKirana = hasAll || clientModules.includes('Kirana') || clientModules.includes('POS');
+
+    // Super-Admin only view: Clients menu is only visible to super-admin (no client_id and clientModules = ALL)
+    const menuClients = document.getElementById('menuClients');
+    if (menuClients) {
+      menuClients.style.display = (hasAll && !activeUser.client_id) ? 'flex' : 'none';
     }
 
-    if (!checkScreenPermission(Object.keys(screens).find(key => screens[key].view?.style.display === 'block'))) {
-      switchScreen('dashboard');
+    // Gate Kirana / POS menu items
+    const kiranaMenus = [
+      document.getElementById('menuSales'),
+      document.getElementById('menuPurchase'),
+      document.getElementById('menuReceipt'),
+      document.getElementById('menuReports')
+    ];
+
+    if (!hasKirana) {
+      kiranaMenus.forEach(menuEl => {
+        if (menuEl) menuEl.style.display = 'none';
+      });
+    }
+
+    const masterGroup = document.getElementById('groupMasters');
+    if (masterGroup) {
+      if (!hasKirana) {
+        masterGroup.style.display = 'none';
+      } else {
+        const visibleChild = Array.from(masterGroup.querySelectorAll('.drawer-submenu .drawer-item'))
+          .some(item => item.style.display !== 'none');
+        masterGroup.style.display = visibleChild ? 'block' : 'none';
+      }
+    }
+
+    const activeScreenKey = Object.keys(screens).find(key => screens[key].view?.style.display === 'block');
+    if (activeScreenKey) {
+      const isKiranaScreen = ['item', 'category', 'unit', 'tax', 'vendor_listing', 'sales', 'purchase', 'receipt', 'reports'].includes(activeScreenKey);
+      if (isKiranaScreen && !hasKirana) {
+        switchScreen('dashboard');
+      } else if (!checkScreenPermission(activeScreenKey)) {
+        switchScreen('dashboard');
+      }
     }
 
     // Update side drawer header text to show appropriate Role name
@@ -589,6 +641,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allUsersList = await usersRes.json();
         populateUserSelector();
       }
+      fetchClients();
     } catch (err) {
       console.error('Error fetching permissions:', err);
     }
@@ -803,6 +856,11 @@ document.addEventListener('DOMContentLoaded', () => {
       selectRole.value = user.role_id || '';
     }
 
+    const selectClient = document.getElementById('user_client_id');
+    if (selectClient) {
+      selectClient.value = user.client_id || '';
+    }
+
     // Hide username and password fields for edit mode
     const credentialSection = document.getElementById('credentialSection');
     if (credentialSection) {
@@ -877,6 +935,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const selectRole = document.getElementById('user_role_id');
     if (selectRole) {
       selectRole.value = '';
+    }
+
+    const selectClient = document.getElementById('user_client_id');
+    if (selectClient) {
+      selectClient.value = '';
     }
 
     if (btnTogglePassword) {
@@ -3284,6 +3347,248 @@ document.addEventListener('DOMContentLoaded', () => {
         alert(`Role ${id ? 'updated' : 'registered'} successfully!`);
         closeRoleModal();
         fetchRoles();
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+      }
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 🏢 CLIENTS MANAGEMENT (TENANTS)
+  // ─────────────────────────────────────────────────────────────────────────
+  const clientTableBody = document.getElementById('clientTableBody');
+  const clientForm = document.getElementById('clientForm');
+  const clientIdInput = document.getElementById('client_id');
+  const clientSubmitBtn = document.getElementById('btnClientSave');
+
+  const clientModal = document.getElementById('clientModal');
+  const btnNewClient = document.getElementById('btnNewClient');
+  const btnRefreshClients = document.getElementById('btnRefreshClients');
+  const clientModalClose = document.getElementById('clientModalClose');
+  const btnClientCancel = document.getElementById('btnClientCancel');
+
+  let allClients = [];
+
+  const fetchClients = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/clients'));
+      if (!response.ok) throw new Error('Failed to fetch clients');
+      allClients = await response.json();
+      renderClients(allClients);
+      populateClientDropdown();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const populateClientDropdown = () => {
+    const userClientSelect = document.getElementById('user_client_id');
+    if (userClientSelect) {
+      userClientSelect.innerHTML = '<option value="">Super Admin (All Clients)</option>' +
+        allClients.map(c => `<option value="${c.client_id}">${c.name}</option>`).join('');
+    }
+  };
+
+  const renderClients = (list) => {
+    if (!clientTableBody) return;
+    if (list.length === 0) {
+      clientTableBody.innerHTML = `
+        <tr>
+          <td colspan="7" class="empty-state">No clients registered yet.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    clientTableBody.innerHTML = list.map(c => {
+      const statusText = c.active ? 'Active' : 'Inactive';
+      const statusClass = c.active ? 'status-active' : 'status-inactive';
+      const contactInfo = `
+        <div><strong>Phone:</strong> ${c.phone || 'N/A'}</div>
+        <div><strong>Email:</strong> ${c.email || 'N/A'}</div>
+      `;
+
+      return `
+        <tr>
+          <td>${c.client_id}</td>
+          <td>
+            <strong>${c.name}</strong>
+            ${c.logo_url ? `<br><img src="${c.logo_url}" style="height:24px; max-width:80px; margin-top:4px; object-fit:contain;">` : ''}
+          </td>
+          <td>${contactInfo}</td>
+          <td>${c.gst_no || 'N/A'}</td>
+          <td>${c.address || 'N/A'}</td>
+          <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+          <td>
+            <button type="button" class="btn-icon btn-edit-client" data-id="${c.client_id}" title="Edit Client">
+              <span class="material-icons">edit</span>
+            </button>
+            <button type="button" class="btn-icon btn-delete-client" data-id="${c.client_id}" title="Deactivate Client">
+              <span class="material-icons">delete</span>
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Attach click listeners to Edit and Delete buttons inside clients list
+    document.querySelectorAll('.btn-edit-client').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-id');
+        openEditClientModal(id);
+      });
+    });
+
+    document.querySelectorAll('.btn-delete-client').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        if (confirm('Are you sure you want to deactivate this client?')) {
+          try {
+            const res = await fetch(getApiUrl(`/api/clients/${id}`), { method: 'DELETE' });
+            if (!res.ok) throw new Error('Failed to deactivate client');
+            showToast('Client Deactivated', 'The client was successfully deactivated.', 'success');
+            fetchClients();
+          } catch (err) {
+            showToast('Error', err.message, 'danger');
+          }
+        }
+      });
+    });
+  };
+
+  const closeClientModal = () => {
+    if (clientModal) {
+      clientModal.style.display = 'none';
+    }
+  };
+
+  const openEditClientModal = async (id) => {
+    const client = allClients.find(c => c.client_id == id);
+    if (!client) return;
+
+    clientIdInput.value = client.client_id;
+    document.getElementById('client_name').value = client.name || '';
+    document.getElementById('client_gst_no').value = client.gst_no || '';
+    document.getElementById('client_phone').value = client.phone || '';
+    document.getElementById('client_email').value = client.email || '';
+    document.getElementById('client_logo_url').value = client.logo_url || '';
+    document.getElementById('client_address').value = client.address || '';
+
+    // Fetch and check module assignments for this client
+    try {
+      const response = await fetch(getApiUrl(`/api/clients/${id}/modules`));
+      if (response.ok) {
+        const modules = await response.json();
+        const activeIds = modules.map(m => m.group_id);
+        document.getElementById('client_mod_kirana').checked = activeIds.includes(1);
+        document.getElementById('client_mod_restaurant').checked = activeIds.includes(2);
+        document.getElementById('client_mod_hotel').checked = activeIds.includes(3);
+      }
+    } catch (err) {
+      console.error('Error fetching client modules:', err);
+    }
+
+    if (clientModal) {
+      clientModal.querySelector('h2').textContent = 'Edit Client Company';
+      clientModal.style.display = 'flex';
+    }
+  };
+
+  if (btnNewClient) {
+    btnNewClient.addEventListener('click', () => {
+      clientForm.reset();
+      clientIdInput.value = '';
+      document.getElementById('client_mod_kirana').checked = true;
+      document.getElementById('client_mod_restaurant').checked = false;
+      document.getElementById('client_mod_hotel').checked = false;
+      if (clientModal) {
+        clientModal.querySelector('h2').textContent = 'Register New Client';
+        clientModal.style.display = 'flex';
+      }
+    });
+  }
+
+  if (btnRefreshClients) {
+    btnRefreshClients.addEventListener('click', () => {
+      fetchClients();
+    });
+  }
+
+  if (clientModalClose) clientModalClose.addEventListener('click', closeClientModal);
+  if (btnClientCancel) btnClientCancel.addEventListener('click', closeClientModal);
+
+  window.addEventListener('click', (e) => {
+    if (e.target === clientModal) {
+      closeClientModal();
+    }
+  });
+
+  if (clientForm) {
+    clientForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const id = clientIdInput.value;
+      const name = document.getElementById('client_name').value.trim();
+      const gst_no = document.getElementById('client_gst_no').value.trim();
+      const phone = document.getElementById('client_phone').value.trim();
+      const email = document.getElementById('client_email').value.trim();
+      const logo_url = document.getElementById('client_logo_url').value.trim();
+      const address = document.getElementById('client_address').value.trim();
+
+      if (!name) {
+        alert('Company name is required');
+        return;
+      }
+
+      const clientData = { name, gst_no, phone, email, logo_url, address, active: 1 };
+      const url = id ? getApiUrl(`/api/clients/${id}`) : getApiUrl('/api/clients');
+      const method = id ? 'PUT' : 'POST';
+
+      try {
+        const response = await fetch(url, {
+          method: method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(clientData)
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Failed to save client');
+        }
+
+        const resData = await response.json();
+        const clientId = id || resData.client_id;
+
+        // Save module subscription assignments
+        const groupIds = [];
+        if (document.getElementById('client_mod_kirana').checked) groupIds.push(1);
+        if (document.getElementById('client_mod_restaurant').checked) groupIds.push(2);
+        if (document.getElementById('client_mod_hotel').checked) groupIds.push(3);
+
+        const modulesResponse = await fetch(getApiUrl(`/api/clients/${clientId}/modules`), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ groupIds })
+        });
+
+        if (!modulesResponse.ok) {
+          throw new Error('Client saved, but module subscription mapping failed.');
+        }
+
+        showToast('Client Saved', `Client ${name} saved successfully!`, 'success');
+        closeClientModal();
+        fetchClients();
+
+        // If updating the active user's own client, we reload sidebar module view dynamically
+        if (activeUser && activeUser.client_id == clientId) {
+          const modRes = await fetch(getApiUrl(`/api/clients/${clientId}/modules`));
+          if (modRes.ok) {
+            const modules = await modRes.json();
+            activeUser.clientModules = modules.map(m => m.name);
+            localStorage.setItem('pos_active_user', JSON.stringify(activeUser));
+            applyNavigationPermissions();
+          }
+        }
       } catch (err) {
         alert(`Error: ${err.message}`);
       }

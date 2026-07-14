@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -5,6 +6,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// It dynamically resolves the API Base URL based on the current operating system/platform.
 class AppConfig {
   static String? _customHost;
+  static String? _activeUserClientId;
+
+  static String? get activeUserClientId => _activeUserClientId;
+  
+  static void setActiveUserClientId(String? val) {
+    _activeUserClientId = val;
+  }
 
   // ─────────────────────────────────────────────────────────────────────────
   // 🌐 PRODUCTION: Render.com backend URL  (24/7 hosted — default)
@@ -34,6 +42,18 @@ class AppConfig {
       final prefs = await SharedPreferences.getInstance();
       _customHost = prefs.getString('backend_host');
       _isRestaurantMode = prefs.getBool('is_restaurant_mode') ?? false;
+      
+      final savedUser = prefs.getString('active_user');
+      if (savedUser != null) {
+        try {
+          final Map<String, dynamic> decoded = json.decode(savedUser);
+          if (decoded['client_id'] != null) {
+            _activeUserClientId = decoded['client_id'].toString();
+          }
+        } catch (e) {
+          debugPrint('Error parsing stored active_user client_id: $e');
+        }
+      }
     } catch (e) {
       debugPrint('Error loading custom backend host: $e');
     }
