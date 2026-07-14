@@ -436,6 +436,30 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Client Management',
       onTransition: () => fetchClients()
     },
+    'rest_tables': {
+      menu: document.getElementById('menuRestTables'),
+      view: document.getElementById('screenRestTables'),
+      title: 'Dine-in Tables',
+      onTransition: () => fetchRestTables()
+    },
+    'rest_menu': {
+      menu: document.getElementById('menuRestMenu'),
+      view: document.getElementById('screenRestMenu'),
+      title: 'Restaurant Menu',
+      onTransition: () => loadRestMenuTab()
+    },
+    'rest_orders': {
+      menu: document.getElementById('menuRestOrders'),
+      view: document.getElementById('screenRestOrders'),
+      title: 'Rest. Orders & KOT',
+      onTransition: () => fetchRestOrders()
+    },
+    'rest_kds': {
+      menu: document.getElementById('menuRestKds'),
+      view: document.getElementById('screenRestKds'),
+      title: 'Kitchen Queue (KDS)',
+      onTransition: () => fetchKdsQueue()
+    },
     'role_listing': {
       menu: document.getElementById('menuRoleListing'),
       view: document.getElementById('screenRoleListing'),
@@ -551,6 +575,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (menuEl) menuEl.style.display = 'none';
       });
     }
+
+    // Gate Restaurant menu items
+    const hasRestaurant = hasAll || clientModules.includes('Restaurant');
+    const restMenus = [
+      document.getElementById('menuRestTables'),
+      document.getElementById('menuRestMenu'),
+      document.getElementById('menuRestOrders'),
+      document.getElementById('menuRestKds')
+    ];
+
+    restMenus.forEach(menuEl => {
+      if (menuEl) {
+        menuEl.style.display = hasRestaurant ? 'flex' : 'none';
+      }
+    });
 
     const masterGroup = document.getElementById('groupMasters');
     if (masterGroup) {
@@ -6050,6 +6089,845 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 🍴 RESTAURANT MODULE CLIENT LOGIC
+  // ─────────────────────────────────────────────────────────────────────────
+  let allTables = [];
+  let allMenuCategories = [];
+  let allMenuItems = [];
+  let allRestOrders = [];
+  let currentOrderItems = [];
+
+  // --- TABLES MASTER ---
+  const fetchRestTables = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/restaurant/tables'));
+      if (!response.ok) throw new Error('Failed to fetch restaurant tables');
+      allTables = await response.json();
+      renderRestTables();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderRestTables = () => {
+    const container = document.getElementById('tableGridContainer');
+    if (!container) return;
+    
+    if (allTables.length === 0) {
+      container.innerHTML = `<div style="grid-column: 1/-1;" class="empty-state">No tables registered yet. Create one above!</div>`;
+      return;
+    }
+
+    container.innerHTML = allTables.map(t => {
+      let statusColor = '#10B981'; // Available - Green
+      if (t.status === 'occupied') statusColor = '#EF4444'; // Occupied - Red
+      else if (t.status === 'reserved') statusColor = '#3B82F6'; // Reserved - Blue
+
+      return `
+        <div class="card table-card" style="padding: 1.5rem; text-align: center; border-radius: 12px; border: 1.5px solid ${statusColor}; position: relative; background: var(--card-bg);">
+          <span class="material-icons" style="font-size: 3rem; color: ${statusColor}; margin-bottom: 0.5rem;">table_restaurant</span>
+          <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--text-main);">${t.table_no}</h3>
+          <p style="margin: 4px 0; font-size: 0.85rem; color: var(--text-muted);">${t.section} • Capacity: ${t.capacity}</p>
+          <div style="margin-top: 0.75rem; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; color: ${statusColor};">${t.status}</div>
+          
+          <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center;">
+            <button class="btn btn-secondary btn-table-edit" data-id="${t.table_id}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; justify-content: center;"><span class="material-icons" style="font-size: 1rem;">edit</span></button>
+            <button class="btn btn-danger btn-table-delete" data-id="${t.table_id}" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; display: inline-flex; align-items: center; justify-content: center;"><span class="material-icons" style="font-size: 1rem;">delete</span></button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Bind edit/delete actions
+    container.querySelectorAll('.btn-table-edit').forEach(btn => {
+      btn.addEventListener('click', () => openTableModal(btn.getAttribute('data-id')));
+    });
+    container.querySelectorAll('.btn-table-delete').forEach(btn => {
+      btn.addEventListener('click', () => deleteTable(btn.getAttribute('data-id')));
+    });
+  };
+
+  const tableModal = document.getElementById('tableModal');
+  const btnNewTable = document.getElementById('btnNewTable');
+  const tableForm = document.getElementById('tableForm');
+
+  const openTableModal = (id = null) => {
+    if (!tableModal) return;
+    tableForm.reset();
+    document.getElementById('table_id').value = id || '';
+    if (id) {
+      const table = allTables.find(t => t.table_id == id);
+      if (table) {
+        document.getElementById('table_no').value = table.table_no;
+        document.getElementById('table_section').value = table.section;
+        document.getElementById('table_capacity').value = table.capacity;
+      }
+    }
+    tableModal.style.display = 'flex';
+  };
+
+  if (btnNewTable) btnNewTable.addEventListener('click', () => openTableModal());
+  if (document.getElementById('tableModalClose')) {
+    document.getElementById('tableModalClose').addEventListener('click', () => { tableModal.style.display = 'none'; });
+  }
+  if (document.getElementById('btnTableCancel')) {
+    document.getElementById('btnTableCancel').addEventListener('click', () => { tableModal.style.display = 'none'; });
+  }
+
+  if (tableForm) {
+    tableForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('table_id').value;
+      const data = {
+        table_no: document.getElementById('table_no').value.trim(),
+        section: document.getElementById('table_section').value,
+        capacity: parseInt(document.getElementById('table_capacity').value) || 4
+      };
+
+      try {
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/restaurant/tables/${id}` : '/api/restaurant/tables';
+        const response = await fetch(getApiUrl(url), {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to save table');
+        tableModal.style.display = 'none';
+        showToast('Table Saved', 'Restaurant dining table configuration updated successfully!', 'success');
+        fetchRestTables();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+  const deleteTable = async (id) => {
+    if (!confirm('Are you sure you want to delete this table?')) return;
+    try {
+      const response = await fetch(getApiUrl(`/api/restaurant/tables/${id}`), { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete table');
+      showToast('Table Deleted', 'Table de-registered successfully', 'success');
+      fetchRestTables();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+
+  // --- RESTAURANT MENU TABS & LISTINGS ---
+  let activeMenuTab = 'categories';
+  const sectionMenuCategories = document.getElementById('sectionMenuCategories');
+  const sectionMenuItems = document.getElementById('sectionMenuItems');
+  const btnTabMenuCategories = document.getElementById('btnTabMenuCategories');
+  const btnTabMenuItems = document.getElementById('btnTabMenuItems');
+
+  const loadRestMenuTab = () => {
+    if (activeMenuTab === 'categories') {
+      if (btnTabMenuCategories) btnTabMenuCategories.className = 'btn btn-primary';
+      if (btnTabMenuItems) btnTabMenuItems.className = 'btn btn-secondary';
+      if (sectionMenuCategories) sectionMenuCategories.style.display = 'block';
+      if (sectionMenuItems) sectionMenuItems.style.display = 'none';
+      fetchMenuCategories();
+    } else {
+      if (btnTabMenuCategories) btnTabMenuCategories.className = 'btn btn-secondary';
+      if (btnTabMenuItems) btnTabMenuItems.className = 'btn btn-primary';
+      if (sectionMenuCategories) sectionMenuCategories.style.display = 'none';
+      if (sectionMenuItems) sectionMenuItems.style.display = 'block';
+      fetchMenuItems();
+    }
+  };
+
+  if (btnTabMenuCategories) btnTabMenuCategories.addEventListener('click', () => { activeMenuTab = 'categories'; loadRestMenuTab(); });
+  if (btnTabMenuItems) btnTabMenuItems.addEventListener('click', () => { activeMenuTab = 'items'; loadRestMenuTab(); });
+
+  const fetchMenuCategories = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/restaurant/menu/categories'));
+      if (!response.ok) throw new Error('Failed to fetch categories');
+      allMenuCategories = await response.json();
+      renderMenuCategories();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderMenuCategories = () => {
+    const tbody = document.getElementById('menuCategoryTableBody');
+    if (!tbody) return;
+    if (allMenuCategories.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No categories registered yet.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = allMenuCategories.map(c => `
+      <tr>
+        <td><strong>${c.category_id}</strong></td>
+        <td><strong>${c.name}</strong></td>
+        <td>${c.image_url || 'None'}</td>
+        <td style="text-align: center;">
+          <div class="table-actions" style="justify-content: center;">
+            <button class="btn btn-secondary btn-category-edit" data-id="${c.category_id}" style="padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; justify-content: center;"><span class="material-icons" style="font-size: 1rem;">edit</span></button>
+            <button class="btn btn-danger btn-category-delete" data-id="${c.category_id}" style="padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; justify-content: center;"><span class="material-icons" style="font-size: 1rem;">delete</span></button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('.btn-category-edit').forEach(btn => {
+      btn.addEventListener('click', () => openCategoryModal(btn.getAttribute('data-id')));
+    });
+    tbody.querySelectorAll('.btn-category-delete').forEach(btn => {
+      btn.addEventListener('click', () => deleteCategory(btn.getAttribute('data-id')));
+    });
+  };
+
+  const menuCategoryModal = document.getElementById('menuCategoryModal');
+  const btnNewMenuCategory = document.getElementById('btnNewMenuCategory');
+  const menuCategoryForm = document.getElementById('menuCategoryForm');
+
+  const openCategoryModal = (id = null) => {
+    if (!menuCategoryModal) return;
+    menuCategoryForm.reset();
+    document.getElementById('menu_category_id').value = id || '';
+    if (id) {
+      const cat = allMenuCategories.find(c => c.category_id == id);
+      if (cat) {
+        document.getElementById('menu_category_name').value = cat.name;
+        document.getElementById('menu_category_image').value = cat.image_url || '';
+      }
+    }
+    menuCategoryModal.style.display = 'flex';
+  };
+
+  if (btnNewMenuCategory) btnNewMenuCategory.addEventListener('click', () => openCategoryModal());
+  if (document.getElementById('menuCategoryModalClose')) {
+    document.getElementById('menuCategoryModalClose').addEventListener('click', () => { menuCategoryModal.style.display = 'none'; });
+  }
+  if (document.getElementById('btnMenuCategoryCancel')) {
+    document.getElementById('btnMenuCategoryCancel').addEventListener('click', () => { menuCategoryModal.style.display = 'none'; });
+  }
+
+  if (menuCategoryForm) {
+    menuCategoryForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('menu_category_id').value;
+      const data = {
+        name: document.getElementById('menu_category_name').value.trim(),
+        image_url: document.getElementById('menu_category_image').value.trim() || null
+      };
+
+      try {
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/restaurant/menu/categories/${id}` : '/api/restaurant/menu/categories';
+        const response = await fetch(getApiUrl(url), {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to save category');
+        menuCategoryModal.style.display = 'none';
+        showToast('Category Saved', 'Menu category created successfully!', 'success');
+        fetchMenuCategories();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+  const deleteCategory = async (id) => {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    try {
+      const response = await fetch(getApiUrl(`/api/restaurant/menu/categories/${id}`), { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete category');
+      showToast('Category Deleted', 'Category removed successfully', 'success');
+      fetchMenuCategories();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // --- MENU ITEMS ---
+  const fetchMenuItems = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/restaurant/menu/items'));
+      if (!response.ok) throw new Error('Failed to fetch items');
+      allMenuItems = await response.json();
+      renderMenuItems();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderMenuItems = () => {
+    const tbody = document.getElementById('menuItemTableBody');
+    if (!tbody) return;
+    if (allMenuItems.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No menu items registered yet.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = allMenuItems.map(i => `
+      <tr>
+        <td><strong>${i.name}</strong><br><small style="color: var(--text-muted);">${i.description || 'No description'}</small></td>
+        <td>${i.category_name || 'Unassigned'}</td>
+        <td>₹${parseFloat(i.price).toFixed(2)}</td>
+        <td><span class="status-badge" style="background: ${i.is_veg ? '#d1fae5; color: #065f46;' : '#fee2e2; color: #991b1b;'}">${i.is_veg ? 'VEG' : 'NON-VEG'}</span></td>
+        <td>${i.preparation_time} mins</td>
+        <td>${i.kitchen_dept}</td>
+        <td>${parseFloat(i.gst_percent).toFixed(1)}%</td>
+        <td style="text-align: center;">
+          <div class="table-actions" style="justify-content: center;">
+            <button class="btn btn-secondary btn-item-edit" data-id="${i.menu_item_id}" style="padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; justify-content: center;"><span class="material-icons" style="font-size: 1rem;">edit</span></button>
+            <button class="btn btn-danger btn-item-delete" data-id="${i.menu_item_id}" style="padding: 0.25rem 0.5rem; display: inline-flex; align-items: center; justify-content: center;"><span class="material-icons" style="font-size: 1rem;">delete</span></button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    tbody.querySelectorAll('.btn-item-edit').forEach(btn => {
+      btn.addEventListener('click', () => openMenuItemModal(btn.getAttribute('data-id')));
+    });
+    tbody.querySelectorAll('.btn-item-delete').forEach(btn => {
+      btn.addEventListener('click', () => deleteMenuItem(btn.getAttribute('data-id')));
+    });
+  };
+
+  const menuItemModal = document.getElementById('menuItemModal');
+  const btnNewMenuItem = document.getElementById('btnNewMenuItem');
+  const menuItemForm = document.getElementById('menuItemForm');
+
+  const openMenuItemModal = (id = null) => {
+    if (!menuItemModal) return;
+    menuItemForm.reset();
+    
+    // Populate Categories dropdown inside form
+    const catSelect = document.getElementById('menu_item_category');
+    if (catSelect) {
+      catSelect.innerHTML = '<option value="">Select Category</option>' +
+        allMenuCategories.map(c => `<option value="${c.category_id}">${c.name}</option>`).join('');
+    }
+
+    document.getElementById('menu_item_id').value = id || '';
+    if (id) {
+      const item = allMenuItems.find(i => i.menu_item_id == id);
+      if (item) {
+        document.getElementById('menu_item_name').value = item.name;
+        document.getElementById('menu_item_category').value = item.category_id || '';
+        document.getElementById('menu_item_price').value = item.price;
+        document.getElementById('menu_item_gst').value = item.gst_percent;
+        document.getElementById('menu_item_prep').value = item.preparation_time;
+        document.getElementById('menu_item_dept').value = item.kitchen_dept;
+        document.getElementById('menu_item_desc').value = item.description || '';
+        document.getElementById('menu_item_image').value = item.image_url || '';
+        document.getElementById('menu_item_veg').checked = item.is_veg === 1 || item.is_veg === true;
+        document.getElementById('menu_item_available').checked = item.available === 1 || item.available === true;
+      }
+    }
+    menuItemModal.style.display = 'flex';
+  };
+
+  if (btnNewMenuItem) btnNewMenuItem.addEventListener('click', async () => {
+    await fetchMenuCategories();
+    openMenuItemModal();
+  });
+  if (document.getElementById('menuItemModalClose')) {
+    document.getElementById('menuItemModalClose').addEventListener('click', () => { menuItemModal.style.display = 'none'; });
+  }
+  if (document.getElementById('btnMenuItemCancel')) {
+    document.getElementById('btnMenuItemCancel').addEventListener('click', () => { menuItemModal.style.display = 'none'; });
+  }
+
+  if (menuItemForm) {
+    menuItemForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('menu_item_id').value;
+      const data = {
+        name: document.getElementById('menu_item_name').value.trim(),
+        category_id: parseInt(document.getElementById('menu_item_category').value) || null,
+        price: parseFloat(document.getElementById('menu_item_price').value) || 0,
+        gst_percent: parseFloat(document.getElementById('menu_item_gst').value) || 5.00,
+        preparation_time: parseInt(document.getElementById('menu_item_prep').value) || 10,
+        kitchen_dept: document.getElementById('menu_item_dept').value,
+        description: document.getElementById('menu_item_desc').value.trim() || '',
+        image_url: document.getElementById('menu_item_image').value.trim() || null,
+        is_veg: document.getElementById('menu_item_veg').checked ? 1 : 0,
+        available: document.getElementById('menu_item_available').checked ? 1 : 0
+      };
+
+      try {
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/restaurant/menu/items/${id}` : '/api/restaurant/menu/items';
+        const response = await fetch(getApiUrl(url), {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to save menu item');
+        menuItemModal.style.display = 'none';
+        showToast('Item Saved', 'Menu dish item updated successfully!', 'success');
+        fetchMenuItems();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+  const deleteMenuItem = async (id) => {
+    if (!confirm('Are you sure you want to delete this menu item?')) return;
+    try {
+      const response = await fetch(getApiUrl(`/api/restaurant/menu/items/${id}`), { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to delete item');
+      showToast('Item Deleted', 'Menu item removed successfully', 'success');
+      fetchMenuItems();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+
+  // --- RESTAURANT ORDERS & BILLING ---
+  const fetchRestOrders = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/restaurant/orders'));
+      if (!response.ok) throw new Error('Failed to fetch restaurant orders');
+      allRestOrders = await response.json();
+      renderRestOrders();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderRestOrders = () => {
+    const tbody = document.getElementById('restOrdersTableBody');
+    if (!tbody) return;
+    if (allRestOrders.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No active orders placed yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = allRestOrders.map(o => {
+      const dateVal = new Date(o.created_date);
+      const dateStr = `${dateVal.getHours().toString().padStart(2,'0')}:${dateVal.getMinutes().toString().padStart(2,'0')}`;
+      
+      let statusColor = '#F59E0B'; // Pending/accepted - Amber
+      if (o.status === 'ready' || o.status === 'served') statusColor = '#10B981'; // Green
+      else if (o.status === 'billed') statusColor = '#6366F1'; // Blue
+      else if (o.status === 'cancelled') statusColor = '#EF4444'; // Red
+
+      const getOrderAction = () => {
+        if (o.status === 'pending' || o.status === 'accepted' || o.status === 'preparing') {
+          return `<button class="btn btn-secondary btn-order-kot" data-id="${o.order_id}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Add KOT</button>`;
+        }
+        if (o.status === 'ready' || o.status === 'served') {
+          return `<button class="btn btn-primary btn-order-bill" data-id="${o.order_id}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Generate Bill</button>`;
+        }
+        return `<span style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">Settled</span>`;
+      };
+
+      return `
+        <tr>
+          <td><strong>#OR-${o.order_id}</strong></td>
+          <td style="text-transform: uppercase;"><strong>${o.order_type}</strong></td>
+          <td>${o.table_no ? `<strong>Table ${o.table_no}</strong> (${o.section})` : 'Parcel/Del.'}</td>
+          <td>${o.customer_name || 'Walk-in Guest'}</td>
+          <td><strong>₹${parseFloat(o.total).toFixed(2)}</strong></td>
+          <td><span class="status-badge" style="background: ${statusColor}22; color: ${statusColor}; font-weight: bold; text-transform: uppercase;">${o.status}</span></td>
+          <td>${dateStr}</td>
+          <td style="text-align: center;">
+            <div style="display: flex; gap: 0.5rem; justify-content: center; align-items: center;">
+              ${getOrderAction()}
+              ${o.status !== 'cancelled' && o.status !== 'billed' ? `<button class="btn btn-danger btn-order-cancel" data-id="${o.order_id}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; display: inline-flex; align-items: center; justify-content: center;"><span class="material-icons" style="font-size: 1rem;">cancel</span></button>` : ''}
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-order-kot').forEach(btn => {
+      btn.addEventListener('click', () => openRestOrderModal(btn.getAttribute('data-id')));
+    });
+    tbody.querySelectorAll('.btn-order-bill').forEach(btn => {
+      btn.addEventListener('click', () => checkoutOrder(btn.getAttribute('data-id')));
+    });
+    tbody.querySelectorAll('.btn-order-cancel').forEach(btn => {
+      btn.addEventListener('click', () => updateOrderStatus(btn.getAttribute('data-id'), 'cancelled'));
+    });
+  };
+
+  const updateOrderStatus = async (id, status) => {
+    if (status === 'cancelled' && !confirm('Are you sure you want to cancel this order?')) return;
+    try {
+      const response = await fetch(getApiUrl(`/api/restaurant/orders/${id}/status`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (!response.ok) throw new Error('Failed to update status');
+      showToast('Order Updated', `Order status updated to ${status}`, 'success');
+      fetchRestOrders();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const checkoutOrder = async (id) => {
+    const order = allRestOrders.find(o => o.order_id == id);
+    if (!order) return;
+
+    if (!confirm(`Generate final bill checkout for Order #OR-${id} of ₹${parseFloat(order.total).toFixed(2)}?`)) return;
+
+    const salesInvoiceData = {
+      customer_id: order.customer_id,
+      gross: order.total,
+      tax: parseFloat(order.total) * 0.05,
+      total: parseFloat(order.total) * 1.05,
+      payment_method: 'Cash',
+      items: order.items.map(i => ({
+        item_id: null,
+        item_name: i.item_name,
+        quantity: i.quantity,
+        item_amount: i.price,
+        tax_amount: parseFloat(i.price) * 0.05
+      }))
+    };
+
+    try {
+      const response = await fetch(getApiUrl('/api/sales'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(salesInvoiceData)
+      });
+      if (!response.ok) throw new Error('Failed to create sales invoice checkout.');
+      const result = await response.json();
+
+      await fetch(getApiUrl(`/api/restaurant/orders/${id}/status`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'billed' })
+      });
+
+      showToast('Checkout Complete', 'Sales Invoice created & table released.', 'success');
+      fetchRestOrders();
+      openPrintReceipt(result.sales_id);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const restOrderModal = document.getElementById('restOrderModal');
+  const btnNewRestOrder = document.getElementById('btnNewRestOrder');
+  const restOrderForm = document.getElementById('restOrderForm');
+  const orderAddItemSelect = document.getElementById('orderAddItemSelect');
+  const orderAddItemQty = document.getElementById('orderAddItemQty');
+  const btnOrderAddItem = document.getElementById('btnOrderAddItem');
+  const orderSelectedItemsBody = document.getElementById('orderSelectedItemsBody');
+  const orderGrandTotal = document.getElementById('orderGrandTotal');
+
+  const openRestOrderModal = async (id = null) => {
+    if (!restOrderModal) return;
+    restOrderForm.reset();
+    currentOrderItems = [];
+    document.getElementById('rest_order_id').value = id || '';
+
+    try {
+      const responseTab = await fetch(getApiUrl('/api/restaurant/tables'));
+      const listTab = await responseTab.json();
+      const tabSelect = document.getElementById('order_table_id');
+      if (tabSelect) {
+        tabSelect.innerHTML = '<option value="">Select Table</option>' +
+          listTab.map(t => `<option value="${t.table_id}">${t.table_no} (${t.section} Seating)</option>`).join('');
+      }
+
+      const responseCust = await fetch(getApiUrl('/api/customers'));
+      const listCust = await responseCust.json();
+      const custSelect = document.getElementById('order_customer_id');
+      if (custSelect) {
+        custSelect.innerHTML = '<option value="">Walk-in Customer</option>' +
+          listCust.map(c => `<option value="${c.customer_id}">${c.name} (${c.phone})</option>`).join('');
+      }
+
+      const responseWait = await fetch(getApiUrl('/api/users'));
+      const listWait = await responseWait.json();
+      const waitSelect = document.getElementById('order_waiter_id');
+      if (waitSelect) {
+        waitSelect.innerHTML = '<option value="">Assign Waiter</option>' +
+          listWait.map(u => `<option value="${u.user_id}">${u.username}</option>`).join('');
+      }
+
+      const responseMenu = await fetch(getApiUrl('/api/restaurant/menu/items'));
+      allMenuItems = await responseMenu.json();
+      if (orderAddItemSelect) {
+        orderAddItemSelect.innerHTML = '<option value="">Select Dish / Beverage</option>' +
+          allMenuItems.map(i => `<option value="${i.menu_item_id}">${i.name} (₹${parseFloat(i.price).toFixed(2)})</option>`).join('');
+      }
+
+    } catch (err) {
+      console.error(err);
+    }
+
+    if (id) {
+      const order = allRestOrders.find(o => o.order_id == id);
+      if (order) {
+        document.getElementById('order_type').value = order.order_type;
+        document.getElementById('order_table_id').value = order.table_id || '';
+        document.getElementById('order_waiter_id').value = order.waiter_id || '';
+        document.getElementById('order_customer_id').value = order.customer_id || '';
+        document.getElementById('order_notes').value = order.notes || '';
+      }
+    }
+
+    updateRestOrderItemsList();
+    restOrderModal.style.display = 'flex';
+  };
+
+  const updateRestOrderItemsList = () => {
+    if (!orderSelectedItemsBody) return;
+    if (currentOrderItems.length === 0) {
+      orderSelectedItemsBody.innerHTML = `<tr><td colspan="5" style="text-align: center;" class="empty-state">No items added to KOT ticket yet.</td></tr>`;
+      orderGrandTotal.textContent = '₹0.00';
+      return;
+    }
+
+    let total = 0;
+    orderSelectedItemsBody.innerHTML = currentOrderItems.map((item, idx) => {
+      const cost = item.price * item.quantity;
+      total += cost;
+      return `
+        <tr>
+          <td><strong>${item.name}</strong></td>
+          <td style="text-align: right;">₹${parseFloat(item.price).toFixed(2)}</td>
+          <td style="text-align: center;">${item.quantity}</td>
+          <td style="text-align: right; font-weight: bold; color: var(--primary-color);">₹${parseFloat(cost).toFixed(2)}</td>
+          <td style="text-align: center;">
+            <button type="button" class="btn btn-danger" onclick="removeKOTDraftItem(${idx})" style="padding: 0.15rem 0.4rem; font-size: 0.75rem; display: inline-flex; align-items: center; justify-content: center;"><span class="material-icons" style="font-size: 0.95rem;">delete</span></button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    orderGrandTotal.textContent = `₹${parseFloat(total).toFixed(2)}`;
+  };
+
+  window.removeKOTDraftItem = (idx) => {
+    currentOrderItems.splice(idx, 1);
+    updateRestOrderItemsList();
+  };
+
+  if (btnOrderAddItem) {
+    btnOrderAddItem.addEventListener('click', () => {
+      const itemId = orderAddItemSelect.value;
+      const qty = parseInt(orderAddItemQty.value) || 1;
+      if (!itemId) return alert('Select a dish item first');
+
+      const item = allMenuItems.find(i => i.menu_item_id == itemId);
+      if (item) {
+        const exist = currentOrderItems.find(i => i.menu_item_id == itemId);
+        if (exist) {
+          exist.quantity += qty;
+        } else {
+          currentOrderItems.push({
+            menu_item_id: item.menu_item_id,
+            name: item.name,
+            price: parseFloat(item.price),
+            quantity: qty
+          });
+        }
+        updateRestOrderItemsList();
+      }
+    });
+  }
+
+  if (btnNewRestOrder) btnNewRestOrder.addEventListener('click', () => openRestOrderModal());
+  if (document.getElementById('restOrderModalClose')) {
+    document.getElementById('restOrderModalClose').addEventListener('click', () => { restOrderModal.style.display = 'none'; });
+  }
+  if (document.getElementById('btnRestOrderCancel')) {
+    document.getElementById('btnRestOrderCancel').addEventListener('click', () => { restOrderModal.style.display = 'none'; });
+  }
+
+  if (restOrderForm) {
+    restOrderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('rest_order_id').value;
+
+      if (currentOrderItems.length === 0) return alert('Please add at least 1 menu item to place an order.');
+
+      const data = {
+        table_id: parseInt(document.getElementById('order_table_id').value) || null,
+        customer_id: parseInt(document.getElementById('order_customer_id').value) || null,
+        waiter_id: parseInt(document.getElementById('order_waiter_id').value) || null,
+        order_type: document.getElementById('order_type').value,
+        notes: document.getElementById('order_notes').value.trim(),
+        items: currentOrderItems
+      };
+
+      try {
+        const url = id ? `/api/restaurant/orders/${id}/items` : '/api/restaurant/orders';
+        const response = await fetch(getApiUrl(url), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to submit order');
+        restOrderModal.style.display = 'none';
+        showToast('KOT Submitted', 'KOT ticket routed to kitchen display system successfully!', 'success');
+        fetchRestOrders();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+
+  // --- KITCHEN DISPLAY SYSTEM (KDS) Queue ---
+  let kdsQueue = [];
+
+  const fetchKdsQueue = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/restaurant/kitchen/queue'));
+      if (!response.ok) throw new Error('Failed to fetch KDS queue');
+      kdsQueue = await response.json();
+      renderKdsQueue();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderKdsQueue = () => {
+    const container = document.getElementById('kdsGridContainer');
+    if (!container) return;
+
+    const filterVal = document.getElementById('kdsDeptFilter').value;
+    const filteredQueue = kdsQueue.filter(item => filterVal === 'ALL' || item.kitchen_dept === filterVal);
+
+    if (filteredQueue.length === 0) {
+      container.innerHTML = `<div style="grid-column: 1/-1;" class="empty-state">Kitchen Queue is clear! No active preparations.</div>`;
+      return;
+    }
+
+    const orderGroups = {};
+    filteredQueue.forEach(item => {
+      if (!orderGroups[item.order_id]) {
+        orderGroups[item.order_id] = {
+          order_id: item.order_id,
+          table_no: item.table_no,
+          order_type: item.order_type,
+          order_time: new Date(item.order_time),
+          items: []
+        };
+      }
+      orderGroups[item.order_id].items.push(item);
+    });
+
+    container.innerHTML = Object.values(orderGroups).map(group => {
+      const elapsedMins = Math.round((Date.now() - group.order_time) / 60000);
+      const isUrgent = elapsedMins > 15 ? 'color: #EF4444; font-weight: 800;' : '';
+
+      const itemsHtml = group.items.map(item => {
+        let statusBtn = `<button class="btn btn-secondary btn-kds-step" data-id="${item.id}" data-status="preparing" style="padding: 0.15rem 0.5rem; font-size: 0.75rem;">Prep</button>`;
+        if (item.status === 'preparing') {
+          statusBtn = `<button class="btn btn-primary btn-kds-step" data-id="${item.id}" data-status="ready" style="padding: 0.15rem 0.5rem; font-size: 0.75rem; background: #10B981; border: none;">Ready</button>`;
+        }
+
+        return `
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px dashed var(--border-color);">
+            <div>
+              <span style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">${parseInt(item.quantity)}x</span>
+              <span style="color: var(--text-main); font-size: 0.9rem;">${item.item_name}</span>
+              ${item.notes ? `<div style="font-size: 0.75rem; color: #EF4444; font-style: italic;">* ${item.notes}</div>` : ''}
+              <div style="font-size: 0.7rem; color: var(--text-muted);">${item.kitchen_dept}</div>
+            </div>
+            <div>
+              ${statusBtn}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      return `
+        <div class="card kds-ticket" style="padding: 1.25rem; border-radius: 12px; border: 1.5px solid var(--border-color); background: var(--card-bg);">
+          <div style="display: flex; justify-content: space-between; border-bottom: 1.5px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 0.75rem;">
+            <div>
+              <span style="font-size: 1.1rem; font-weight: 800; color: var(--text-main);">#OR-${group.order_id}</span>
+              <span style="font-size: 0.8rem; text-transform: uppercase; margin-left: 0.5rem; padding: 2px 6px; border-radius: 12px; background: #E2E8F0; color: #475569; font-weight: 700;">${group.order_type}</span>
+            </div>
+            <div style="text-align: right;">
+              <span style="font-size: 0.95rem; font-weight: 700; color: var(--primary-color);">${group.table_no ? `Table ${group.table_no}` : 'Parcel'}</span>
+              <div style="font-size: 0.75rem; ${isUrgent}">${elapsedMins} mins ago</div>
+            </div>
+          </div>
+          <div class="kds-ticket-items">
+            ${itemsHtml}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    container.querySelectorAll('.btn-kds-step').forEach(btn => {
+      btn.addEventListener('click', () => {
+        updateKdsItemStatus(btn.getAttribute('data-id'), btn.getAttribute('data-status'));
+      });
+    });
+  };
+
+  const updateKdsItemStatus = async (itemId, status) => {
+    try {
+      const response = await fetch(getApiUrl(`/api/restaurant/orders/items/${itemId}/status`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (!response.ok) throw new Error('Failed to update KDS item state');
+      fetchKdsQueue();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  if (document.getElementById('kdsDeptFilter')) {
+    document.getElementById('kdsDeptFilter').addEventListener('change', renderKdsQueue);
+  }
+
+  // --- SSE REAL-TIME SYNCHRONIZATION ---
+  const initRealtimeSSE = () => {
+    if (!activeUser) return;
+    console.log('Initializing Real-Time SSE Listener Stream...');
+    const sse = new EventSource(getApiUrl('/api/realtime-events'));
+
+    sse.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.client_id && data.client_id !== activeUser.client_id) return;
+
+        console.log('Real-Time Event Received:', data.type);
+        
+        if (activeScreen === 'rest_kds') {
+          fetchKdsQueue();
+        } else if (activeScreen === 'rest_orders') {
+          fetchRestOrders();
+        } else if (activeScreen === 'rest_tables') {
+          fetchRestTables();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    sse.onerror = (err) => {
+      console.warn('SSE disconnected, reconnecting in 5s...');
+      sse.close();
+      setTimeout(initRealtimeSSE, 5000);
+    };
+  };
+
+  const originalCheckAuthSession = checkAuthSession;
+  checkAuthSession = () => {
+    originalCheckAuthSession();
+    if (activeUser) {
+      initRealtimeSSE();
+    }
+  };
 
   window.fetchLicenseDetails = fetchLicenseDetails;
 

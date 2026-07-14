@@ -105,6 +105,10 @@ const restaurantRoutes = require('./RestaurantAPI');
 app.use('/api/restaurant', restaurantRoutes);
 app.use('/api/Restaurant', restaurantRoutes);
 
+const hotelRoutes = require('./HotelAPI');
+app.use('/api/hotel', hotelRoutes);
+app.use('/api/Hotel', hotelRoutes);
+
 const eventBus = require('./eventBus');
 
 // Real-Time Server-Sent Events Stream

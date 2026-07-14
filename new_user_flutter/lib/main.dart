@@ -24,6 +24,10 @@ import 'support_screen.dart';
 import 'license_screen.dart';
 import 'clients_screen.dart';
 import 'printer_settings_screen.dart';
+import 'restaurant_tables_screen.dart';
+import 'restaurant_menu_screen.dart';
+import 'restaurant_orders_screen.dart';
+import 'restaurant_kds_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -407,6 +411,10 @@ class _MainLayoutState extends State<MainLayout> {
     const LicenseScreen(), // 15
     ClientsScreen(canModify: activeUser?['client_id'] == null), // 16
     const PrinterSettingsScreen(), // 17
+    const RestaurantTablesScreen(), // 18
+    const RestaurantMenuScreen(), // 19
+    const RestaurantOrdersScreen(), // 20
+    const RestaurantKdsScreen(), // 21
   ];
 
   String _getAppBarTitle() {
@@ -447,6 +455,14 @@ class _MainLayoutState extends State<MainLayout> {
         return 'Clients Company Management';
       case 17:
         return 'Thermal Printer Settings';
+      case 18:
+        return 'Restaurant Tables';
+      case 19:
+        return 'Restaurant Menu';
+      case 20:
+        return 'Restaurant Orders';
+      case 21:
+        return 'Kitchen Display (KDS)';
       default:
         return 'POS System';
     }
@@ -739,6 +755,51 @@ class _MainLayoutState extends State<MainLayout> {
                             selected: _currentIndex == 17,
                             onTap: () {
                               setState(() => _currentIndex = 17);
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
+
+                    if (_hasModuleGroup('Restaurant'))
+                      ExpansionTile(
+                        leading: const Icon(Icons.restaurant_outlined, color: Color(0xFF64748B)),
+                        title: const Text('Restaurant POS', style: TextStyle(fontWeight: FontWeight.bold)),
+                        childrenPadding: const EdgeInsets.only(left: 16.0),
+                        children: [
+                          ListTile(
+                            leading: const Icon(Icons.table_restaurant_outlined, color: Color(0xFF64748B)),
+                            title: const Text('Tables Grid'),
+                            selected: _currentIndex == 18,
+                            onTap: () {
+                              setState(() => _currentIndex = 18);
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.restaurant_menu_outlined, color: Color(0xFF64748B)),
+                            title: const Text('Menu Catalog'),
+                            selected: _currentIndex == 19,
+                            onTap: () {
+                              setState(() => _currentIndex = 19);
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.ramen_dining_outlined, color: Color(0xFF64748B)),
+                            title: const Text('Orders & KOT'),
+                            selected: _currentIndex == 20,
+                            onTap: () {
+                              setState(() => _currentIndex = 20);
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(Icons.kitchen_outlined, color: Color(0xFF64748B)),
+                            title: const Text('Kitchen Display (KDS)'),
+                            selected: _currentIndex == 21,
+                            onTap: () {
+                              setState(() => _currentIndex = 21);
                               Navigator.pop(context);
                             },
                           ),

@@ -140,6 +140,25 @@
           <span class="material-icons">assessment</span>
           <span>Reports</span>
         </li>
+        
+        <!-- Restaurant Module Menu Items -->
+        <li class="drawer-item" id="menuRestTables" style="display: none;">
+          <span class="material-icons">table_restaurant</span>
+          <span>Dine-in Tables</span>
+        </li>
+        <li class="drawer-item" id="menuRestMenu" style="display: none;">
+          <span class="material-icons">restaurant_menu</span>
+          <span>Restaurant Menu</span>
+        </li>
+        <li class="drawer-item" id="menuRestOrders" style="display: none;">
+          <span class="material-icons">ramen_dining</span>
+          <span>Rest. Orders & KOT</span>
+        </li>
+        <li class="drawer-item" id="menuRestKds" style="display: none;">
+          <span class="material-icons">kitchen</span>
+          <span>Kitchen Queue (KDS)</span>
+        </li>
+
         <li class="drawer-item" id="menuSupport">
           <span class="material-icons">contact_support</span>
           <span>Support & Contact</span>
@@ -1170,6 +1189,143 @@
       </section>
     </div>
 
+    <!-- Screen 18: Dine-in Tables [NEW] -->
+    <div id="screenRestTables" class="screen-view" style="display: none;">
+      <section class="list-section card">
+        <div class="list-header" style="margin-bottom: 1.5rem;">
+          <div>
+            <h2>Restaurant Tables</h2>
+            <p>Manage dine-in tables, sections, seating capacities, and live table status indicators.</p>
+          </div>
+          <button type="button" id="btnNewTable" class="btn btn-primary">
+            <span class="material-icons">add</span> Add Table
+          </button>
+        </div>
+        <div id="tableGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+          <!-- Tables cards rendered dynamically -->
+        </div>
+      </section>
+    </div>
+
+    <!-- Screen 19: Restaurant Menu Management [NEW] -->
+    <div id="screenRestMenu" class="screen-view" style="display: none;">
+      <div style="display: flex; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <button type="button" id="btnTabMenuCategories" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Menu Categories</button>
+        <button type="button" id="btnTabMenuItems" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Menu Items</button>
+      </div>
+
+      <!-- Categories Section -->
+      <section id="sectionMenuCategories" class="list-section card">
+        <div class="list-header" style="margin-bottom: 1.5rem;">
+          <div>
+            <h2>Menu Categories</h2>
+            <p>Group your menu items into structured food and beverage categories.</p>
+          </div>
+          <button type="button" id="btnNewMenuCategory" class="btn btn-primary">
+            <span class="material-icons">add</span> Add Category
+          </button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Category Name</th>
+                <th>Image URL</th>
+                <th style="text-align: center; width: 120px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="menuCategoryTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Items Section -->
+      <section id="sectionMenuItems" class="list-section card" style="display: none;">
+        <div class="list-header" style="margin-bottom: 1.5rem;">
+          <div>
+            <h2>Menu Items</h2>
+            <p>Create and edit dishes, beverages, pricing, prep times, and department routing.</p>
+          </div>
+          <button type="button" id="btnNewMenuItem" class="btn btn-primary">
+            <span class="material-icons">add</span> Add Menu Item
+          </button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Type</th>
+                <th>Prep Time</th>
+                <th>Kitchen Dept</th>
+                <th>Tax %</th>
+                <th style="text-align: center; width: 120px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="menuItemTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Screen 20: Restaurant Orders & KOT [NEW] -->
+    <div id="screenRestOrders" class="screen-view" style="display: none;">
+      <section class="list-section card">
+        <div class="list-header" style="margin-bottom: 1.5rem;">
+          <div>
+            <h2>Dine-in & Takeaway Orders</h2>
+            <p>Create new table orders, append KOT items, print guest bills, and complete check-outs.</p>
+          </div>
+          <button type="button" id="btnNewRestOrder" class="btn btn-primary">
+            <span class="material-icons">add</span> Create New Order
+          </button>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Type</th>
+                <th>Table</th>
+                <th>Customer</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Ordered Time</th>
+                <th style="text-align: center; width: 220px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="restOrdersTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Screen 21: Kitchen Queue / KDS [NEW] -->
+    <div id="screenRestKds" class="screen-view" style="display: none;">
+      <section class="list-section card">
+        <div class="list-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <h2>Kitchen Display System (KDS)</h2>
+            <p>Real-time incoming KOT orders. Chefs can update item statuses and view preparation notes.</p>
+          </div>
+          <div class="form-field" style="margin-bottom: 0;">
+            <select id="kdsDeptFilter" style="padding: 0.5rem 1rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main);">
+              <option value="ALL">All Kitchen Departments</option>
+              <option value="Hot Kitchen">Hot Kitchen</option>
+              <option value="Cold Kitchen">Cold Kitchen</option>
+              <option value="Bar">Bar / Beverages</option>
+            </select>
+          </div>
+        </div>
+        <div id="kdsGridContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+          <!-- KOT tickets rendered dynamically -->
+        </div>
+      </section>
+    </div>
+
     <!-- Screen 17: License & AMC Management [NEW] -->
     <div id="screenLicense" class="screen-view" style="display: none;">
       <!-- Validity Status Banner Alert -->
@@ -1890,6 +2046,228 @@
           <div class="form-actions" style="margin-top: 2rem;">
             <button type="button" class="btn btn-secondary" id="btnRoleCancel">Cancel</button>
             <button type="submit" class="btn btn-primary" id="btnRoleSave">Save Role</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- Restaurant Table Registration Modal -->
+  <div id="tableModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 500px;">
+      <span class="close-modal" id="tableModalClose">&times;</span>
+      <section class="form-section">
+        <h2>Register New Table</h2>
+        <form id="tableForm">
+          <input type="hidden" id="table_id" name="table_id">
+          <div class="form-grid col-1">
+            <div class="form-field">
+              <label for="table_no">Table Number <span class="required-star">*</span></label>
+              <input type="text" id="table_no" name="table_no" required placeholder="e.g. Table 1, T-5" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="table_section">Section Area</label>
+              <select id="table_section" name="section" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+                <option value="Indoor">Indoor Section</option>
+                <option value="Outdoor">Outdoor Section</option>
+                <option value="Terrace">Terrace Rooftop</option>
+                <option value="Bar">Bar Lounge</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="table_capacity">Seating Capacity</label>
+              <input type="number" id="table_capacity" name="capacity" value="4" min="1" max="20" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top: 2rem;">
+            <button type="button" class="btn btn-secondary" id="btnTableCancel">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnTableSave">Save Table</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- Menu Category Modal -->
+  <div id="menuCategoryModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 500px;">
+      <span class="close-modal" id="menuCategoryModalClose">&times;</span>
+      <section class="form-section">
+        <h2>Register Menu Category</h2>
+        <form id="menuCategoryForm">
+          <input type="hidden" id="menu_category_id" name="category_id">
+          <div class="form-grid col-1">
+            <div class="form-field">
+              <label for="menu_category_name">Category Name <span class="required-star">*</span></label>
+              <input type="text" id="menu_category_name" name="name" required placeholder="e.g. Starters, Main Course, Drinks" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="menu_category_image">Category Image URL</label>
+              <input type="url" id="menu_category_image" name="image_url" placeholder="https://example.com/image.jpg" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top: 2rem;">
+            <button type="button" class="btn btn-secondary" id="btnMenuCategoryCancel">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnMenuCategorySave">Save Category</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- Menu Item Modal -->
+  <div id="menuItemModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 600px;">
+      <span class="close-modal" id="menuItemModalClose">&times;</span>
+      <section class="form-section">
+        <h2>Register Menu Item</h2>
+        <form id="menuItemForm">
+          <input type="hidden" id="menu_item_id" name="menu_item_id">
+          <div class="form-grid col-2">
+            <div class="form-field">
+              <label for="menu_item_name">Item Name <span class="required-star">*</span></label>
+              <input type="text" id="menu_item_name" name="name" required placeholder="e.g. Paneer Tikka, Butter Chicken" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="menu_item_category">Category <span class="required-star">*</span></label>
+              <select id="menu_item_category" name="category_id" required style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);"></select>
+            </div>
+          </div>
+          <div class="form-grid col-2" style="margin-top: 1rem;">
+            <div class="form-field">
+              <label for="menu_item_price">Sales Price (₹) <span class="required-star">*</span></label>
+              <input type="number" id="menu_item_price" name="price" step="0.01" required placeholder="0.00" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="menu_item_gst">GST Percentage (%)</label>
+              <input type="number" id="menu_item_gst" name="gst_percent" step="0.01" value="5.00" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-grid col-2" style="margin-top: 1rem;">
+            <div class="form-field">
+              <label for="menu_item_prep">Prep Time (mins)</label>
+              <input type="number" id="menu_item_prep" name="preparation_time" value="10" min="1" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="menu_item_dept">Kitchen Dept Routing</label>
+              <select id="menu_item_dept" name="kitchen_dept" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+                <option value="Hot Kitchen">Hot Kitchen</option>
+                <option value="Cold Kitchen">Cold Kitchen</option>
+                <option value="Bar">Bar / Beverages</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grid col-1" style="margin-top: 1rem;">
+            <div class="form-field">
+              <label for="menu_item_desc">Description</label>
+              <input type="text" id="menu_item_desc" name="description" placeholder="Short description of ingredients" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field" style="margin-top: 0.5rem;">
+              <label for="menu_item_image">Item Image URL</label>
+              <input type="url" id="menu_item_image" name="image_url" placeholder="https://example.com/dish.jpg" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-grid col-3" style="margin-top: 1rem; align-items: center;">
+            <div class="form-field" style="display: flex; align-items: center; gap: 0.25rem;">
+              <input type="checkbox" id="menu_item_veg" name="is_veg" checked style="width: auto;">
+              <label for="menu_item_veg" style="margin-bottom: 0;">Is Vegetarian</label>
+            </div>
+            <div class="form-field" style="display: flex; align-items: center; gap: 0.25rem;">
+              <input type="checkbox" id="menu_item_available" name="available" checked style="width: auto;">
+              <label for="menu_item_available" style="margin-bottom: 0;">In Stock</label>
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top: 2rem;">
+            <button type="button" class="btn btn-secondary" id="btnMenuItemCancel">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnMenuItemSave">Save Menu Item</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- Restaurant Order Builder Modal -->
+  <div id="restOrderModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 800px; width: 90%;">
+      <span class="close-modal" id="restOrderModalClose">&times;</span>
+      <section class="form-section">
+        <h2>Place Restaurant Order / KOT</h2>
+        <form id="restOrderForm">
+          <input type="hidden" id="rest_order_id" name="order_id">
+          
+          <div class="form-grid col-3">
+            <div class="form-field">
+              <label for="order_type">Order Type</label>
+              <select id="order_type" name="order_type" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+                <option value="dine-in">Dine-In Seating</option>
+                <option value="takeaway">Takeaway Parcel</option>
+                <option value="delivery">Home Delivery</option>
+              </select>
+            </div>
+            <div class="form-field" id="fieldOrderTable">
+              <label for="order_table_id">Select Table</label>
+              <select id="order_table_id" name="table_id" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);"></select>
+            </div>
+            <div class="form-field">
+              <label for="order_waiter_id">Select Waiter</label>
+              <select id="order_waiter_id" name="waiter_id" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);"></select>
+            </div>
+          </div>
+
+          <div class="form-grid col-2" style="margin-top: 1rem;">
+            <div class="form-field">
+              <label for="order_customer_id">Select Customer</label>
+              <select id="order_customer_id" name="customer_id" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);"></select>
+            </div>
+            <div class="form-field">
+              <label for="order_notes">Chef Preparation Notes</label>
+              <input type="text" id="order_notes" name="notes" placeholder="e.g. Extra spicy, No onions" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+
+          <div class="form-group-title" style="margin-top: 1.5rem;">Add Dishes & Beverages</div>
+          <div class="form-grid col-3" style="align-items: flex-end;">
+            <div class="form-field" style="flex: 2;">
+              <label for="orderAddItemSelect">Menu Dish</label>
+              <select id="orderAddItemSelect" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);"></select>
+            </div>
+            <div class="form-field" style="width: 100px;">
+              <label for="orderAddItemQty">Qty</label>
+              <input type="number" id="orderAddItemQty" value="1" min="1" max="100" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <button type="button" id="btnOrderAddItem" class="btn btn-secondary" style="padding: 0.75rem 1.5rem; height: 46px; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; width: 100%;">
+                <span class="material-icons">add_shopping_cart</span> Add to KOT
+              </button>
+            </div>
+          </div>
+
+          <div class="table-container" style="margin-top: 1.5rem; max-height: 250px; overflow-y: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Dish / Beverage Name</th>
+                  <th style="text-align: right; width: 100px;">Price</th>
+                  <th style="text-align: center; width: 120px;">Qty</th>
+                  <th style="text-align: right; width: 120px;">Total</th>
+                  <th style="text-align: center; width: 80px;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="orderSelectedItemsBody">
+                <!-- Selected dishes list here -->
+              </tbody>
+            </table>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; border-top: 1.5px solid var(--border-color); padding-top: 1rem;">
+            <div>
+              <span style="font-size: 1.1rem; font-weight: 700; color: var(--text-main);">KOT Order Total: </span>
+              <span id="orderGrandTotal" style="font-size: 1.25rem; font-weight: 800; color: var(--primary-color);">₹0.00</span>
+            </div>
+            <div class="form-actions" style="margin-top: 0;">
+              <button type="button" class="btn btn-secondary" id="btnRestOrderCancel">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="btnRestOrderSave">Send KOT / Place Order</button>
+            </div>
           </div>
         </form>
       </section>
