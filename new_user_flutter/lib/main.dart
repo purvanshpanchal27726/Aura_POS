@@ -23,6 +23,7 @@ import 'connection_setup_screen.dart';
 import 'support_screen.dart';
 import 'license_screen.dart';
 import 'clients_screen.dart';
+import 'printer_settings_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -405,6 +406,7 @@ class _MainLayoutState extends State<MainLayout> {
     const SupportScreen(), // 14
     const LicenseScreen(), // 15
     ClientsScreen(canModify: activeUser?['client_id'] == null), // 16
+    const PrinterSettingsScreen(), // 17
   ];
 
   String _getAppBarTitle() {
@@ -443,6 +445,8 @@ class _MainLayoutState extends State<MainLayout> {
         return 'AMC & License Management';
       case 16:
         return 'Clients Company Management';
+      case 17:
+        return 'Thermal Printer Settings';
       default:
         return 'POS System';
     }
@@ -713,15 +717,32 @@ class _MainLayoutState extends State<MainLayout> {
                         ],
                       ),
 
-                    if (_hasPermission(1) && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
-                      ListTile(
-                        leading: Icon(Icons.settings_outlined, color: Color(0xFF64748B)),
-                        title: Text('Setting'),
-                        selected: _currentIndex == 8,
-                        onTap: () {
-                          setState(() => _currentIndex = 8);
-                          Navigator.pop(context);
-                        },
+                    if (_hasPermission(1))
+                      ExpansionTile(
+                        leading: const Icon(Icons.settings_outlined, color: Color(0xFF64748B)),
+                        title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold)),
+                        childrenPadding: const EdgeInsets.only(left: 16.0),
+                        children: [
+                          if (_hasModuleGroup('Kirana') || _hasModuleGroup('POS'))
+                            ListTile(
+                              leading: const Icon(Icons.security_outlined, color: Color(0xFF64748B)),
+                              title: const Text('Role Permissions'),
+                              selected: _currentIndex == 8,
+                              onTap: () {
+                                setState(() => _currentIndex = 8);
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ListTile(
+                            leading: const Icon(Icons.print_outlined, color: Color(0xFF64748B)),
+                            title: const Text('Printer Settings'),
+                            selected: _currentIndex == 17,
+                            onTap: () {
+                              setState(() => _currentIndex = 17);
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
                       ),
 
                     if (_hasPermission(4) && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))

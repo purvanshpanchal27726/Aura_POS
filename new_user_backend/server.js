@@ -101,6 +101,10 @@ const settingsRoutes = require('./SettingsAPI');
 app.use('/api/settings', settingsRoutes);
 app.use('/api/Settings', settingsRoutes);
 
+const restaurantRoutes = require('./RestaurantAPI');
+app.use('/api/restaurant', restaurantRoutes);
+app.use('/api/Restaurant', restaurantRoutes);
+
 const eventBus = require('./eventBus');
 
 // Real-Time Server-Sent Events Stream

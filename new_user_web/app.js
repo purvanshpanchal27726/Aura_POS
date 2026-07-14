@@ -425,7 +425,10 @@ document.addEventListener('DOMContentLoaded', () => {
       menu: document.getElementById('menuSettings'),
       view: document.getElementById('screenSettings'),
       title: 'Setting',
-      onTransition: () => fetchPermissionMatrix()
+      onTransition: () => {
+        fetchPermissionMatrix();
+        fetchPrinterSettings();
+      }
     },
     'clients': {
       menu: document.getElementById('menuClients'),
@@ -2979,6 +2982,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!response.ok) throw new Error('Failed to fetch invoice details.');
       const invoice = await response.json();
 
+      const printReceiptContent = document.getElementById('printReceiptContent');
+      if (printReceiptContent) {
+        printReceiptContent.classList.remove('receipt-small', 'receipt-medium', 'receipt-large');
+        const size = (activeUser && activeUser.printerSettings && activeUser.printerSettings.paper_size) || 'medium';
+        printReceiptContent.classList.add(`receipt-${size}`);
+      }
+
       document.getElementById('rCustName').textContent = invoice.customer_name || 'Walk-in Customer';
       const dateVal = new Date(invoice.sales_date);
       const dateStr = `${dateVal.getDate()}/${dateVal.getMonth()+1}/${dateVal.getFullYear()}`;
@@ -3128,6 +3138,77 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!response.ok) throw new Error('Failed to update permissions matrix.');
         alert('Role permissions updated successfully!');
         await fetchPermissionsAndUsers();
+      } catch (err) {
+        alert(`Error: ${err.message}`);
+      }
+    });
+  }
+
+  // 🖨️ PRINTER CONFIGURATION SETTINGS
+  const printerSettingsForm = document.getElementById('printerSettingsForm');
+
+  const fetchPrinterSettings = async () => {
+    if (!printerSettingsForm) return;
+    try {
+      const response = await fetch(getApiUrl('/api/settings/printer'));
+      if (!response.ok) throw new Error('Failed to load printer settings.');
+      const settings = await response.json();
+      
+      document.getElementById('setting_printer_name').value = settings.printer_name || '';
+      document.getElementById('setting_printer_type').value = settings.printer_type || 'thermal';
+      document.getElementById('setting_paper_size').value = settings.paper_size || 'medium';
+      document.getElementById('setting_connection').value = settings.connection || 'usb';
+      document.getElementById('setting_ip_address').value = settings.ip_address || '';
+      document.getElementById('setting_port').value = settings.port !== null ? settings.port : 9100;
+      document.getElementById('setting_auto_print').checked = settings.auto_print === 1 || settings.auto_print === true;
+      document.getElementById('setting_copies').value = settings.copies || 1;
+    } catch (err) {
+      console.error('Error fetching printer settings:', err);
+    }
+  };
+
+  if (printerSettingsForm) {
+    printerSettingsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const printer_name = document.getElementById('setting_printer_name').value.trim();
+      const printer_type = document.getElementById('setting_printer_type').value;
+      const paper_size = document.getElementById('setting_paper_size').value;
+      const connection = document.getElementById('setting_connection').value;
+      const ip_address = document.getElementById('setting_ip_address').value.trim();
+      const port = parseInt(document.getElementById('setting_port').value) || 9100;
+      const auto_print = document.getElementById('setting_auto_print').checked ? 1 : 0;
+      const copies = parseInt(document.getElementById('setting_copies').value) || 1;
+
+      const data = {
+        printer_name,
+        printer_type,
+        paper_size,
+        connection,
+        ip_address: ip_address || null,
+        port,
+        auto_print,
+        copies
+      };
+
+      try {
+        const response = await fetch(getApiUrl('/api/settings/printer'), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || 'Failed to update printer settings.');
+        }
+
+        showToast('Printer Settings Saved', 'POS thermal printer configuration updated successfully!', 'success');
+        
+        if (activeUser) {
+          activeUser.printerSettings = data;
+          localStorage.setItem('pos_active_user', JSON.stringify(activeUser));
+        }
       } catch (err) {
         alert(`Error: ${err.message}`);
       }

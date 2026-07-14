@@ -284,6 +284,7 @@ router.post('/login', async (req, res) => {
 
     // Fetch client modules if client_id is set
     let clientModules = [];
+    let printerSettings = null;
     if (user.client_id) {
       const [modulesRows] = await db.execute(`
         SELECT mg.name 
@@ -292,6 +293,11 @@ router.post('/login', async (req, res) => {
         WHERE cm.client_id = ? AND cm.enabled = 1
       `, [user.client_id]);
       clientModules = modulesRows.map(r => r.name);
+
+      const [printerRows] = await db.execute('SELECT * FROM printer_settings WHERE client_id = ?', [user.client_id]);
+      if (printerRows.length > 0) {
+        printerSettings = printerRows[0];
+      }
     } else {
       clientModules = ['ALL']; // Super-Admin has all modules
     }
@@ -303,7 +309,8 @@ router.post('/login', async (req, res) => {
       user: {
         ...user,
         id: user.user_id,
-        clientModules: clientModules
+        clientModules: clientModules,
+        printerSettings: printerSettings
       }
     });
   } catch (err) {

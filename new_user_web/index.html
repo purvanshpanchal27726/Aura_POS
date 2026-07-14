@@ -912,6 +912,73 @@
         </div>
       </section>
 
+      <!-- Printer Configuration Settings -->
+      <section class="form-section card" style="max-width: 1000px; margin: 0 auto 1.5rem auto; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg);">
+        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+          <span class="material-icons" style="color: var(--primary-color);">print</span>
+          <h2 style="margin: 0; color: var(--text-main); font-size: 1.25rem;">Printer Settings</h2>
+        </div>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">Configure POS thermal receipt printer preferences.</p>
+        
+        <form id="printerSettingsForm">
+          <div class="form-grid col-3">
+            <div class="form-field">
+              <label for="printer_name">Printer Device Name</label>
+              <input type="text" id="setting_printer_name" name="printer_name" placeholder="e.g. POS-80, Default Printer" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="printer_type">Printer Type</label>
+              <select id="setting_printer_type" name="printer_type" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+                <option value="thermal">Thermal POS Printer</option>
+                <option value="laser">Laser / Inkjet Standard</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="paper_size">Paper Dimension Size</label>
+              <select id="setting_paper_size" name="paper_size" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+                <option value="small">Small (58mm Roll)</option>
+                <option value="medium" selected>Medium (80mm Standard Roll)</option>
+                <option value="large">Large (A4 Document Page)</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-grid col-3" style="margin-top: 1rem;">
+            <div class="form-field">
+              <label for="connection">Connection Port Type</label>
+              <select id="setting_connection" name="connection" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+                <option value="usb">USB Local Port</option>
+                <option value="network">LAN / Wi-Fi Network</option>
+                <option value="bluetooth">Bluetooth Device</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="ip_address">Network IP Address</label>
+              <input type="text" id="setting_ip_address" name="ip_address" placeholder="e.g. 192.168.1.100" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="port">Network Port</label>
+              <input type="number" id="setting_port" name="port" value="9100" placeholder="9100" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          
+          <div class="form-grid col-2" style="margin-top: 1rem; align-items: center;">
+            <div class="form-field" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
+              <input type="checkbox" id="setting_auto_print" name="auto_print" style="width: auto;">
+              <label for="setting_auto_print" style="margin-bottom: 0; font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Enable Direct / Auto-Print on Billing</label>
+            </div>
+            <div class="form-field">
+              <label for="copies" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem; display: block;">Number of Copies</label>
+              <input type="number" id="setting_copies" name="copies" value="1" min="1" max="5" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          
+          <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
+            <button type="submit" id="btnSavePrinterSettings" class="btn btn-primary">Save Printer Settings</button>
+          </div>
+        </form>
+      </section>
+
       <section class="list-section card" style="max-width: 1000px; margin: 0 auto;">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>

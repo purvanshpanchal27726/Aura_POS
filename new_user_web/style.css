@@ -1622,6 +1622,46 @@ body.print-report-active th, body.print-report-active td {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}/* Print dimensions styling for Small, Medium, Large sizes */
+#printReceiptContent.receipt-small {
+  width: 58mm !important;
+  font-size: 10px !important;
+  font-family: monospace !important;
+  padding: 0.1in !important;
+}
+#printReceiptContent.receipt-small table {
+  font-size: 10px !important;
 }
 
+#printReceiptContent.receipt-medium {
+  width: 80mm !important;
+  font-size: 12px !important;
+  font-family: monospace !important;
+  padding: 0.2in !important;
+}
+#printReceiptContent.receipt-medium table {
+  font-size: 12px !important;
+}
 
+#printReceiptContent.receipt-large {
+  width: 100% !important;
+  max-width: 210mm !important; /* A4 width */
+  font-size: 14px !important;
+  font-family: inherit !important;
+  padding: 0.5in !important;
+}
+#printReceiptContent.receipt-large table {
+  font-size: 14px !important;
+}
+
+@media print {
+  body:not(.print-report-active) #printReceiptContent.receipt-small {
+    width: 58mm !important;
+  }
+  body:not(.print-report-active) #printReceiptContent.receipt-medium {
+    width: 80mm !important;
+  }
+  body:not(.print-report-active) #printReceiptContent.receipt-large {
+    width: 210mm !important;
+  }
+}
