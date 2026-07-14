@@ -490,6 +490,18 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Purchase Orders & GRN',
       onTransition: () => fetchPurchaseOrders()
     },
+    'employees': {
+      menu: document.getElementById('menuEmployees'),
+      view: document.getElementById('screenEmployees'),
+      title: 'Employee Directory',
+      onTransition: () => fetchEmployees()
+    },
+    'attendance': {
+      menu: document.getElementById('menuAttendance'),
+      view: document.getElementById('screenAttendance'),
+      title: 'Staff Attendance Sheet',
+      onTransition: () => fetchAttendance()
+    },
     'role_listing': {
       menu: document.getElementById('menuRoleListing'),
       view: document.getElementById('screenRoleListing'),
@@ -643,6 +655,17 @@ document.addEventListener('DOMContentLoaded', () => {
     invMenus.forEach(menuEl => {
       if (menuEl) {
         menuEl.style.display = hasKirana ? 'flex' : 'none';
+      }
+    });
+
+    // Gate Employees & Attendance menu items
+    const employeeMenus = [
+      document.getElementById('menuEmployees'),
+      document.getElementById('menuAttendance')
+    ];
+    employeeMenus.forEach(menuEl => {
+      if (menuEl) {
+        menuEl.style.display = 'flex';
       }
     });
 
@@ -7989,6 +8012,268 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 👥 EMPLOYEE & STAFF ATTENDANCE CLIENT LOGIC [NEW]
+  // ─────────────────────────────────────────────────────────────────────────
+  let allEmployees = [];
+  let allAttendance = [];
+
+  // --- EMPLOYEE MANAGEMENT ---
+  const fetchEmployees = async () => {
+    try {
+      const response = await fetch(getApiUrl('/api/employees'));
+      if (!response.ok) throw new Error('Failed to fetch employees list');
+      allEmployees = await response.json();
+      renderEmployees();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderEmployees = () => {
+    const tbody = document.getElementById('employeesTableBody');
+    if (!tbody) return;
+
+    if (allEmployees.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" class="empty-state">No staff employees registered yet.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = allEmployees.map(e => {
+      const salaryVal = parseFloat(e.salary || 0);
+      const joinStr = e.join_date ? new Date(e.join_date).toLocaleDateString() : 'N/A';
+
+      return `
+        <tr>
+          <td><strong>#EMP-${e.employee_id}</strong></td>
+          <td><strong>${e.first_name} ${e.last_name}</strong></td>
+          <td>${e.designation || 'N/A'}</td>
+          <td>${e.department || 'N/A'}</td>
+          <td>${e.phone || 'N/A'}</td>
+          <td style="text-align: right; font-weight: bold;">₹${salaryVal.toFixed(2)}</td>
+          <td>${joinStr}</td>
+          <td><span class="status-badge" style="background: var(--primary-bg); color: var(--primary-color); font-weight: bold;">${e.role_name || 'No Access'}</span></td>
+          <td style="text-align: center;">
+            <div class="table-actions" style="justify-content: center;">
+              <button class="btn btn-secondary btn-emp-edit" data-id="${e.employee_id}" style="padding: 0.25rem 0.5rem;"><span class="material-icons" style="font-size: 1rem;">edit</span></button>
+              <button class="btn btn-danger btn-emp-del" data-id="${e.employee_id}" style="padding: 0.25rem 0.5rem;"><span class="material-icons" style="font-size: 1rem;">delete</span></button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.btn-emp-edit').forEach(btn => {
+      btn.addEventListener('click', () => openEmployeeModal(btn.getAttribute('data-id')));
+    });
+    tbody.querySelectorAll('.btn-emp-del').forEach(btn => {
+      btn.addEventListener('click', () => deactivateEmployee(btn.getAttribute('data-id')));
+    });
+  };
+
+  const employeeModal = document.getElementById('employeeModal');
+  const btnNewEmployee = document.getElementById('btnNewEmployee');
+  const employeeForm = document.getElementById('employeeForm');
+
+  const openEmployeeModal = async (id = null) => {
+    if (!employeeModal) return;
+    employeeForm.reset();
+    document.getElementById('employee_id').value = id || '';
+    
+    try {
+      const responseR = await fetch(getApiUrl('/api/roles'));
+      const listR = await responseR.json();
+      document.getElementById('emp_role_id').innerHTML = '<option value="">No System Access (Staff)</option>' +
+        listR.map(r => `<option value="${r.role_id}">${r.role_name}</option>`).join('');
+    } catch (err) {
+      console.error(err);
+    }
+
+    if (id) {
+      const emp = allEmployees.find(e => e.employee_id == id);
+      if (emp) {
+        document.getElementById('emp_first_name').value = emp.first_name;
+        document.getElementById('emp_last_name').value = emp.last_name;
+        document.getElementById('emp_phone').value = emp.phone;
+        document.getElementById('emp_email').value = emp.email || '';
+        document.getElementById('emp_designation').value = emp.designation || '';
+        document.getElementById('emp_department').value = emp.department || '';
+        document.getElementById('emp_salary').value = emp.salary;
+        document.getElementById('emp_join_date').value = emp.join_date ? emp.join_date.slice(0, 10) : '';
+        document.getElementById('emp_role_id').value = emp.role_id || '';
+      }
+    }
+    employeeModal.style.display = 'flex';
+  };
+
+  if (btnNewEmployee) btnNewEmployee.addEventListener('click', () => openEmployeeModal());
+  if (document.getElementById('employeeModalClose')) {
+    document.getElementById('employeeModalClose').addEventListener('click', () => { employeeModal.style.display = 'none'; });
+  }
+  if (document.getElementById('btnEmpCancel')) {
+    document.getElementById('btnEmpCancel').addEventListener('click', () => { employeeModal.style.display = 'none'; });
+  }
+
+  if (employeeForm) {
+    employeeForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('employee_id').value;
+      const data = {
+        first_name: document.getElementById('emp_first_name').value.trim(),
+        last_name: document.getElementById('emp_last_name').value.trim(),
+        phone: document.getElementById('emp_phone').value.trim(),
+        email: document.getElementById('emp_email').value.trim() || null,
+        designation: document.getElementById('emp_designation').value.trim() || null,
+        department: document.getElementById('emp_department').value.trim() || null,
+        salary: parseFloat(document.getElementById('emp_salary').value) || 0.0,
+        join_date: document.getElementById('emp_join_date').value || null,
+        role_id: parseInt(document.getElementById('emp_role_id').value) || null,
+        password: document.getElementById('emp_password').value.trim() || null
+      };
+
+      try {
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/employees/${id}` : '/api/employees';
+        const response = await fetch(getApiUrl(url), {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!response.ok) throw new Error('Failed to save employee profile');
+        employeeModal.style.display = 'none';
+        showToast('Profile Saved', 'Employee staff directory updated successfully!', 'success');
+        fetchEmployees();
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+  }
+
+  const deactivateEmployee = async (id) => {
+    if (!confirm('Are you sure you want to deactivate this employee?')) return;
+    try {
+      const response = await fetch(getApiUrl(`/api/employees/${id}`), { method: 'DELETE' });
+      if (!response.ok) throw new Error('Failed to deactivate employee');
+      showToast('Employee Deactivated', 'Staff user marked inactive.', 'success');
+      fetchEmployees();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  // --- STAFF ATTENDANCE ---
+  const attendanceDatePicker = document.getElementById('attendanceDatePicker');
+  if (attendanceDatePicker) {
+    attendanceDatePicker.value = new Date().toISOString().substring(0, 10);
+    attendanceDatePicker.addEventListener('change', () => fetchAttendance());
+  }
+
+  const fetchAttendance = async () => {
+    const date = attendanceDatePicker ? attendanceDatePicker.value : new Date().toISOString().substring(0, 10);
+    try {
+      const response = await fetch(getApiUrl(`/api/employees/attendance?date=${date}`));
+      if (!response.ok) throw new Error('Failed to load attendance sheet');
+      allAttendance = await response.json();
+      renderAttendance();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const renderAttendance = () => {
+    const tbody = document.getElementById('attendanceTableBody');
+    if (!tbody) return;
+
+    if (allAttendance.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No active employees to track attendance for.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = allAttendance.map(att => {
+      const checkInStr = att.check_in || '--:--';
+      const checkOutStr = att.check_out || '--:--';
+
+      let selectClass = '';
+      if (att.status === 'present') selectClass = 'style="color: var(--accent); font-weight: bold;"';
+      else if (att.status === 'absent') selectClass = 'style="color: #ef4444; font-weight: bold;"';
+      else if (att.status === 'leave') selectClass = 'style="color: #f59e0b; font-weight: bold;"';
+
+      return `
+        <tr>
+          <td><strong>${att.first_name} ${att.last_name}</strong></td>
+          <td>${att.designation || 'Staff'} <br><small class="text-muted">${att.department || 'General'}</small></td>
+          <td><strong style="color: var(--primary-color);">${checkInStr}</strong></td>
+          <td><strong style="color: var(--text-muted);">${checkOutStr}</strong></td>
+          <td>
+            <select class="attendance-status-select" data-id="${att.employee_id}" ${selectClass} style="padding: 0.35rem; border-radius: 6px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main);">
+              <option value="present" ${att.status === 'present' ? 'selected' : ''}>Present</option>
+              <option value="absent" ${att.status === 'absent' ? 'selected' : ''}>Absent</option>
+              <option value="leave" ${att.status === 'leave' ? 'selected' : ''}>On Leave</option>
+            </select>
+          </td>
+          <td style="text-align: center;">
+            <div style="display: flex; gap: 0.5rem; justify-content: center;">
+              <button class="btn btn-primary btn-checkin" data-id="${att.employee_id}" style="padding: 0.35rem 0.6rem; font-size: 0.8rem;"><span class="material-icons" style="font-size: 0.95rem; vertical-align: middle;">login</span> Check-in</button>
+              <button class="btn btn-secondary btn-checkout" data-id="${att.employee_id}" style="padding: 0.35rem 0.6rem; font-size: 0.8rem;"><span class="material-icons" style="font-size: 0.95rem; vertical-align: middle;">logout</span> Check-out</button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.querySelectorAll('.attendance-status-select').forEach(sel => {
+      sel.addEventListener('change', () => {
+        updateAttendanceStatus(sel.getAttribute('data-id'), sel.value);
+      });
+    });
+
+    tbody.querySelectorAll('.btn-checkin').forEach(btn => {
+      btn.addEventListener('click', () => logCheckInOut(btn.getAttribute('data-id'), 'check-in'));
+    });
+
+    tbody.querySelectorAll('.btn-checkout').forEach(btn => {
+      btn.addEventListener('click', () => logCheckInOut(btn.getAttribute('data-id'), 'check-out'));
+    });
+  };
+
+  const updateAttendanceStatus = async (empId, status) => {
+    const date = attendanceDatePicker ? attendanceDatePicker.value : new Date().toISOString().substring(0, 10);
+    try {
+      const response = await fetch(getApiUrl('/api/employees/attendance/status'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employee_id: parseInt(empId), date, status })
+      });
+      if (!response.ok) throw new Error('Failed to update status');
+      showToast('Attendance Logged', 'Staff status updated successfully!', 'success');
+      fetchAttendance();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const logCheckInOut = async (empId, type) => {
+    const date = attendanceDatePicker ? attendanceDatePicker.value : new Date().toISOString().substring(0, 10);
+    const now = new Date();
+    const timeStr = now.toTimeString().split(' ')[0];
+    
+    try {
+      const response = await fetch(getApiUrl(`/api/employees/attendance/${type}`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ employee_id: parseInt(empId), date, time: timeStr })
+      });
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || 'Failed log transaction');
+      }
+      showToast(type === 'check-in' ? 'Check-in Recorded' : 'Check-out Recorded', `Logged successfully at ${timeStr}!`, 'success');
+      fetchAttendance();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   window.fetchLicenseDetails = fetchLicenseDetails;
 

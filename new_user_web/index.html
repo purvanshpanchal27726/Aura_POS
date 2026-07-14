@@ -151,6 +151,16 @@
           <span>Purchase Orders</span>
         </li>
         
+        <!-- Employees & Staff Module Menu Items -->
+        <li class="drawer-item" id="menuEmployees" style="display: none;">
+          <span class="material-icons">people_alt</span>
+          <span>Employee Directory</span>
+        </li>
+        <li class="drawer-item" id="menuAttendance" style="display: none;">
+          <span class="material-icons">edit_calendar</span>
+          <span>Staff Attendance</span>
+        </li>
+        
         <!-- Restaurant Module Menu Items -->
         <li class="drawer-item" id="menuRestTables" style="display: none;">
           <span class="material-icons">table_restaurant</span>
@@ -1501,6 +1511,72 @@
       </section>
     </div>
 
+    <!-- Screen 27: Employee Directory [NEW] -->
+    <div id="screenEmployees" class="screen-view" style="display: none;">
+      <section class="list-section card">
+        <div class="list-header" style="margin-bottom: 1.5rem;">
+          <div>
+            <h2>Employee & Staff Directory</h2>
+            <p>Manage employee credentials, designations, departments, salaries, and assign system access permissions.</p>
+          </div>
+          <button type="button" id="btnNewEmployee" class="btn btn-primary">
+            <span class="material-icons">person_add</span> Register Employee
+          </button>
+        </div>
+        
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Emp ID</th>
+                <th>Employee Name</th>
+                <th>Designation</th>
+                <th>Department</th>
+                <th>Contact Phone</th>
+                <th style="text-align: right;">Monthly Salary</th>
+                <th>Joining Date</th>
+                <th>Role / Access</th>
+                <th style="text-align: center; width: 140px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="employeesTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Screen 28: Staff Attendance [NEW] -->
+    <div id="screenAttendance" class="screen-view" style="display: none;">
+      <section class="list-section card">
+        <div class="list-header" style="margin-bottom: 1.5rem;">
+          <div>
+            <h2>Daily Staff Attendance Sheet</h2>
+            <p>Log employee daily check-ins, check-outs, and direct status updates (present, absent, leave).</p>
+          </div>
+          <div style="display: flex; gap: 1rem; align-items: center;">
+            <label for="attendanceDatePicker" style="font-weight: 700; font-size: 0.85rem; text-transform: uppercase; color: var(--text-muted);">Sheet Date:</label>
+            <input type="date" id="attendanceDatePicker" style="padding: 0.5rem 0.75rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee Name</th>
+                <th>Designation / Dept</th>
+                <th>Check-in Time</th>
+                <th>Check-out Time</th>
+                <th>Attendance Status</th>
+                <th style="text-align: center; width: 340px;">Check-in / Status Actions</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
     <!-- Screen 17: License & AMC Management [NEW] -->
     <div id="screenLicense" class="screen-view" style="display: none;">
       <!-- Validity Status Banner Alert -->
@@ -2812,6 +2888,73 @@
           <div class="form-actions" style="margin-top: 2rem;">
             <button type="button" class="btn btn-secondary" id="btnGrnCancel">Cancel</button>
             <button type="submit" class="btn btn-primary" id="btnGrnSubmit">Complete GRN & Update Stock</button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+
+  <!-- Employee Registration / Edit Modal -->
+  <div id="employeeModal" class="modal-overlay" style="display: none;">
+    <div class="modal-card" style="max-width: 600px; width: 95%;">
+      <span class="close-modal" id="employeeModalClose">&times;</span>
+      <section class="form-section">
+        <h2>Register Employee Profile</h2>
+        <form id="employeeForm">
+          <input type="hidden" id="employee_id" name="employee_id">
+          <div class="form-grid col-2">
+            <div class="form-field">
+              <label for="emp_first_name">First Name <span class="required-star">*</span></label>
+              <input type="text" id="emp_first_name" required placeholder="First name" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="emp_last_name">Last Name <span class="required-star">*</span></label>
+              <input type="text" id="emp_last_name" required placeholder="Last name" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-grid col-2" style="margin-top: 1rem;">
+            <div class="form-field">
+              <label for="emp_phone">Phone Number <span class="required-star">*</span></label>
+              <input type="tel" id="emp_phone" required placeholder="Contact phone number" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="emp_email">Email Address</label>
+              <input type="email" id="emp_email" placeholder="e.g. employee@company.com" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-grid col-2" style="margin-top: 1rem;">
+            <div class="form-field">
+              <label for="emp_designation">Designation / Role Title</label>
+              <input type="text" id="emp_designation" placeholder="e.g. Head Chef, Cashier, Waiter" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="emp_department">Department</label>
+              <input type="text" id="emp_department" placeholder="e.g. Kitchen, Front Desk, Sales" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-grid col-2" style="margin-top: 1rem;">
+            <div class="form-field">
+              <label for="emp_salary">Monthly Salary (₹)</label>
+              <input type="number" id="emp_salary" step="0.01" placeholder="0.00" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+            </div>
+            <div class="form-field">
+              <label for="emp_join_date">Date of Joining</label>
+              <input type="date" id="emp_join_date" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-grid col-2" style="margin-top: 1rem; border-top: 1.5px dashed var(--border-color); padding-top: 1rem;">
+            <div class="form-field">
+              <label for="emp_role_id">Access Permission Role</label>
+              <select id="emp_role_id" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);"></select>
+            </div>
+            <div class="form-field">
+              <label for="emp_password">System Access Password</label>
+              <input type="password" id="emp_password" placeholder="Leave blank to use phone number" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+            </div>
+          </div>
+          <div class="form-actions" style="margin-top: 2rem;">
+            <button type="button" class="btn btn-secondary" id="btnEmpCancel">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btnEmpSave">Save Profile</button>
           </div>
         </form>
       </section>

@@ -115,6 +115,9 @@ app.use('/api/inventory', inventoryRoutes);
 const poRoutes = require('./PurchaseOrderAPI');
 app.use('/api/purchase-orders', poRoutes);
 
+const employeeRoutes = require('./EmployeeAPI');
+app.use('/api/employees', employeeRoutes);
+
 const eventBus = require('./eventBus');
 
 // Real-Time Server-Sent Events Stream

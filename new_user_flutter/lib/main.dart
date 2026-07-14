@@ -33,6 +33,7 @@ import 'hotel_guests_screen.dart';
 import 'hotel_bookings_screen.dart';
 import 'inventory_screen.dart';
 import 'purchase_orders_screen.dart';
+import 'employee_screen.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -425,6 +426,7 @@ class _MainLayoutState extends State<MainLayout> {
     const HotelBookingsScreen(), // 24
     const InventoryScreen(), // 25
     const PurchaseOrdersScreen(), // 26
+    const EmployeeScreen(), // 27
   ];
 
   String _getAppBarTitle() {
@@ -483,6 +485,8 @@ class _MainLayoutState extends State<MainLayout> {
         return 'Stock Inventory';
       case 26:
         return 'Purchase Orders';
+      case 27:
+        return 'Employees & Attendance';
       default:
         return 'POS System';
     }
@@ -887,6 +891,16 @@ class _MainLayoutState extends State<MainLayout> {
                             },
                           ),
                         ],
+                      ),
+
+                      ListTile(
+                        leading: const Icon(Icons.people_outline, color: Color(0xFF64748B)),
+                        title: const Text('Employees & Attendance'),
+                        selected: _currentIndex == 27,
+                        onTap: () {
+                          setState(() => _currentIndex = 27);
+                          Navigator.pop(context);
+                        },
                       ),
 
                     if (_hasPermission(4) && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
