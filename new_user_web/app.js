@@ -4900,13 +4900,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const fetchReportsOverviewMetrics = async () => {
     try {
-      const [salesRes, purchaseRes] = await Promise.all([
+      const [salesRes, purchaseRes, invRes, empRes] = await Promise.all([
         fetch(getApiUrl('/api/sales')),
-        fetch(getApiUrl('/api/purchase'))
+        fetch(getApiUrl('/api/purchase')),
+        fetch(getApiUrl('/api/inventory')),
+        fetch(getApiUrl('/api/employees'))
       ]);
 
       const sales = salesRes.ok ? await salesRes.json() : [];
       const purchases = purchaseRes.ok ? await purchaseRes.json() : [];
+      const inv = invRes.ok ? await invRes.json() : [];
+      const emps = empRes.ok ? await empRes.json() : [];
 
       let totalSalesAmt = 0;
       sales.forEach(s => totalSalesAmt += parseFloat(s.total || 0));
@@ -4915,6 +4919,7 @@ document.addEventListener('DOMContentLoaded', () => {
       purchases.forEach(p => totalPurchasesAmt += parseFloat(p.total || 0));
 
       const profitMargin = totalSalesAmt - totalPurchasesAmt;
+      const lowStockItems = inv.filter(i => parseFloat(i.current_stock) <= parseFloat(i.min_stock)).length;
 
       if (reportValSales) reportValSales.textContent = `₹${totalSalesAmt.toFixed(2)}`;
       if (reportCountSales) reportCountSales.textContent = `${sales.length} invoices`;
@@ -4925,6 +4930,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (reportValMargin) {
         reportValMargin.textContent = `₹${profitMargin.toFixed(2)}`;
         reportValMargin.style.color = profitMargin >= 0 ? '#10b981' : '#ef4444';
+      }
+
+      const reportValStockAlert = document.getElementById('reportValStockAlert');
+      const reportCountStaff = document.getElementById('reportCountStaff');
+
+      if (reportValStockAlert) {
+        reportValStockAlert.textContent = `${lowStockItems} Alert${lowStockItems === 1 ? '' : 's'}`;
+        reportValStockAlert.style.color = lowStockItems > 0 ? '#ef4444' : 'inherit';
+      }
+      if (reportCountStaff) {
+        reportCountStaff.textContent = `${emps.length} active employee${emps.length === 1 ? '' : 's'}`;
       }
     } catch (err) {
       console.error('Error fetching overview metrics:', err);
