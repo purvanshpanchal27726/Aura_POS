@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 /// Stateful Role Administration Screen.
 /// Renders security roles in a responsive list (cards on mobile < 750, data table on desktop).
@@ -44,7 +45,7 @@ class _RoleListingScreenState extends State<RoleListingScreen> {
   Future<void> fetchRoles() async {
     try {
       setState(() => isLoading = true);
-      final response = await http.get(Uri.parse(AppConfig.rolesApiUrl));
+      final response = await ApiClient.get(Uri.parse(AppConfig.rolesApiUrl));
       if (response.statusCode == 200) {
         setState(() {
           roles = json.decode(response.body);
@@ -74,15 +75,13 @@ class _RoleListingScreenState extends State<RoleListingScreen> {
       http.Response response;
 
       if (editingRoleId == null) {
-        response = await http.post(
+        response = await ApiClient.post(
           Uri.parse(AppConfig.rolesApiUrl),
-          headers: {'Content-Type': 'application/json'},
           body: json.encode(roleData),
         );
       } else {
-        response = await http.put(
+        response = await ApiClient.put(
           Uri.parse('${AppConfig.rolesApiUrl}/$editingRoleId'),
-          headers: {'Content-Type': 'application/json'},
           body: json.encode(roleData),
         );
       }
@@ -157,7 +156,7 @@ class _RoleListingScreenState extends State<RoleListingScreen> {
 
     try {
       setState(() => isLoading = true);
-      final response = await http.delete(Uri.parse('${AppConfig.rolesApiUrl}/$id'));
+      final response = await ApiClient.delete(Uri.parse('${AppConfig.rolesApiUrl}/$id'));
       
       if (response.statusCode == 200) {
         if (mounted) {

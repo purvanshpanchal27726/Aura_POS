@@ -3,6 +3,13 @@ const db = require('./db');
 
 const router = express.Router();
 
+// Helper to get client_id from headers or query params
+function getClientId(req) {
+  const cid = req.headers['x-client-id'] || req.query.client_id;
+  if (!cid || cid === 'null' || cid === 'undefined') return null;
+  return parseInt(cid);
+}
+
 /**
  * POST /api/sales
  * Saves a new Sales Invoice.
@@ -13,6 +20,13 @@ router.post('/', async (req, res) => {
     await connection.beginTransaction();
 
     const data = req.body || {};
+    const clientId = getClientId(req);
+    
+    if (!clientId) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
     const { customer_id, sales_date, sales_bill_no, gross, tax, total, created_by, items, payment_method } = data;
 
     if (!customer_id || !sales_date || !sales_bill_no || !items || !Array.isArray(items) || items.length === 0) {
@@ -23,11 +37,12 @@ router.post('/', async (req, res) => {
     // Insert into sales_master
     const masterQuery = `
       INSERT INTO sales_master (
-        customer_id, sales_date, sales_bill_no, gross, tax, total, created_by, payment_method
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        client_id, customer_id, sales_date, sales_bill_no, gross, tax, total, created_by, payment_method
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [masterResult] = await connection.execute(masterQuery, [
+      clientId,
       customer_id,
       sales_date,
       sales_bill_no,
@@ -65,9 +80,8 @@ router.post('/', async (req, res) => {
     // Trigger automatic WhatsApp billing delivery
     try {
       const { sendWhatsAppInvoice } = require('./WhatsAppService');
-      const [custInfo] = await db.execute('SELECT client_id FROM customers WHERE customer_id = ?', [customer_id]);
+      const [custInfo] = await db.execute('SELECT client_id FROM customers WHERE customer_id = ? AND client_id = ?', [customer_id, clientId]);
       if (custInfo.length > 0) {
-        const clientId = custInfo[0].client_id;
         sendWhatsAppInvoice(clientId, customer_id, total, sales_bill_no);
       }
     } catch (wsErr) {
@@ -79,6 +93,7 @@ router.post('/', async (req, res) => {
     eventBus.emit('broadcast', {
       event: 'transaction',
       type: 'sales',
+      client_id: clientId,
       billNo: sales_bill_no,
       total: total || 0,
       operator: created_by || 'System'
@@ -99,16 +114,22 @@ router.post('/', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
     const query = `
       SELECT sm.*, 
              CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
              c.phone_1 AS customer_phone
       FROM sales_master sm
       LEFT JOIN customers c ON sm.customer_id = c.customer_id
+      WHERE sm.client_id = ?
       ORDER BY sm.sales_id ASC
     `;
 
-    const [rows] = await db.query(query);
+    const [rows] = await db.query(query, [clientId]);
     res.json(rows.map(r => ({ ...r, id: r.sales_id })));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -121,6 +142,11 @@ router.get('/', async (req, res) => {
  */
 router.get('/details/all', async (req, res) => {
   try {
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
     const query = `
       SELECT sd.*, sm.sales_date, sm.sales_bill_no, sm.customer_id, sm.created_by,
              CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
@@ -130,9 +156,10 @@ router.get('/details/all', async (req, res) => {
       LEFT JOIN customers c ON sm.customer_id = c.customer_id
       LEFT JOIN items i ON sd.item_id = i.item_id
       LEFT JOIN categories cat ON i.category_id = cat.category_id
+      WHERE sm.client_id = ?
       ORDER BY sm.sales_id DESC, sd.sales_detail_id ASC
     `;
-    const [rows] = await db.query(query);
+    const [rows] = await db.query(query, [clientId]);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -146,6 +173,10 @@ router.get('/details/all', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const salesId = req.params.id;
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
 
     const masterQuery = `
       SELECT sm.*, 
@@ -155,10 +186,10 @@ router.get('/:id', async (req, res) => {
              c.city AS customer_city
       FROM sales_master sm
       LEFT JOIN customers c ON sm.customer_id = c.customer_id
-      WHERE sm.sales_id = ?
+      WHERE sm.sales_id = ? AND sm.client_id = ?
     `;
 
-    const [masterRows] = await db.execute(masterQuery, [salesId]);
+    const [masterRows] = await db.execute(masterQuery, [salesId, clientId]);
     if (masterRows.length === 0) {
       return res.status(404).json({ error: 'Invoice not found' });
     }
@@ -189,14 +220,19 @@ router.get('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const salesId = parseInt(req.params.id);
-    const [rows] = await db.execute('SELECT * FROM sales_master WHERE sales_id = ?', [salesId]);
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
+    const [rows] = await db.execute('SELECT * FROM sales_master WHERE sales_id = ? AND client_id = ?', [salesId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Invoice not found' });
     }
 
     await db.query('START TRANSACTION');
-    await db.execute('DELETE FROM sales_master WHERE sales_id = ?', [salesId]);
-    await db.execute('UPDATE sales_master SET sales_id = sales_id - 1 WHERE sales_id > ?', [salesId]);
+    await db.execute('DELETE FROM sales_master WHERE sales_id = ? AND client_id = ?', [salesId, clientId]);
+    await db.execute('UPDATE sales_master SET sales_id = sales_id - 1 WHERE sales_id > ? AND client_id = ?', [salesId, clientId]);
     await db.execute('ALTER TABLE sales_master AUTO_INCREMENT = 1');
     await db.query('COMMIT');
     

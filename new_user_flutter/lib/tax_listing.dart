@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 /// Stateful Tax Administration Screen.
 /// Renders registered taxes inside responsive layout (card lists on mobile < 750, data table on desktop).
@@ -46,7 +47,7 @@ class _TaxListingScreenState extends State<TaxListingScreen> {
   Future<void> fetchTaxes() async {
     try {
       setState(() => isLoading = true);
-      final response = await http.get(Uri.parse(AppConfig.taxesApiUrl));
+      final response = await ApiClient.get(Uri.parse(AppConfig.taxesApiUrl));
       if (response.statusCode == 200) {
         setState(() {
           taxes = json.decode(response.body);
@@ -77,15 +78,13 @@ class _TaxListingScreenState extends State<TaxListingScreen> {
       http.Response response;
 
       if (editingTaxId == null) {
-        response = await http.post(
+        response = await ApiClient.post(
           Uri.parse(AppConfig.taxesApiUrl),
-          headers: {'Content-Type': 'application/json'},
           body: json.encode(taxData),
         );
       } else {
-        response = await http.put(
+        response = await ApiClient.put(
           Uri.parse('${AppConfig.taxesApiUrl}/$editingTaxId'),
-          headers: {'Content-Type': 'application/json'},
           body: json.encode(taxData),
         );
       }
@@ -143,7 +142,7 @@ class _TaxListingScreenState extends State<TaxListingScreen> {
 
     try {
       setState(() => isLoading = true);
-      final response = await http.delete(Uri.parse('${AppConfig.taxesApiUrl}/$id'));
+      final response = await ApiClient.delete(Uri.parse('${AppConfig.taxesApiUrl}/$id'));
 
       if (response.statusCode == 200) {
         if (mounted) {

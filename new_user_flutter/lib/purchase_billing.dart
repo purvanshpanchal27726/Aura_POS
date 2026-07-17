@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 class PurchaseBillingScreen extends StatefulWidget {
   const PurchaseBillingScreen({super.key});
@@ -48,11 +48,11 @@ class _PurchaseBillingScreenState extends State<PurchaseBillingScreen> {
       setState(() => isLoading = true);
       
       final responses = await Future.wait([
-        http.get(Uri.parse(AppConfig.vendorsApiUrl)),
-        http.get(Uri.parse(AppConfig.itemsApiUrl)),
-        http.get(Uri.parse(AppConfig.taxesApiUrl)),
-        http.get(Uri.parse(AppConfig.purchasesApiUrl)),
-        http.get(Uri.parse(AppConfig.categoriesApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.vendorsApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.itemsApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.taxesApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.purchasesApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.categoriesApiUrl)),
       ]);
 
       if (responses.every((res) => res.statusCode == 200)) {
@@ -242,9 +242,8 @@ class _PurchaseBillingScreenState extends State<PurchaseBillingScreen> {
 
     try {
       setState(() => isLoading = true);
-      final response = await http.post(
+      final response = await ApiClient.post(
         Uri.parse(AppConfig.purchasesApiUrl),
-        headers: {'Content-Type': 'application/json'},
         body: json.encode(payload),
       );
 
@@ -285,7 +284,7 @@ class _PurchaseBillingScreenState extends State<PurchaseBillingScreen> {
 
   Future<void> _openReceiptDialog(int purchaseId) async {
     try {
-      final response = await http.get(Uri.parse('${AppConfig.purchasesApiUrl}/$purchaseId'));
+      final response = await ApiClient.get(Uri.parse('${AppConfig.purchasesApiUrl}/$purchaseId'));
       if (response.statusCode != 200) throw Exception('Failed to load purchase receipt details.');
       
       final invoice = json.decode(response.body);

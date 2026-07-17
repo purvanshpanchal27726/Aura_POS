@@ -3,6 +3,13 @@ const db = require('./db');
 
 const router = express.Router();
 
+// Helper to get client_id from headers or query params
+function getClientId(req) {
+  const cid = req.headers['x-client-id'] || req.query.client_id;
+  if (!cid || cid === 'null' || cid === 'undefined') return null;
+  return parseInt(cid);
+}
+
 /**
  * POST /api/taxes
  * Registers a new tax.
@@ -10,7 +17,12 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   try {
     const data = req.body.TaxModel || req.body;
+    const clientId = getClientId(req);
     
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
     const { name, percentage } = data;
     const finalPercentage = percentage !== undefined ? parseFloat(percentage) : 0.00;
     
@@ -25,11 +37,12 @@ router.post('/', async (req, res) => {
     }
 
     const query = `
-      INSERT INTO taxes (name, percentage, active, created_by)
-      VALUES (?, ?, ?, ?)
+      INSERT INTO taxes (client_id, name, percentage, active, created_by)
+      VALUES (?, ?, ?, ?, ?)
     `;
 
     const values = [
+      clientId,
       name,
       finalPercentage,
       active ? 1 : 0,
@@ -53,7 +66,11 @@ router.post('/', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM taxes ORDER BY tax_id ASC');
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+    const [rows] = await db.query('SELECT * FROM taxes WHERE client_id = ? ORDER BY tax_id ASC', [clientId]);
     // Map response to also include id alias for client flexibility
     const mappedRows = rows.map(r => ({
       ...r,
@@ -73,7 +90,11 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const taxId = req.params.id;
-    const [rows] = await db.execute('SELECT * FROM taxes WHERE tax_id = ?', [taxId]);
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+    const [rows] = await db.execute('SELECT * FROM taxes WHERE tax_id = ? AND client_id = ?', [taxId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Tax not found' });
     }
@@ -91,12 +112,17 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const taxId = req.params.id;
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
     const data = req.body.TaxModel || req.body;
     
     const { name, percentage } = data;
     const active = data.active !== undefined ? data.active : data.acitve;
 
-    const [rows] = await db.execute('SELECT * FROM taxes WHERE tax_id = ?', [taxId]);
+    const [rows] = await db.execute('SELECT * FROM taxes WHERE tax_id = ? AND client_id = ?', [taxId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Tax not found' });
     }
@@ -108,14 +134,15 @@ router.put('/:id', async (req, res) => {
 
     const query = `
       UPDATE taxes SET name = ?, percentage = ?, active = ?
-      WHERE tax_id = ?
+      WHERE tax_id = ? AND client_id = ?
     `;
 
     await db.execute(query, [
       finalName,
       finalPercentage,
       finalActive,
-      taxId
+      taxId,
+      clientId
     ]);
 
     res.json({ message: 'Tax updated successfully' });
@@ -131,15 +158,19 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const taxId = parseInt(req.params.id);
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
 
-    const [rows] = await db.execute('SELECT * FROM taxes WHERE tax_id = ?', [taxId]);
+    const [rows] = await db.execute('SELECT * FROM taxes WHERE tax_id = ? AND client_id = ?', [taxId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Tax not found' });
     }
 
     await db.query('START TRANSACTION');
-    await db.execute('DELETE FROM taxes WHERE tax_id = ?', [taxId]);
-    await db.execute('UPDATE taxes SET tax_id = tax_id - 1 WHERE tax_id > ?', [taxId]);
+    await db.execute('DELETE FROM taxes WHERE tax_id = ? AND client_id = ?', [taxId, clientId]);
+    await db.execute('UPDATE taxes SET tax_id = tax_id - 1 WHERE tax_id > ? AND client_id = ?', [taxId, clientId]);
     await db.execute('ALTER TABLE taxes AUTO_INCREMENT = 1');
     await db.query('COMMIT');
     

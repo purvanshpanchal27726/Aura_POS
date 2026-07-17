@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 class ReceiptListingScreen extends StatefulWidget {
   const ReceiptListingScreen({super.key});
@@ -24,7 +24,7 @@ class _ReceiptListingScreenState extends State<ReceiptListingScreen> {
   Future<void> fetchReceipts() async {
     try {
       setState(() => isLoading = true);
-      final response = await http.get(Uri.parse(AppConfig.salesApiUrl));
+      final response = await ApiClient.get(Uri.parse(AppConfig.salesApiUrl));
       if (response.statusCode == 200) {
         setState(() {
           receipts = json.decode(response.body);
@@ -40,7 +40,7 @@ class _ReceiptListingScreenState extends State<ReceiptListingScreen> {
   Future<void> _viewReceipt(int salesId) async {
     try {
       setState(() => isLoading = true);
-      final response = await http.get(Uri.parse('${AppConfig.salesApiUrl}/$salesId'));
+      final response = await ApiClient.get(Uri.parse('${AppConfig.salesApiUrl}/$salesId'));
       setState(() => isLoading = false);
       
       if (response.statusCode != 200) throw Exception('Invoice not found');

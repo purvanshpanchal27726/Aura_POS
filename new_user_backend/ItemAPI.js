@@ -4,6 +4,13 @@ const { resolveImageForStorage, decorateItem, deleteStoredImage } = require('./i
 
 const router = express.Router();
 
+// Helper to get client_id from headers or query params
+function getClientId(req) {
+  const cid = req.headers['x-client-id'] || req.query.client_id;
+  if (!cid || cid === 'null' || cid === 'undefined') return null;
+  return parseInt(cid);
+}
+
 /**
  * POST /api/items
  * Registers a new inventory item.
@@ -11,6 +18,11 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   try {
     const data = req.body.ItemModel || req.body || {};
+    const clientId = getClientId(req);
+    
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
 
     const { name, code } = data;
     
@@ -50,12 +62,14 @@ router.post('/', async (req, res) => {
     const nameCheck = name.trim().toLowerCase();
     const codeCheck = code && code.trim().length > 0 ? code.trim() : null;
 
-    let duplicateCheckQuery = 'SELECT * FROM items WHERE LOWER(name) = ?';
+    let duplicateCheckQuery = 'SELECT * FROM items WHERE (LOWER(name) = ?';
     let duplicateCheckValues = [nameCheck];
     if (codeCheck) {
       duplicateCheckQuery += ' OR code = ?';
       duplicateCheckValues.push(codeCheck);
     }
+    duplicateCheckQuery += ') AND client_id = ?';
+    duplicateCheckValues.push(clientId);
 
     const [existing] = await db.execute(duplicateCheckQuery, duplicateCheckValues);
     if (existing.length > 0) {
@@ -64,14 +78,15 @@ router.post('/', async (req, res) => {
 
     const query = `
       INSERT INTO items (
-        name, short_name, long_name, description, code, image,
+        client_id, name, short_name, long_name, description, code, image,
         sales_price, purchase_price, editable_price, visible, 
         tax_id, category_id, unit_id, base_quantity, weight_measurement,
         active, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
+      clientId,
       name,
       short_name,
       long_name,
@@ -108,6 +123,11 @@ router.post('/', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
     const query = `
       SELECT 
         i.*,
@@ -118,10 +138,11 @@ router.get('/', async (req, res) => {
       LEFT JOIN categories c ON i.category_id = c.category_id
       LEFT JOIN units u ON i.unit_id = u.unit_id
       LEFT JOIN taxes t ON i.tax_id = t.tax_id
+      WHERE i.client_id = ?
       ORDER BY i.item_id ASC
     `;
 
-    const [rows] = await db.query(query);
+    const [rows] = await db.query(query, [clientId]);
 
     const mappedRows = rows.map(r => ({
       ...decorateItem(r, req),
@@ -143,6 +164,10 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const itemId = req.params.id;
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
 
     const query = `
       SELECT 
@@ -154,10 +179,10 @@ router.get('/:id', async (req, res) => {
       LEFT JOIN categories c ON i.category_id = c.category_id
       LEFT JOIN units u ON i.unit_id = u.unit_id
       LEFT JOIN taxes t ON i.tax_id = t.tax_id
-      WHERE i.item_id = ?
+      WHERE i.item_id = ? AND i.client_id = ?
     `;
 
-    const [rows] = await db.execute(query, [itemId]);
+    const [rows] = await db.execute(query, [itemId, clientId]);
 
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Item not found' });
@@ -182,6 +207,11 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const itemId = req.params.id;
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
     const data = req.body.ItemModel || req.body || {};
 
     const { name, code } = data;
@@ -209,7 +239,7 @@ router.put('/:id', async (req, res) => {
     const base_quantity = data.base_quantity !== undefined ? data.base_quantity : data.baseQuantity;
     const weight_measurement = data.weight_measurement !== undefined ? data.weight_measurement : data.weightMeasurement;
 
-    const [rows] = await db.execute('SELECT * FROM items WHERE item_id = ?', [itemId]);
+    const [rows] = await db.execute('SELECT * FROM items WHERE item_id = ? AND client_id = ?', [itemId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Item not found' });
     }
@@ -247,8 +277,8 @@ router.put('/:id', async (req, res) => {
       duplicateCheckQuery += ' OR code = ?';
       duplicateCheckValues.push(codeCheck);
     }
-    duplicateCheckQuery += ') AND item_id != ?';
-    duplicateCheckValues.push(itemId);
+    duplicateCheckQuery += ') AND item_id != ? AND client_id = ?';
+    duplicateCheckValues.push(itemId, clientId);
 
     const [existingDup] = await db.execute(duplicateCheckQuery, duplicateCheckValues);
     if (existingDup.length > 0) {
@@ -261,7 +291,7 @@ router.put('/:id', async (req, res) => {
         sales_price = ?, purchase_price = ?, editable_price = ?, visible = ?, 
         tax_id = ?, category_id = ?, unit_id = ?, base_quantity = ?, weight_measurement = ?,
         active = ?
-      WHERE item_id = ?
+      WHERE item_id = ? AND client_id = ?
     `;
 
     await db.execute(query, [
@@ -281,7 +311,8 @@ router.put('/:id', async (req, res) => {
       finalBaseQuantity,
       finalWeightMeasurement,
       finalActive,
-      itemId
+      itemId,
+      clientId
     ]);
 
     if (finalImage !== existing.image) {
@@ -301,8 +332,12 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const itemId = parseInt(req.params.id);
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
 
-    const [rows] = await db.execute('SELECT * FROM items WHERE item_id = ?', [itemId]);
+    const [rows] = await db.execute('SELECT * FROM items WHERE item_id = ? AND client_id = ?', [itemId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Item not found' });
     }
@@ -310,8 +345,8 @@ router.delete('/:id', async (req, res) => {
     const imageToDelete = rows[0].image;
 
     await db.query('START TRANSACTION');
-    await db.execute('DELETE FROM items WHERE item_id = ?', [itemId]);
-    await db.execute('UPDATE items SET item_id = item_id - 1 WHERE item_id > ?', [itemId]);
+    await db.execute('DELETE FROM items WHERE item_id = ? AND client_id = ?', [itemId, clientId]);
+    await db.execute('UPDATE items SET item_id = item_id - 1 WHERE item_id > ? AND client_id = ?', [itemId, clientId]);
     await db.execute('ALTER TABLE items AUTO_INCREMENT = 1');
     await db.query('COMMIT');
     deleteStoredImage(imageToDelete);

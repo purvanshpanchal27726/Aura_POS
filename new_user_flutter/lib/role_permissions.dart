@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 /// Stateful Rolewise Permissions configuration screen.
 /// Loads the current role-permission mapping matrix and supports bulk updates (PUT).
@@ -30,7 +30,7 @@ class _RolewisePermissionsScreenState extends State<RolewisePermissionsScreen> {
   Future<void> loadPermissionsMatrix() async {
     try {
       setState(() => isLoading = true);
-      final response = await http.get(Uri.parse(AppConfig.permissionsApiUrl));
+      final response = await ApiClient.get(Uri.parse(AppConfig.permissionsApiUrl));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() {
@@ -85,9 +85,8 @@ class _RolewisePermissionsScreenState extends State<RolewisePermissionsScreen> {
         'allowed': (p['allowed'] == 1 || p['allowed'] == true) ? 1 : 0,
       }).toList();
 
-      final response = await http.put(
+      final response = await ApiClient.put(
         Uri.parse(AppConfig.permissionsApiUrl),
-        headers: {'Content-Type': 'application/json'},
         body: json.encode(payload),
       );
 

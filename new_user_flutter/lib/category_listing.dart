@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 class CategoryListingScreen extends StatefulWidget {
   final int? roleId;
@@ -40,7 +41,7 @@ class _CategoryListingScreenState extends State<CategoryListingScreen> {
   Future<void> fetchCategories() async {
     try {
       setState(() => isLoading = true);
-      final response = await http.get(Uri.parse(AppConfig.categoriesApiUrl));
+      final response = await ApiClient.get(Uri.parse(AppConfig.categoriesApiUrl));
       if (response.statusCode == 200) {
         setState(() {
           categories = json.decode(response.body);
@@ -89,15 +90,13 @@ class _CategoryListingScreenState extends State<CategoryListingScreen> {
       http.Response response;
 
       if (editingCategoryId == null) {
-        response = await http.post(
+        response = await ApiClient.post(
           Uri.parse(AppConfig.categoriesApiUrl),
-          headers: {'Content-Type': 'application/json'},
           body: json.encode(categoryData),
         );
       } else {
-        response = await http.put(
+        response = await ApiClient.put(
           Uri.parse('${AppConfig.categoriesApiUrl}/$editingCategoryId'),
-          headers: {'Content-Type': 'application/json'},
           body: json.encode(categoryData),
         );
       }
@@ -166,7 +165,7 @@ class _CategoryListingScreenState extends State<CategoryListingScreen> {
 
     try {
       setState(() => isLoading = true);
-      final response = await http.delete(
+      final response = await ApiClient.delete(
         Uri.parse('${AppConfig.categoriesApiUrl}/$id'),
       );
 

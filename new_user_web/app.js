@@ -3828,28 +3828,58 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const username = document.getElementById('loginUsername').value.trim();
       const password = document.getElementById('loginPassword').value;
+      const errorBanner = document.getElementById('loginErrorBanner');
+      const submitBtn = document.getElementById('loginSubmitBtn');
+
+      // Hide previous errors, show loading state
+      if (errorBanner) { errorBanner.style.display = 'none'; errorBanner.textContent = ''; }
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Signing in…'; }
+
+      const showLoginError = (msg) => {
+        if (errorBanner) {
+          errorBanner.textContent = msg;
+          errorBanner.style.display = 'block';
+        }
+        showToast('Login Failed', msg, 'danger');
+        AudioSynth.playError();
+      };
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
         const response = await fetch(getApiUrl('/api/users/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ username, password }),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
+
         if (!response.ok) {
           const errData = await response.json();
           throw new Error(errData.error || 'Invalid credentials');
         }
         const data = await response.json();
         localStorage.setItem('pos_active_user', JSON.stringify(data.user));
+        if (errorBanner) errorBanner.style.display = 'none';
         showToast('Login Successful', `Welcome back, ${username}!`, 'success');
         AudioSynth.playSuccess();
         checkAuthSession();
       } catch (err) {
-        showToast('Login Failed', err.message, 'danger');
-        AudioSynth.playError();
+        if (err.name === 'AbortError') {
+          showLoginError('Connection timed out. The server may be starting up — please wait 30 seconds and try again.');
+        } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('Load failed')) {
+          showLoginError('Cannot reach the server. Check your internet connection or try again in a moment.');
+        } else {
+          showLoginError(err.message || 'Invalid username or password.');
+        }
+      } finally {
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Login'; }
       }
     });
   }
+
 
 
 
@@ -6373,7 +6403,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', () => openCategoryModal(btn.getAttribute('data-id')));
     });
     tbody.querySelectorAll('.btn-category-delete').forEach(btn => {
-      btn.addEventListener('click', () => deleteCategory(btn.getAttribute('data-id')));
+      btn.addEventListener('click', () => deleteMenuCategory(btn.getAttribute('data-id')));
     });
   };
 
@@ -6430,7 +6460,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const deleteCategory = async (id) => {
+  const deleteMenuCategory = async (id) => {
     if (!confirm('Are you sure you want to delete this category?')) return;
     try {
       const response = await fetch(getApiUrl(`/api/restaurant/menu/categories/${id}`), { method: 'DELETE' });
@@ -6984,7 +7014,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- SSE REAL-TIME SYNCHRONIZATION ---
-  const initRealtimeSSE = () => {
+  const initRestaurantSSE = () => {
     if (!activeUser) return;
     console.log('Initializing Real-Time SSE Listener Stream...');
     const sse = new EventSource(getApiUrl('/api/realtime-events'));
@@ -7011,7 +7041,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sse.onerror = (err) => {
       console.warn('SSE disconnected, reconnecting in 5s...');
       sse.close();
-      setTimeout(initRealtimeSSE, 5000);
+      setTimeout(initRestaurantSSE, 5000);
     };
   };
 
@@ -7019,7 +7049,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkAuthSession = () => {
     originalCheckAuthSession();
     if (activeUser) {
-      initRealtimeSSE();
+      initRestaurantSSE();
     }
   };
 

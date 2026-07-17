@@ -3,6 +3,13 @@ const db = require('./db');
 
 const router = express.Router();
 
+// Helper to get client_id from headers or query params
+function getClientId(req) {
+  const cid = req.headers['x-client-id'] || req.query.client_id;
+  if (!cid || cid === 'null' || cid === 'undefined') return null;
+  return parseInt(cid);
+}
+
 /**
  * POST /api/vendors
  * Creates a new vendor.
@@ -10,6 +17,12 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   try {
     const data = req.body.VendorModel || req.body || {};
+    const clientId = getClientId(req);
+    
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
     const { first_name, last_name, company, address_1, address_2, city, country, phone_1, phone_2, email, created_by } = data;
 
     if (!first_name || !last_name || !address_1 || !city || !country || !phone_1) {
@@ -21,7 +34,7 @@ router.post('/', async (req, res) => {
     const phoneCheck = phone_1.trim();
     const emailCheck = email ? email.trim().toLowerCase() : '';
 
-    let queryDup = 'SELECT * FROM vendors WHERE phone_1 = ?';
+    let queryDup = 'SELECT * FROM vendors WHERE (phone_1 = ?';
     let paramsDup = [phoneCheck];
     if (emailCheck) {
       queryDup += ' OR LOWER(email) = ?';
@@ -31,6 +44,8 @@ router.post('/', async (req, res) => {
       queryDup += ' OR LOWER(company) = ?';
       paramsDup.push(companyCheck);
     }
+    queryDup += ') AND client_id = ?';
+    paramsDup.push(clientId);
     
     const [existing] = await db.execute(queryDup, paramsDup);
     if (existing.length > 0) {
@@ -48,12 +63,13 @@ router.post('/', async (req, res) => {
 
     const query = `
       INSERT INTO vendors (
-        first_name, last_name, company, address_1, address_2, 
+        client_id, first_name, last_name, company, address_1, address_2, 
         city, country, phone_1, phone_2, email, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const [result] = await db.execute(query, [
+      clientId,
       first_name,
       last_name,
       company || null,
@@ -79,7 +95,11 @@ router.post('/', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM vendors ORDER BY vendor_id ASC');
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+    const [rows] = await db.query('SELECT * FROM vendors WHERE client_id = ? ORDER BY vendor_id ASC', [clientId]);
     res.json(rows.map(r => ({ ...r, id: r.vendor_id })));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -93,7 +113,11 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const vendorId = req.params.id;
-    const [rows] = await db.execute('SELECT * FROM vendors WHERE vendor_id = ?', [vendorId]);
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+    const [rows] = await db.execute('SELECT * FROM vendors WHERE vendor_id = ? AND client_id = ?', [vendorId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Vendor not found' });
     }
@@ -110,10 +134,15 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const vendorId = req.params.id;
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
     const data = req.body.VendorModel || req.body || {};
     const { first_name, last_name, company, address_1, address_2, city, country, phone_1, phone_2, email } = data;
 
-    const [rows] = await db.execute('SELECT * FROM vendors WHERE vendor_id = ?', [vendorId]);
+    const [rows] = await db.execute('SELECT * FROM vendors WHERE vendor_id = ? AND client_id = ?', [vendorId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Vendor not found' });
     }
@@ -145,8 +174,8 @@ router.put('/:id', async (req, res) => {
       queryDup += ' OR LOWER(company) = ?';
       paramsDup.push(f_company);
     }
-    queryDup += ') AND vendor_id != ?';
-    paramsDup.push(vendorId);
+    queryDup += ') AND vendor_id != ? AND client_id = ?';
+    paramsDup.push(vendorId, clientId);
 
     const [existingDup] = await db.execute(`SELECT * FROM vendors WHERE ${queryDup}`, paramsDup);
     if (existingDup.length > 0) {
@@ -166,10 +195,10 @@ router.put('/:id', async (req, res) => {
       UPDATE vendors SET 
         first_name = ?, last_name = ?, company = ?, address_1 = ?, address_2 = ?, 
         city = ?, country = ?, phone_1 = ?, phone_2 = ?, email = ?
-      WHERE vendor_id = ?
+      WHERE vendor_id = ? AND client_id = ?
     `;
 
-    await db.execute(query, [f_name, l_name, comp, addr1, addr2, c_city, c_country, p1, p2, mail, vendorId]);
+    await db.execute(query, [f_name, l_name, comp, addr1, addr2, c_city, c_country, p1, p2, mail, vendorId, clientId]);
     res.json({ message: 'Vendor updated successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -183,14 +212,19 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const vendorId = parseInt(req.params.id);
-    const [rows] = await db.execute('SELECT * FROM vendors WHERE vendor_id = ?', [vendorId]);
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
+    const [rows] = await db.execute('SELECT * FROM vendors WHERE vendor_id = ? AND client_id = ?', [vendorId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Vendor not found' });
     }
 
     await db.query('START TRANSACTION');
-    await db.execute('DELETE FROM vendors WHERE vendor_id = ?', [vendorId]);
-    await db.execute('UPDATE vendors SET vendor_id = vendor_id - 1 WHERE vendor_id > ?', [vendorId]);
+    await db.execute('DELETE FROM vendors WHERE vendor_id = ? AND client_id = ?', [vendorId, clientId]);
+    await db.execute('UPDATE vendors SET vendor_id = vendor_id - 1 WHERE vendor_id > ? AND client_id = ?', [vendorId, clientId]);
     await db.execute('ALTER TABLE vendors AUTO_INCREMENT = 1');
     await db.query('COMMIT');
     

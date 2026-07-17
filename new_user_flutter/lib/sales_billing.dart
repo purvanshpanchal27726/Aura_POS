@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 class SalesBillingScreen extends StatefulWidget {
   const SalesBillingScreen({super.key});
@@ -43,11 +43,11 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
       setState(() => isLoading = true);
       
       final responses = await Future.wait([
-        http.get(Uri.parse(AppConfig.customersApiUrl)),
-        http.get(Uri.parse(AppConfig.itemsApiUrl)),
-        http.get(Uri.parse(AppConfig.taxesApiUrl)),
-        http.get(Uri.parse(AppConfig.salesApiUrl)),
-        http.get(Uri.parse(AppConfig.categoriesApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.customersApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.itemsApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.taxesApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.salesApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.categoriesApiUrl)),
       ]);
 
       if (responses.every((res) => res.statusCode == 200)) {
@@ -228,9 +228,8 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
 
     try {
       setState(() => isLoading = true);
-      final response = await http.post(
+      final response = await ApiClient.post(
         Uri.parse(AppConfig.salesApiUrl),
-        headers: {'Content-Type': 'application/json'},
         body: json.encode(payload),
       );
 
@@ -271,7 +270,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
 
   Future<void> _openReceiptDialog(int salesId) async {
     try {
-      final response = await http.get(Uri.parse('${AppConfig.salesApiUrl}/$salesId'));
+      final response = await ApiClient.get(Uri.parse('${AppConfig.salesApiUrl}/$salesId'));
       if (response.statusCode != 200) throw Exception('Failed to load invoice receipt details.');
       
       final invoice = json.decode(response.body);

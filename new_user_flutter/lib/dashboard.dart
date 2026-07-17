@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 class DashboardScreen extends StatefulWidget {
   final void Function(int)? onNavigate;
@@ -51,8 +51,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       setState(() => isLoading = true);
       final responses = await Future.wait([
-        http.get(Uri.parse(AppConfig.dashboardStatsUrl)),
-        http.get(Uri.parse(AppConfig.itemsApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.dashboardStatsUrl)),
+        ApiClient.get(Uri.parse(AppConfig.itemsApiUrl)),
       ]);
 
       if (responses[0].statusCode == 200 && responses[1].statusCode == 200) {

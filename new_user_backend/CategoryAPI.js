@@ -3,6 +3,13 @@ const db = require('./db');
 
 const router = express.Router();
 
+// Helper to get client_id from headers or query params
+function getClientId(req) {
+  const cid = req.headers['x-client-id'] || req.query.client_id;
+  if (!cid || cid === 'null' || cid === 'undefined') return null;
+  return parseInt(cid);
+}
+
 /**
  * POST /api/categories
  * Registers a new category.
@@ -10,6 +17,11 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   try {
     const data = req.body.CategoryModel || req.body;
+    const clientId = getClientId(req);
+    
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
 
     const { name } = data;
 
@@ -25,17 +37,18 @@ router.post('/', async (req, res) => {
 
     // Duplicate Check
     const nameCheck = name.trim().toLowerCase();
-    const [existing] = await db.execute('SELECT * FROM categories WHERE LOWER(name) = ?', [nameCheck]);
+    const [existing] = await db.execute('SELECT * FROM categories WHERE LOWER(name) = ? AND client_id = ?', [nameCheck, clientId]);
     if (existing.length > 0) {
       return res.status(400).json({ error: 'This category is already added.' });
     }
 
     const query = `
-      INSERT INTO categories (name, active, created_by)
-      VALUES (?, ?, ?)
+      INSERT INTO categories (client_id, name, active, created_by)
+      VALUES (?, ?, ?, ?)
     `;
 
     const values = [
+      clientId,
       name,
       active ? 1 : 0,
       created_by
@@ -58,7 +71,11 @@ router.post('/', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM categories ORDER BY category_id ASC');
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+    const [rows] = await db.query('SELECT * FROM categories WHERE client_id = ? ORDER BY category_id ASC', [clientId]);
     const mappedRows = rows.map(r => ({
       ...r,
       id: r.category_id,
@@ -77,7 +94,11 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const categoryId = req.params.id;
-    const [rows] = await db.execute('SELECT * FROM categories WHERE category_id = ?', [categoryId]);
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+    const [rows] = await db.execute('SELECT * FROM categories WHERE category_id = ? AND client_id = ?', [categoryId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Category not found' });
     }
@@ -95,12 +116,17 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const categoryId = req.params.id;
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
     const data = req.body.CategoryModel || req.body;
 
     const { name } = data;
     const active = data.active !== undefined ? data.active : data.acitve;
 
-    const [rows] = await db.execute('SELECT * FROM categories WHERE category_id = ?', [categoryId]);
+    const [rows] = await db.execute('SELECT * FROM categories WHERE category_id = ? AND client_id = ?', [categoryId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Category not found' });
     }
@@ -113,8 +139,8 @@ router.put('/:id', async (req, res) => {
     if (name !== undefined) {
       const nameCheck = name.trim().toLowerCase();
       const [existingDup] = await db.execute(
-        'SELECT * FROM categories WHERE LOWER(name) = ? AND category_id != ?',
-        [nameCheck, categoryId]
+        'SELECT * FROM categories WHERE LOWER(name) = ? AND category_id != ? AND client_id = ?',
+        [nameCheck, categoryId, clientId]
       );
       if (existingDup.length > 0) {
         return res.status(400).json({ error: 'This category is already added.' });
@@ -123,10 +149,10 @@ router.put('/:id', async (req, res) => {
 
     const query = `
       UPDATE categories SET name = ?, active = ?
-      WHERE category_id = ?
+      WHERE category_id = ? AND client_id = ?
     `;
 
-    await db.execute(query, [finalName, finalActive, categoryId]);
+    await db.execute(query, [finalName, finalActive, categoryId, clientId]);
 
     res.json({ message: 'Category updated successfully' });
   } catch (err) {
@@ -141,15 +167,19 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const categoryId = parseInt(req.params.id);
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
 
-    const [rows] = await db.execute('SELECT * FROM categories WHERE category_id = ?', [categoryId]);
+    const [rows] = await db.execute('SELECT * FROM categories WHERE category_id = ? AND client_id = ?', [categoryId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Category not found' });
     }
 
     await db.query('START TRANSACTION');
-    await db.execute('DELETE FROM categories WHERE category_id = ?', [categoryId]);
-    await db.execute('UPDATE categories SET category_id = category_id - 1 WHERE category_id > ?', [categoryId]);
+    await db.execute('DELETE FROM categories WHERE category_id = ? AND client_id = ?', [categoryId, clientId]);
+    await db.execute('UPDATE categories SET category_id = category_id - 1 WHERE category_id > ? AND client_id = ?', [categoryId, clientId]);
     await db.execute('ALTER TABLE categories AUTO_INCREMENT = 1');
     await db.query('COMMIT');
 

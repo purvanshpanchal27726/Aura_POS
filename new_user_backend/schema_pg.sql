@@ -110,6 +110,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- 5. Customers
 CREATE TABLE IF NOT EXISTS customers (
     customer_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
     address_1 VARCHAR(255) NOT NULL,
@@ -126,6 +127,7 @@ CREATE TABLE IF NOT EXISTS customers (
 -- 6. Vendors
 CREATE TABLE IF NOT EXISTS vendors (
     vendor_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     first_name VARCHAR(255) NOT NULL,
     last_name VARCHAR(255) NOT NULL,
     company VARCHAR(255),
@@ -143,6 +145,7 @@ CREATE TABLE IF NOT EXISTS vendors (
 -- 7. Units
 CREATE TABLE IF NOT EXISTS units (
     unit_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     active SMALLINT DEFAULT 1,
     created_by VARCHAR(255) DEFAULT 'System',
@@ -152,6 +155,7 @@ CREATE TABLE IF NOT EXISTS units (
 -- 8. Taxes
 CREATE TABLE IF NOT EXISTS taxes (
     tax_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00,
     active SMALLINT DEFAULT 1,
@@ -162,6 +166,7 @@ CREATE TABLE IF NOT EXISTS taxes (
 -- 9. Categories
 CREATE TABLE IF NOT EXISTS categories (
     category_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     active SMALLINT DEFAULT 1,
     created_by VARCHAR(255) DEFAULT 'System',
@@ -171,6 +176,7 @@ CREATE TABLE IF NOT EXISTS categories (
 -- 10. Items
 CREATE TABLE IF NOT EXISTS items (
     item_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     short_name VARCHAR(255),
     long_name VARCHAR(255),
@@ -197,6 +203,7 @@ CREATE TABLE IF NOT EXISTS items (
 -- 11. Sales Master
 CREATE TABLE IF NOT EXISTS sales_master (
     sales_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     customer_id INT NOT NULL,
     sales_date DATE NOT NULL,
     sales_bill_no VARCHAR(100) NOT NULL,

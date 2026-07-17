@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 import 'dashboard.dart';
 import 'user_listing.dart';
 import 'customer_listing.dart';
@@ -317,8 +318,8 @@ class _MainLayoutState extends State<MainLayout> {
 
       try {
         final responses = await Future.wait([
-          http.get(Uri.parse(AppConfig.usersApiUrl), headers: AppConfig.extraHeaders),
-          http.get(Uri.parse(AppConfig.permissionsApiUrl), headers: AppConfig.extraHeaders),
+          ApiClient.get(Uri.parse(AppConfig.usersApiUrl)),
+          ApiClient.get(Uri.parse(AppConfig.permissionsApiUrl)),
         ]).timeout(attempts[i]);
 
         if (responses[0].statusCode == 200 && responses[1].statusCode == 200) {

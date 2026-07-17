@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 class LoginScreen extends StatefulWidget {
   final ValueChanged<Map<String, dynamic>> onLoginSuccess;
@@ -36,9 +36,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       // Login Request
-      final response = await http.post(
+      final response = await ApiClient.post(
         Uri.parse('${AppConfig.baseUrl}/api/users/login'),
-        headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'username': _usernameCtrl.text.trim(),
           'password': _passwordCtrl.text,

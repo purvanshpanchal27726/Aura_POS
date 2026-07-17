@@ -3,6 +3,13 @@ const db = require('./db');
 
 const router = express.Router();
 
+// Helper to get client_id from headers or query params
+function getClientId(req) {
+  const cid = req.headers['x-client-id'] || req.query.client_id;
+  if (!cid || cid === 'null' || cid === 'undefined') return null;
+  return parseInt(cid);
+}
+
 /**
  * POST /api/customers
  * Registers a new customer.
@@ -10,7 +17,12 @@ const router = express.Router();
 router.post('/', async (req, res) => {
   try {
     const data = req.body.CustomerModel || req.body;
+    const clientId = getClientId(req);
     
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
     const {
       first_name,
       last_name,
@@ -32,19 +44,20 @@ router.post('/', async (req, res) => {
 
     // Check duplicate mobile number
     const phoneCheck = phone_1.trim();
-    const [existing] = await db.execute('SELECT * FROM customers WHERE phone_1 = ?', [phoneCheck]);
+    const [existing] = await db.execute('SELECT * FROM customers WHERE phone_1 = ? AND client_id = ?', [phoneCheck, clientId]);
     if (existing.length > 0) {
       return res.status(400).json({ error: 'Customer with this mobile number already exists.' });
     }
 
     const query = `
       INSERT INTO customers (
-        first_name, last_name, address_1, address_2, city, country, 
+        client_id, first_name, last_name, address_1, address_2, city, country, 
         phone_1, phone_2, email, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
+      clientId,
       first_name,
       last_name,
       address_1,
@@ -74,7 +87,11 @@ router.post('/', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM customers ORDER BY customer_id ASC');
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+    const [rows] = await db.query('SELECT * FROM customers WHERE client_id = ? ORDER BY customer_id ASC', [clientId]);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -88,7 +105,11 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
-    const [rows] = await db.execute('SELECT * FROM customers WHERE customer_id = ?', [customerId]);
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+    const [rows] = await db.execute('SELECT * FROM customers WHERE customer_id = ? AND client_id = ?', [customerId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Customer not found' });
     }
@@ -105,6 +126,11 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
     const data = req.body.CustomerModel || req.body;
     
     const {
@@ -119,7 +145,7 @@ router.put('/:id', async (req, res) => {
       email
     } = data;
 
-    const [rows] = await db.execute('SELECT * FROM customers WHERE customer_id = ?', [customerId]);
+    const [rows] = await db.execute('SELECT * FROM customers WHERE customer_id = ? AND client_id = ?', [customerId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Customer not found' });
     }
@@ -137,7 +163,7 @@ router.put('/:id', async (req, res) => {
 
     // Check duplicate mobile number
     if (finalPhone1) {
-      const [existing] = await db.execute('SELECT * FROM customers WHERE phone_1 = ? AND customer_id != ?', [finalPhone1.trim(), customerId]);
+      const [existing] = await db.execute('SELECT * FROM customers WHERE phone_1 = ? AND customer_id != ? AND client_id = ?', [finalPhone1.trim(), customerId, clientId]);
       if (existing.length > 0) {
         return res.status(400).json({ error: 'Customer with this mobile number already exists.' });
       }
@@ -154,7 +180,7 @@ router.put('/:id', async (req, res) => {
         phone_1 = ?, 
         phone_2 = ?, 
         email = ?
-      WHERE customer_id = ?
+      WHERE customer_id = ? AND client_id = ?
     `;
 
     await db.execute(query, [
@@ -167,7 +193,8 @@ router.put('/:id', async (req, res) => {
       finalPhone1,
       finalPhone2,
       finalEmail,
-      customerId
+      customerId,
+      clientId
     ]);
 
     res.json({ message: 'Customer updated successfully' });
@@ -183,15 +210,19 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const customerId = parseInt(req.params.id);
+    const clientId = getClientId(req);
+    if (!clientId) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
 
-    const [rows] = await db.execute('SELECT * FROM customers WHERE customer_id = ?', [customerId]);
+    const [rows] = await db.execute('SELECT * FROM customers WHERE customer_id = ? AND client_id = ?', [customerId, clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Customer not found' });
     }
 
     await db.query('START TRANSACTION');
-    await db.execute('DELETE FROM customers WHERE customer_id = ?', [customerId]);
-    await db.execute('UPDATE customers SET customer_id = customer_id - 1 WHERE customer_id > ?', [customerId]);
+    await db.execute('DELETE FROM customers WHERE customer_id = ? AND client_id = ?', [customerId, clientId]);
+    await db.execute('UPDATE customers SET customer_id = customer_id - 1 WHERE customer_id > ? AND client_id = ?', [customerId, clientId]);
     await db.execute('ALTER TABLE customers AUTO_INCREMENT = 1');
     await db.query('COMMIT');
     

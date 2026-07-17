@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:file_picker/file_picker.dart';
 import 'config.dart';
+import 'api_client.dart';
 
 /// Stateful Item Administration Screen.
 /// Renders registered items inside a data table, supporting full CRUD modal overlays with category, unit, and tax mappings.
@@ -132,10 +133,10 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
       setState(() => isLoading = true);
       
       final responses = await Future.wait([
-        http.get(Uri.parse(AppConfig.itemsApiUrl)),
-        http.get(Uri.parse(AppConfig.categoriesApiUrl)),
-        http.get(Uri.parse(AppConfig.unitsApiUrl)),
-        http.get(Uri.parse(AppConfig.taxesApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.itemsApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.categoriesApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.unitsApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.taxesApiUrl)),
       ]);
 
       if (responses.every((res) => res.statusCode == 200)) {
@@ -228,15 +229,13 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
       http.Response response;
 
       if (editingItemId == null) {
-        response = await http.post(
+        response = await ApiClient.post(
           Uri.parse(AppConfig.itemsApiUrl),
-          headers: {'Content-Type': 'application/json'},
           body: json.encode(itemData),
         );
       } else {
-        response = await http.put(
+        response = await ApiClient.put(
           Uri.parse('${AppConfig.itemsApiUrl}/$editingItemId'),
-          headers: {'Content-Type': 'application/json'},
           body: json.encode(itemData),
         );
       }
@@ -287,7 +286,7 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
 
     try {
       setState(() => isLoading = true);
-      final response = await http.delete(
+      final response = await ApiClient.delete(
         Uri.parse('${AppConfig.itemsApiUrl}/$id'),
       );
 

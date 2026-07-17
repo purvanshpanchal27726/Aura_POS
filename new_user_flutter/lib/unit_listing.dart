@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 /// Stateful Unit Administration Screen.
 /// Renders registered units in a responsive list (cards on mobile < 750, data table on desktop).
@@ -44,7 +45,7 @@ class _UnitListingScreenState extends State<UnitListingScreen> {
   Future<void> fetchUnits() async {
     try {
       setState(() => isLoading = true);
-      final response = await http.get(Uri.parse(AppConfig.unitsApiUrl));
+      final response = await ApiClient.get(Uri.parse(AppConfig.unitsApiUrl));
       if (response.statusCode == 200) {
         setState(() {
           units = json.decode(response.body);
@@ -90,15 +91,13 @@ class _UnitListingScreenState extends State<UnitListingScreen> {
       http.Response response;
 
       if (editingUnitId == null) {
-        response = await http.post(
+        response = await ApiClient.post(
           Uri.parse(AppConfig.unitsApiUrl),
-          headers: {'Content-Type': 'application/json'},
           body: json.encode(unitData),
         );
       } else {
-        response = await http.put(
+        response = await ApiClient.put(
           Uri.parse('${AppConfig.unitsApiUrl}/$editingUnitId'),
-          headers: {'Content-Type': 'application/json'},
           body: json.encode(unitData),
         );
       }
@@ -173,7 +172,7 @@ class _UnitListingScreenState extends State<UnitListingScreen> {
 
     try {
       setState(() => isLoading = true);
-      final response = await http.delete(Uri.parse('${AppConfig.unitsApiUrl}/$id'));
+      final response = await ApiClient.delete(Uri.parse('${AppConfig.unitsApiUrl}/$id'));
       
       if (response.statusCode == 200) {
         if (mounted) {

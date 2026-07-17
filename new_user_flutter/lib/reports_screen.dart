@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 class ReportsScreen extends StatefulWidget {
   const ReportsScreen({super.key});
@@ -65,15 +65,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
       setState(() => isLoading = true);
 
       final responses = await Future.wait([
-        http.get(Uri.parse(AppConfig.categoriesApiUrl)),
-        http.get(Uri.parse(AppConfig.itemsApiUrl)),
-        http.get(Uri.parse(AppConfig.customersApiUrl)),
-        http.get(Uri.parse(AppConfig.vendorsApiUrl)),
-        http.get(Uri.parse(AppConfig.usersApiUrl)),
-        http.get(Uri.parse('${AppConfig.salesApiUrl}/details/all')),
-        http.get(Uri.parse('${AppConfig.purchasesApiUrl}/details/all')),
-        http.get(Uri.parse(AppConfig.salesApiUrl)),
-        http.get(Uri.parse(AppConfig.purchasesApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.categoriesApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.itemsApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.customersApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.vendorsApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.usersApiUrl)),
+        ApiClient.get(Uri.parse('${AppConfig.salesApiUrl}/details/all')),
+        ApiClient.get(Uri.parse('${AppConfig.purchasesApiUrl}/details/all')),
+        ApiClient.get(Uri.parse(AppConfig.salesApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.purchasesApiUrl)),
       ]);
 
       if (responses.every((r) => r.statusCode == 200)) {

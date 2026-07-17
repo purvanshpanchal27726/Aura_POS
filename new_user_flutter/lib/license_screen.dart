@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 class LicenseScreen extends StatefulWidget {
   const LicenseScreen({super.key});
@@ -34,7 +34,7 @@ class _LicenseScreenState extends State<LicenseScreen> {
 
     try {
       final url = Uri.parse('${AppConfig.baseUrl}/api/license');
-      final response = await http.get(url);
+      final response = await ApiClient.get(url);
       if (response.statusCode == 200) {
         setState(() {
           licenseData = json.decode(response.body);
@@ -58,9 +58,8 @@ class _LicenseScreenState extends State<LicenseScreen> {
 
     try {
       final url = Uri.parse('${AppConfig.baseUrl}/api/license/renew');
-      final response = await http.post(
+      final response = await ApiClient.post(
         url,
-        headers: {'Content-Type': 'application/json'},
       );
 
       if (response.statusCode == 200) {

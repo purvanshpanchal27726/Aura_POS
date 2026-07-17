@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
+import 'api_client.dart';
 
 /// Stateful User Administration Screen.
 /// Renders registered system users in a responsive layout (card lists on mobile < 750, data table on desktop).
@@ -74,8 +75,8 @@ class _UserListingScreenState extends State<UserListingScreen> {
     try {
       setState(() => isLoading = true);
       final responses = await Future.wait([
-        http.get(Uri.parse(AppConfig.usersApiUrl)),
-        http.get(Uri.parse(AppConfig.rolesApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.usersApiUrl)),
+        ApiClient.get(Uri.parse(AppConfig.rolesApiUrl)),
       ]);
       if (responses[0].statusCode == 200 && responses[1].statusCode == 200) {
         setState(() {
@@ -120,15 +121,13 @@ class _UserListingScreenState extends State<UserListingScreen> {
       http.Response response;
 
       if (editingUserId == null) {
-        response = await http.post(
+        response = await ApiClient.post(
           Uri.parse(AppConfig.usersApiUrl),
-          headers: {'Content-Type': 'application/json'},
           body: json.encode(userData),
         );
       } else {
-        response = await http.put(
+        response = await ApiClient.put(
           Uri.parse('${AppConfig.usersApiUrl}/$editingUserId'),
-          headers: {'Content-Type': 'application/json'},
           body: json.encode(userData),
         );
       }
@@ -207,7 +206,7 @@ class _UserListingScreenState extends State<UserListingScreen> {
 
     try {
       setState(() => isLoading = true);
-      final response = await http.delete(Uri.parse('${AppConfig.usersApiUrl}/$id'));
+      final response = await ApiClient.delete(Uri.parse('${AppConfig.usersApiUrl}/$id'));
       
       if (response.statusCode == 200) {
         if (mounted) {
