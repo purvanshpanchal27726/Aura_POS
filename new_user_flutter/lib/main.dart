@@ -241,8 +241,13 @@ class _MainLayoutState extends State<MainLayout> {
     if (widget.initialUser != null) {
       try {
         activeUser = json.decode(widget.initialUser!);
-        if (activeUser != null && activeUser!['client_id'] != null) {
-          AppConfig.setActiveUserClientId(activeUser!['client_id'].toString());
+        if (activeUser != null) {
+          if (activeUser!['client_id'] != null) {
+            AppConfig.setActiveUserClientId(activeUser!['client_id'].toString());
+          }
+          if (activeUser!['token'] != null) {
+            AppConfig.setAuthToken(activeUser!['token'].toString());
+          }
         }
       } catch (e) {
         debugPrint('Error parsing initial user: $e');
@@ -265,7 +270,9 @@ class _MainLayoutState extends State<MainLayout> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('active_user');
+      await prefs.remove('auth_token');
       AppConfig.setActiveUserClientId(null);
+      AppConfig.setAuthToken(null);
     } catch (e) {
       debugPrint('Error clearing user session: $e');
     }
@@ -554,6 +561,12 @@ class _MainLayoutState extends State<MainLayout> {
               AppConfig.setActiveUserClientId(user['client_id'].toString());
             } else {
               AppConfig.setActiveUserClientId(null);
+            }
+            if (user['token'] != null) {
+              AppConfig.setAuthToken(user['token'].toString());
+              SharedPreferences.getInstance().then((prefs) {
+                prefs.setString('auth_token', user['token'].toString());
+              });
             }
             _currentIndex = 0; // Go to dashboard
           });

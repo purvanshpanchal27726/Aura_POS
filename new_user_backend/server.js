@@ -14,7 +14,13 @@ if (process.env.RENDER === 'true') {
   require('dotenv').config();
 }
 
+if (!process.env.ENCRYPTION_KEY) {
+  console.error('CRITICAL: ENCRYPTION_KEY environment variable is not defined!');
+  process.exit(1);
+}
+
 const db = require('./db');
+const authMiddleware = require('./authMiddleware');
 
 // Run auto-init database schema if empty
 db.initDb();
@@ -28,8 +34,16 @@ app.use(express.json({ limit: '30mb' }));
 app.use(express.urlencoded({ extended: true, limit: '30mb' }));
 
 // Custom CORS handler
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'https://possys-w2ip.onrender.com'
+];
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  if (allowedOrigins.indexOf(origin) > -1 || !origin) {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+  }
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, ngrok-skip-browser-warning, x-client-id');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   if (req.method === 'OPTIONS') {
@@ -37,6 +51,9 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+// Protect all stateful api endpoints under /api
+app.use('/api', authMiddleware);
 
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, '../new_user_web')));
@@ -151,12 +168,43 @@ app.get('/api/realtime-events', (req, res) => {
 app.get('/api/dashboard/stats', async (req, res) => {
   try {
     const db = require('./db');
-    const [users] = await db.query('SELECT COUNT(*) AS count FROM users');
-    const [customers] = await db.query('SELECT COUNT(*) AS count FROM customers');
-    const [items] = await db.query('SELECT COUNT(*) AS count FROM items');
-    const [categories] = await db.query('SELECT COUNT(*) AS count FROM categories');
-    const [units] = await db.query('SELECT COUNT(*) AS count FROM units');
-    const [taxes] = await db.query('SELECT COUNT(*) AS count FROM taxes');
+    
+    let usersQuery = 'SELECT COUNT(*) AS count FROM users';
+    let usersParams = [];
+    let customersQuery = 'SELECT COUNT(*) AS count FROM customers';
+    let customersParams = [];
+    let itemsQuery = 'SELECT COUNT(*) AS count FROM items';
+    let itemsParams = [];
+    let categoriesQuery = 'SELECT COUNT(*) AS count FROM categories';
+    let categoriesParams = [];
+    let unitsQuery = 'SELECT COUNT(*) AS count FROM units';
+    let unitsParams = [];
+    let taxesQuery = 'SELECT COUNT(*) AS count FROM taxes';
+    let taxesParams = [];
+
+    // Filter by client_id if not Super-Admin (or if client_id is explicitly provided)
+    const effectiveClientId = req.headers['x-client-id'] || req.query.client_id || (req.user ? req.user.client_id : null);
+    if (effectiveClientId) {
+      usersQuery += ' WHERE client_id = ?';
+      usersParams.push(effectiveClientId);
+      customersQuery += ' WHERE client_id = ?';
+      customersParams.push(effectiveClientId);
+      itemsQuery += ' WHERE client_id = ?';
+      itemsParams.push(effectiveClientId);
+      categoriesQuery += ' WHERE client_id = ?';
+      categoriesParams.push(effectiveClientId);
+      unitsQuery += ' WHERE client_id = ?';
+      unitsParams.push(effectiveClientId);
+      taxesQuery += ' WHERE client_id = ?';
+      taxesParams.push(effectiveClientId);
+    }
+
+    const [users] = await db.execute(usersQuery, usersParams);
+    const [customers] = await db.execute(customersQuery, customersParams);
+    const [items] = await db.execute(itemsQuery, itemsParams);
+    const [categories] = await db.execute(categoriesQuery, categoriesParams);
+    const [units] = await db.execute(unitsQuery, unitsParams);
+    const [taxes] = await db.execute(taxesQuery, taxesParams);
 
     // NOTE: PostgreSQL COUNT(*) returns a string — must parseInt()
     res.json({

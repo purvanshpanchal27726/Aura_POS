@@ -21,6 +21,11 @@ class ApiClient {
     if (AppConfig.activeUserClientId != null) {
       headers['x-client-id'] = AppConfig.activeUserClientId!;
     }
+
+    // Inject active user's JWT authorization token if logged in
+    if (AppConfig.authToken != null) {
+      headers['Authorization'] = 'Bearer ${AppConfig.authToken!}';
+    }
     
     return headers;
   }

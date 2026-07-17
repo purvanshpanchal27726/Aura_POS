@@ -49,6 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (response.statusCode == 200) {
         final resData = json.decode(response.body);
         final user = Map<String, dynamic>.from(resData['user']);
+        user['token'] = resData['token'];
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Row(

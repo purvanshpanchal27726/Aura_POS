@@ -50,7 +50,7 @@ class _ConnectionSetupScreenState extends State<ConnectionSetupScreen> {
 
     try {
       final response = await http
-          .get(Uri.parse(AppConfig.usersApiUrl), headers: AppConfig.extraHeaders)
+          .get(Uri.parse(AppConfig.baseUrl), headers: AppConfig.extraHeaders)
           .timeout(const Duration(seconds: 12));
 
       if (response.statusCode == 200) {

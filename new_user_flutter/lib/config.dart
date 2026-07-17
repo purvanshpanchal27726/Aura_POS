@@ -7,11 +7,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AppConfig {
   static String? _customHost;
   static String? _activeUserClientId;
+  static String? _authToken;
 
   static String? get activeUserClientId => _activeUserClientId;
+  static String? get authToken => _authToken;
   
   static void setActiveUserClientId(String? val) {
     _activeUserClientId = val;
+  }
+
+  static void setAuthToken(String? val) {
+    _authToken = val;
   }
 
   // ─────────────────────────────────────────────────────────────────────────
@@ -42,6 +48,7 @@ class AppConfig {
       final prefs = await SharedPreferences.getInstance();
       _customHost = prefs.getString('backend_host');
       _isRestaurantMode = prefs.getBool('is_restaurant_mode') ?? false;
+      _authToken = prefs.getString('auth_token');
       
       final savedUser = prefs.getString('active_user');
       if (savedUser != null) {

@@ -1,11 +1,16 @@
 const express = require('express');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const db = require('./db');
 
 const router = express.Router();
 
 const algorithm = 'aes-256-cbc';
-const secret = process.env.ENCRYPTION_KEY || 'mySuperSecretKeyForPOSSystem1234';
+const secret = process.env.ENCRYPTION_KEY;
+if (!secret) {
+  throw new Error('ENCRYPTION_KEY environment variable is required');
+}
 const key = crypto.createHash('sha256').update(secret).digest();
 
 /**
@@ -80,7 +85,7 @@ router.post('/', async (req, res) => {
     const isFirstUser = parseInt(countResult[0].count) === 0;
     const finalRoleId = isFirstUser ? 1 : (role_id ? parseInt(role_id) : 3);
 
-    const encryptedPassword = encryptPassword(password);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const query = `
       INSERT INTO users (
@@ -92,7 +97,7 @@ router.post('/', async (req, res) => {
 
     const values = [
       username,
-      encryptedPassword,
+      hashedPassword,
       first_name,
       middle_name || null,
       last_name,
@@ -135,13 +140,11 @@ router.get('/', async (req, res) => {
       ORDER BY u.user_id ASC
     `;
     const [rows] = await db.query(query);
-    const decryptedRows = rows.map(row => {
-      if (row.password) {
-        row.password = decryptPassword(row.password);
-      }
+    const cleanedRows = rows.map(row => {
+      delete row.password;
       return row;
     });
-    res.json(decryptedRows);
+    res.json(cleanedRows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -184,7 +187,7 @@ router.put('/:id', async (req, res) => {
     
     let finalPassword = existingUser.password;
     if (password) {
-      finalPassword = encryptPassword(password);
+      finalPassword = await bcrypt.hash(password, 10);
     }
 
     const finalFirstName = first_name !== undefined ? first_name : existingUser.first_name;
@@ -277,8 +280,27 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    const decrypted = decryptPassword(user.password);
-    if (decrypted !== password) {
+    const dbPassword = user.password;
+    let isMatch = false;
+    if (dbPassword.startsWith('$2a$') || dbPassword.startsWith('$2b$') || dbPassword.startsWith('$2y$')) {
+      isMatch = await bcrypt.compare(password, dbPassword);
+    } else {
+      // Old format: try decrypting and comparing
+      const decrypted = decryptPassword(dbPassword);
+      if (decrypted === password) {
+        isMatch = true;
+        // Upgrade password to bcrypt transparently!
+        try {
+          const hashed = await bcrypt.hash(password, 10);
+          await db.execute('UPDATE users SET password = ? WHERE user_id = ?', [hashed, user.user_id]);
+          console.log(`[Auth] Upgraded password hash format transparently for user: ${user.username}`);
+        } catch (e) {
+          console.error('[Auth] Failed to upgrade password hash:', e);
+        }
+      }
+    }
+
+    if (!isMatch) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
@@ -302,10 +324,22 @@ router.post('/login', async (req, res) => {
       clientModules = ['ALL']; // Super-Admin has all modules
     }
 
+    const jwtSecret = process.env.JWT_SECRET || 'mySuperSecretJWTKeyForPOSSystem2026';
+    const token = jwt.sign(
+      {
+        user_id: user.user_id,
+        client_id: user.client_id,
+        role_id: user.role_id
+      },
+      jwtSecret,
+      { expiresIn: '24h' }
+    );
+
     // Strip password before returning
     delete user.password;
     res.json({
       message: 'Login successful',
+      token: token,
       user: {
         ...user,
         id: user.user_id,

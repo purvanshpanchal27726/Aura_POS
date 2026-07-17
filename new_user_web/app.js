@@ -526,11 +526,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let allUsersList = [];
   let permissionsData = [];
 
-  // Global fetch interceptor to append activeUser's client_id in x-client-id header
+  // Global fetch interceptor to append activeUser's client_id in x-client-id header and JWT token
   const originalFetch = window.fetch;
   window.fetch = function(url, options) {
     options = options || {};
     options.headers = options.headers || {};
+    const token = localStorage.getItem('pos_auth_token');
+    if (token) {
+      options.headers['Authorization'] = 'Bearer ' + token;
+    }
     if (activeUser && activeUser.client_id) {
       options.headers['x-client-id'] = activeUser.client_id.toString();
     }
@@ -3862,6 +3866,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         const data = await response.json();
         localStorage.setItem('pos_active_user', JSON.stringify(data.user));
+        localStorage.setItem('pos_auth_token', data.token);
         if (errorBanner) errorBanner.style.display = 'none';
         showToast('Login Successful', `Welcome back, ${username}!`, 'success');
         AudioSynth.playSuccess();
@@ -3887,6 +3892,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnLogout.addEventListener('click', () => {
       if (confirm('Are you sure you want to logout?')) {
         localStorage.removeItem('pos_active_user');
+        localStorage.removeItem('pos_auth_token');
         checkAuthSession();
       }
     });
