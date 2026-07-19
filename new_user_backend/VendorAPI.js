@@ -10,6 +10,11 @@ function getClientId(req) {
   return parseInt(cid);
 }
 
+// Helper to check if active user is a Super-Admin
+function checkSuperAdmin(req) {
+  return !req.user || req.user.client_id === null || req.user.client_id === undefined;
+}
+
 /**
  * POST /api/vendors
  * Creates a new vendor.
@@ -18,8 +23,9 @@ router.post('/', async (req, res) => {
   try {
     const data = req.body.VendorModel || req.body || {};
     const clientId = getClientId(req);
+    const isSuperAdmin = checkSuperAdmin(req);
     
-    if (!clientId) {
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
@@ -29,36 +35,19 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Missing required fields for Vendor creation.' });
     }
 
-    // Check duplicate vendor records (Company, Mobile, Email)
-    const companyCheck = company ? company.trim().toLowerCase() : '';
+    // Duplicate check
     const phoneCheck = phone_1.trim();
-    const emailCheck = email ? email.trim().toLowerCase() : '';
-
-    let queryDup = 'SELECT * FROM vendors WHERE (phone_1 = ?';
-    let paramsDup = [phoneCheck];
-    if (emailCheck) {
-      queryDup += ' OR LOWER(email) = ?';
-      paramsDup.push(emailCheck);
+    let dupQuery = 'SELECT * FROM vendors WHERE phone_1 = ? AND ';
+    let dupParams = [phoneCheck];
+    if (clientId) {
+      dupQuery += 'client_id = ?';
+      dupParams.push(clientId);
+    } else {
+      dupQuery += 'client_id IS NULL';
     }
-    if (companyCheck) {
-      queryDup += ' OR LOWER(company) = ?';
-      paramsDup.push(companyCheck);
-    }
-    queryDup += ') AND client_id = ?';
-    paramsDup.push(clientId);
-    
-    const [existing] = await db.execute(queryDup, paramsDup);
+    const [existing] = await db.execute(dupQuery, dupParams);
     if (existing.length > 0) {
-      const dup = existing[0];
-      if (companyCheck && dup.company && dup.company.trim().toLowerCase() === companyCheck) {
-        return res.status(400).json({ error: 'Vendor with this company name already exists.' });
-      }
-      if (dup.phone_1 === phoneCheck) {
-        return res.status(400).json({ error: 'Vendor with this mobile number already exists.' });
-      }
-      if (emailCheck && dup.email && dup.email.trim().toLowerCase() === emailCheck) {
-        return res.status(400).json({ error: 'Vendor with this email ID already exists.' });
-      }
+      return res.status(400).json({ error: 'Vendor with this phone number already exists.' });
     }
 
     const query = `
@@ -68,7 +57,7 @@ router.post('/', async (req, res) => {
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    const [result] = await db.execute(query, [
+    const values = [
       clientId,
       first_name,
       last_name,
@@ -81,9 +70,14 @@ router.post('/', async (req, res) => {
       phone_2 || null,
       email || null,
       created_by || 'System'
-    ]);
+    ];
 
-    res.status(201).json({ message: 'Vendor created successfully', vendor_id: result.insertId });
+    const [result] = await db.execute(query, values);
+
+    res.status(201).json({
+      message: 'Vendor created successfully',
+      vendor_id: result.insertId
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -96,11 +90,23 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
-    const [rows] = await db.query('SELECT * FROM vendors WHERE client_id = ? ORDER BY vendor_id ASC', [clientId]);
-    res.json(rows.map(r => ({ ...r, id: r.vendor_id })));
+
+    let query = 'SELECT * FROM vendors WHERE ';
+    let params = [];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+    query += ' ORDER BY vendor_id ASC';
+
+    const [rows] = await db.query(query, params);
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -108,20 +114,31 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /api/vendors/:id
- * Fetches a single vendor by ID.
+ * Fetches a single vendor.
  */
 router.get('/:id', async (req, res) => {
   try {
     const vendorId = req.params.id;
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
-    const [rows] = await db.execute('SELECT * FROM vendors WHERE vendor_id = ? AND client_id = ?', [vendorId, clientId]);
+
+    let query = 'SELECT * FROM vendors WHERE vendor_id = ? AND ';
+    let params = [vendorId];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Vendor not found' });
     }
-    res.json({ ...rows[0], id: rows[0].vendor_id });
+    res.json(rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -129,76 +146,85 @@ router.get('/:id', async (req, res) => {
 
 /**
  * PUT /api/vendors/:id
- * Updates details of a vendor.
+ * Updates details for a specific vendor.
  */
 router.put('/:id', async (req, res) => {
   try {
     const vendorId = req.params.id;
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
     const data = req.body.VendorModel || req.body || {};
+
     const { first_name, last_name, company, address_1, address_2, city, country, phone_1, phone_2, email } = data;
 
-    const [rows] = await db.execute('SELECT * FROM vendors WHERE vendor_id = ? AND client_id = ?', [vendorId, clientId]);
+    let queryExist = 'SELECT * FROM vendors WHERE vendor_id = ? AND ';
+    let paramsExist = [vendorId];
+    if (clientId) {
+      queryExist += 'client_id = ?';
+      paramsExist.push(clientId);
+    } else {
+      queryExist += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(queryExist, paramsExist);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Vendor not found' });
     }
 
-    const existing = rows[0];
-    const f_name = first_name !== undefined ? first_name : existing.first_name;
-    const l_name = last_name !== undefined ? last_name : existing.last_name;
-    const comp = company !== undefined ? company : existing.company;
-    const addr1 = address_1 !== undefined ? address_1 : existing.address_1;
-    const addr2 = address_2 !== undefined ? address_2 : existing.address_2;
-    const c_city = city !== undefined ? city : existing.city;
-    const c_country = country !== undefined ? country : existing.country;
-    const p1 = phone_1 !== undefined ? phone_1 : existing.phone_1;
-    const p2 = phone_2 !== undefined ? phone_2 : existing.phone_2;
-    const mail = email !== undefined ? email : existing.email;
+    const existingVendor = rows[0];
 
-    // Check duplicate vendor records (Company, Mobile, Email)
-    const f_company = comp ? comp.trim().toLowerCase() : '';
-    const f_phone = p1.trim();
-    const f_email = mail ? mail.trim().toLowerCase() : '';
+    const finalFirstName = first_name !== undefined ? first_name : existingVendor.first_name;
+    const finalLastName = last_name !== undefined ? last_name : existingVendor.last_name;
+    const finalCompany = company !== undefined ? company : existingVendor.company;
+    const finalAddress1 = address_1 !== undefined ? address_1 : existingVendor.address_1;
+    const finalAddress2 = address_2 !== undefined ? address_2 : existingVendor.address_2;
+    const finalCity = city !== undefined ? city : existingVendor.city;
+    const finalCountry = country !== undefined ? country : existingVendor.country;
+    const finalPhone1 = phone_1 !== undefined ? phone_1 : existingVendor.phone_1;
+    const finalPhone2 = phone_2 !== undefined ? phone_2 : existingVendor.phone_2;
+    const finalEmail = email !== undefined ? email : existingVendor.email;
 
-    let queryDup = '(phone_1 = ?';
-    let paramsDup = [f_phone];
-    if (f_email) {
-      queryDup += ' OR LOWER(email) = ?';
-      paramsDup.push(f_email);
-    }
-    if (f_company) {
-      queryDup += ' OR LOWER(company) = ?';
-      paramsDup.push(f_company);
-    }
-    queryDup += ') AND vendor_id != ? AND client_id = ?';
-    paramsDup.push(vendorId, clientId);
-
-    const [existingDup] = await db.execute(`SELECT * FROM vendors WHERE ${queryDup}`, paramsDup);
-    if (existingDup.length > 0) {
-      const dup = existingDup[0];
-      if (f_company && dup.company && dup.company.trim().toLowerCase() === f_company) {
-        return res.status(400).json({ error: 'Vendor with this company name already exists.' });
+    // Duplicate check
+    if (phone_1 !== undefined) {
+      const phoneCheck = phone_1.trim();
+      let dupQuery = 'SELECT * FROM vendors WHERE phone_1 = ? AND vendor_id != ? AND ';
+      let dupParams = [phoneCheck, vendorId];
+      if (clientId) {
+        dupQuery += 'client_id = ?';
+        dupParams.push(clientId);
+      } else {
+        dupQuery += 'client_id IS NULL';
       }
-      if (dup.phone_1 === f_phone) {
-        return res.status(400).json({ error: 'Vendor with this mobile number already exists.' });
-      }
-      if (f_email && dup.email && dup.email.trim().toLowerCase() === f_email) {
-        return res.status(400).json({ error: 'Vendor with this email ID already exists.' });
+      const [existingDup] = await db.execute(dupQuery, dupParams);
+      if (existingDup.length > 0) {
+        return res.status(400).json({ error: 'Vendor with this phone number already exists.' });
       }
     }
 
-    const query = `
+    let updateQuery = `
       UPDATE vendors SET 
         first_name = ?, last_name = ?, company = ?, address_1 = ?, address_2 = ?, 
         city = ?, country = ?, phone_1 = ?, phone_2 = ?, email = ?
-      WHERE vendor_id = ? AND client_id = ?
+      WHERE vendor_id = ? AND 
     `;
+    let updateParams = [
+      finalFirstName, finalLastName, finalCompany, finalAddress1, finalAddress2,
+      finalCity, finalCountry, finalPhone1, finalPhone2, finalEmail,
+      vendorId
+    ];
+    if (clientId) {
+      updateQuery += 'client_id = ?';
+      updateParams.push(clientId);
+    } else {
+      updateQuery += 'client_id IS NULL';
+    }
 
-    await db.execute(query, [f_name, l_name, comp, addr1, addr2, c_city, c_country, p1, p2, mail, vendorId, clientId]);
+    await db.execute(updateQuery, updateParams);
+
     res.json({ message: 'Vendor updated successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -207,22 +233,41 @@ router.put('/:id', async (req, res) => {
 
 /**
  * DELETE /api/vendors/:id
- * Deletes a vendor and shifts subsequent IDs down.
+ * Deletes a specific vendor.
  */
 router.delete('/:id', async (req, res) => {
   try {
     const vendorId = parseInt(req.params.id);
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    const [rows] = await db.execute('SELECT * FROM vendors WHERE vendor_id = ? AND client_id = ?', [vendorId, clientId]);
+    let queryExist = 'SELECT * FROM vendors WHERE vendor_id = ? AND ';
+    let paramsExist = [vendorId];
+    if (clientId) {
+      queryExist += 'client_id = ?';
+      paramsExist.push(clientId);
+    } else {
+      queryExist += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(queryExist, paramsExist);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Vendor not found' });
     }
 
-    await db.execute('DELETE FROM vendors WHERE vendor_id = ? AND client_id = ?', [vendorId, clientId]);
+    let deleteQuery = 'DELETE FROM vendors WHERE vendor_id = ? AND ';
+    let deleteParams = [vendorId];
+    if (clientId) {
+      deleteQuery += 'client_id = ?';
+      deleteParams.push(clientId);
+    } else {
+      deleteQuery += 'client_id IS NULL';
+    }
+
+    await db.execute(deleteQuery, deleteParams);
     
     res.json({ message: 'Vendor deleted successfully' });
   } catch (err) {
@@ -231,4 +276,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-

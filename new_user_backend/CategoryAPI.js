@@ -10,6 +10,11 @@ function getClientId(req) {
   return parseInt(cid);
 }
 
+// Helper to check if active user is a Super-Admin
+function checkSuperAdmin(req) {
+  return !req.user || req.user.client_id === null || req.user.client_id === undefined;
+}
+
 /**
  * POST /api/categories
  * Registers a new category.
@@ -18,8 +23,9 @@ router.post('/', async (req, res) => {
   try {
     const data = req.body.CategoryModel || req.body;
     const clientId = getClientId(req);
+    const isSuperAdmin = checkSuperAdmin(req);
     
-    if (!clientId) {
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
@@ -37,7 +43,15 @@ router.post('/', async (req, res) => {
 
     // Duplicate Check
     const nameCheck = name.trim().toLowerCase();
-    const [existing] = await db.execute('SELECT * FROM categories WHERE LOWER(name) = ? AND client_id = ?', [nameCheck, clientId]);
+    let dupQuery = 'SELECT * FROM categories WHERE LOWER(name) = ? AND ';
+    let dupParams = [nameCheck];
+    if (clientId) {
+      dupQuery += 'client_id = ?';
+      dupParams.push(clientId);
+    } else {
+      dupQuery += 'client_id IS NULL';
+    }
+    const [existing] = await db.execute(dupQuery, dupParams);
     if (existing.length > 0) {
       return res.status(400).json({ error: 'This category is already added.' });
     }
@@ -72,10 +86,22 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
-    const [rows] = await db.query('SELECT * FROM categories WHERE client_id = ? ORDER BY category_id ASC', [clientId]);
+
+    let query = 'SELECT * FROM categories WHERE ';
+    let params = [];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+    query += ' ORDER BY category_id ASC';
+
+    const [rows] = await db.query(query, params);
     const mappedRows = rows.map(r => ({
       ...r,
       id: r.category_id,
@@ -95,10 +121,21 @@ router.get('/:id', async (req, res) => {
   try {
     const categoryId = req.params.id;
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
-    const [rows] = await db.execute('SELECT * FROM categories WHERE category_id = ? AND client_id = ?', [categoryId, clientId]);
+
+    let query = 'SELECT * FROM categories WHERE category_id = ? AND ';
+    let params = [categoryId];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Category not found' });
     }
@@ -117,7 +154,8 @@ router.put('/:id', async (req, res) => {
   try {
     const categoryId = req.params.id;
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
@@ -126,7 +164,16 @@ router.put('/:id', async (req, res) => {
     const { name } = data;
     const active = data.active !== undefined ? data.active : data.acitve;
 
-    const [rows] = await db.execute('SELECT * FROM categories WHERE category_id = ? AND client_id = ?', [categoryId, clientId]);
+    let queryExist = 'SELECT * FROM categories WHERE category_id = ? AND ';
+    let paramsExist = [categoryId];
+    if (clientId) {
+      queryExist += 'client_id = ?';
+      paramsExist.push(clientId);
+    } else {
+      queryExist += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(queryExist, paramsExist);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Category not found' });
     }
@@ -138,21 +185,30 @@ router.put('/:id', async (req, res) => {
     // Duplicate Check
     if (name !== undefined) {
       const nameCheck = name.trim().toLowerCase();
-      const [existingDup] = await db.execute(
-        'SELECT * FROM categories WHERE LOWER(name) = ? AND category_id != ? AND client_id = ?',
-        [nameCheck, categoryId, clientId]
-      );
+      let dupQuery = 'SELECT * FROM categories WHERE LOWER(name) = ? AND category_id != ? AND ';
+      let dupParams = [nameCheck, categoryId];
+      if (clientId) {
+        dupQuery += 'client_id = ?';
+        dupParams.push(clientId);
+      } else {
+        dupQuery += 'client_id IS NULL';
+      }
+      const [existingDup] = await db.execute(dupQuery, dupParams);
       if (existingDup.length > 0) {
         return res.status(400).json({ error: 'This category is already added.' });
       }
     }
 
-    const query = `
-      UPDATE categories SET name = ?, active = ?
-      WHERE category_id = ? AND client_id = ?
-    `;
+    let updateQuery = 'UPDATE categories SET name = ?, active = ? WHERE category_id = ? AND ';
+    let updateParams = [finalName, finalActive, categoryId];
+    if (clientId) {
+      updateQuery += 'client_id = ?';
+      updateParams.push(clientId);
+    } else {
+      updateQuery += 'client_id IS NULL';
+    }
 
-    await db.execute(query, [finalName, finalActive, categoryId, clientId]);
+    await db.execute(updateQuery, updateParams);
 
     res.json({ message: 'Category updated successfully' });
   } catch (err) {
@@ -162,22 +218,41 @@ router.put('/:id', async (req, res) => {
 
 /**
  * DELETE /api/categories/:id
- * Deletes a specific category by ID and shifts subsequent IDs down.
+ * Deletes a specific category by ID.
  */
 router.delete('/:id', async (req, res) => {
   try {
     const categoryId = parseInt(req.params.id);
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    const [rows] = await db.execute('SELECT * FROM categories WHERE category_id = ? AND client_id = ?', [categoryId, clientId]);
+    let queryExist = 'SELECT * FROM categories WHERE category_id = ? AND ';
+    let paramsExist = [categoryId];
+    if (clientId) {
+      queryExist += 'client_id = ?';
+      paramsExist.push(clientId);
+    } else {
+      queryExist += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(queryExist, paramsExist);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Category not found' });
     }
 
-    await db.execute('DELETE FROM categories WHERE category_id = ? AND client_id = ?', [categoryId, clientId]);
+    let deleteQuery = 'DELETE FROM categories WHERE category_id = ? AND ';
+    let deleteParams = [categoryId];
+    if (clientId) {
+      deleteQuery += 'client_id = ?';
+      deleteParams.push(clientId);
+    } else {
+      deleteQuery += 'client_id IS NULL';
+    }
+
+    await db.execute(deleteQuery, deleteParams);
 
     res.json({ message: 'Category deleted successfully' });
   } catch (err) {
@@ -186,4 +261,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-

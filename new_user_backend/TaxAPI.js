@@ -10,6 +10,11 @@ function getClientId(req) {
   return parseInt(cid);
 }
 
+// Helper to check if active user is a Super-Admin
+function checkSuperAdmin(req) {
+  return !req.user || req.user.client_id === null || req.user.client_id === undefined;
+}
+
 /**
  * POST /api/taxes
  * Registers a new tax.
@@ -18,8 +23,9 @@ router.post('/', async (req, res) => {
   try {
     const data = req.body.TaxModel || req.body;
     const clientId = getClientId(req);
+    const isSuperAdmin = checkSuperAdmin(req);
     
-    if (!clientId) {
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
@@ -31,9 +37,24 @@ router.post('/', async (req, res) => {
     const created_by = data.created_by || data.createdBy || 'System';
 
     if (!name) {
-      return res.status(400).json({ 
-        error: 'Missing required fields. Please ensure name is provided.' 
+      return res.status(400).json({
+        error: 'Missing required fields. Please ensure name is provided.'
       });
+    }
+
+    // Duplicate Check
+    const nameCheck = name.trim().toLowerCase();
+    let dupQuery = 'SELECT * FROM taxes WHERE LOWER(name) = ? AND ';
+    let dupParams = [nameCheck];
+    if (clientId) {
+      dupQuery += 'client_id = ?';
+      dupParams.push(clientId);
+    } else {
+      dupQuery += 'client_id IS NULL';
+    }
+    const [existing] = await db.execute(dupQuery, dupParams);
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'This tax is already added.' });
     }
 
     const query = `
@@ -50,7 +71,7 @@ router.post('/', async (req, res) => {
     ];
 
     const [result] = await db.execute(query, values);
-    
+
     res.status(201).json({
       message: 'Tax created successfully',
       tax_id: result.insertId
@@ -67,15 +88,26 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
-    const [rows] = await db.query('SELECT * FROM taxes WHERE client_id = ? ORDER BY tax_id ASC', [clientId]);
-    // Map response to also include id alias for client flexibility
+
+    let query = 'SELECT * FROM taxes WHERE ';
+    let params = [];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+    query += ' ORDER BY tax_id ASC';
+
+    const [rows] = await db.query(query, params);
     const mappedRows = rows.map(r => ({
       ...r,
       id: r.tax_id,
-      acitve: r.active // support both spellings in return JSON
+      acitve: r.active
     }));
     res.json(mappedRows);
   } catch (err) {
@@ -91,10 +123,21 @@ router.get('/:id', async (req, res) => {
   try {
     const taxId = req.params.id;
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
-    const [rows] = await db.execute('SELECT * FROM taxes WHERE tax_id = ? AND client_id = ?', [taxId, clientId]);
+
+    let query = 'SELECT * FROM taxes WHERE tax_id = ? AND ';
+    let params = [taxId];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Tax not found' });
     }
@@ -113,16 +156,26 @@ router.put('/:id', async (req, res) => {
   try {
     const taxId = req.params.id;
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
     const data = req.body.TaxModel || req.body;
-    
+
     const { name, percentage } = data;
     const active = data.active !== undefined ? data.active : data.acitve;
 
-    const [rows] = await db.execute('SELECT * FROM taxes WHERE tax_id = ? AND client_id = ?', [taxId, clientId]);
+    let queryExist = 'SELECT * FROM taxes WHERE tax_id = ? AND ';
+    let paramsExist = [taxId];
+    if (clientId) {
+      queryExist += 'client_id = ?';
+      paramsExist.push(clientId);
+    } else {
+      queryExist += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(queryExist, paramsExist);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Tax not found' });
     }
@@ -132,18 +185,33 @@ router.put('/:id', async (req, res) => {
     const finalPercentage = percentage !== undefined ? parseFloat(percentage) : existingTax.percentage;
     const finalActive = active !== undefined ? (active ? 1 : 0) : existingTax.active;
 
-    const query = `
-      UPDATE taxes SET name = ?, percentage = ?, active = ?
-      WHERE tax_id = ? AND client_id = ?
-    `;
+    // Duplicate Check
+    if (name !== undefined) {
+      const nameCheck = name.trim().toLowerCase();
+      let dupQuery = 'SELECT * FROM taxes WHERE LOWER(name) = ? AND tax_id != ? AND ';
+      let dupParams = [nameCheck, taxId];
+      if (clientId) {
+        dupQuery += 'client_id = ?';
+        dupParams.push(clientId);
+      } else {
+        dupQuery += 'client_id IS NULL';
+      }
+      const [existingDup] = await db.execute(dupQuery, dupParams);
+      if (existingDup.length > 0) {
+        return res.status(400).json({ error: 'This tax is already added.' });
+      }
+    }
 
-    await db.execute(query, [
-      finalName,
-      finalPercentage,
-      finalActive,
-      taxId,
-      clientId
-    ]);
+    let updateQuery = 'UPDATE taxes SET name = ?, percentage = ?, active = ? WHERE tax_id = ? AND ';
+    let updateParams = [finalName, finalPercentage, finalActive, taxId];
+    if (clientId) {
+      updateQuery += 'client_id = ?';
+      updateParams.push(clientId);
+    } else {
+      updateQuery += 'client_id IS NULL';
+    }
+
+    await db.execute(updateQuery, updateParams);
 
     res.json({ message: 'Tax updated successfully' });
   } catch (err) {
@@ -153,22 +221,41 @@ router.put('/:id', async (req, res) => {
 
 /**
  * DELETE /api/taxes/:id
- * Deletes a specific tax by ID and shifts subsequent IDs down.
+ * Deletes a specific tax by ID.
  */
 router.delete('/:id', async (req, res) => {
   try {
     const taxId = parseInt(req.params.id);
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    const [rows] = await db.execute('SELECT * FROM taxes WHERE tax_id = ? AND client_id = ?', [taxId, clientId]);
+    let queryExist = 'SELECT * FROM taxes WHERE tax_id = ? AND ';
+    let paramsExist = [taxId];
+    if (clientId) {
+      queryExist += 'client_id = ?';
+      paramsExist.push(clientId);
+    } else {
+      queryExist += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(queryExist, paramsExist);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Tax not found' });
     }
 
-    await db.execute('DELETE FROM taxes WHERE tax_id = ? AND client_id = ?', [taxId, clientId]);
+    let deleteQuery = 'DELETE FROM taxes WHERE tax_id = ? AND ';
+    let deleteParams = [taxId];
+    if (clientId) {
+      deleteQuery += 'client_id = ?';
+      deleteParams.push(clientId);
+    } else {
+      deleteQuery += 'client_id IS NULL';
+    }
+
+    await db.execute(deleteQuery, deleteParams);
     
     res.json({ message: 'Tax deleted successfully' });
   } catch (err) {

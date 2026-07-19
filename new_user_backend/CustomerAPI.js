@@ -10,6 +10,11 @@ function getClientId(req) {
   return parseInt(cid);
 }
 
+// Helper to check if active user is a Super-Admin
+function checkSuperAdmin(req) {
+  return !req.user || req.user.client_id === null || req.user.client_id === undefined;
+}
+
 /**
  * POST /api/customers
  * Registers a new customer.
@@ -18,8 +23,9 @@ router.post('/', async (req, res) => {
   try {
     const data = req.body.CustomerModel || req.body;
     const clientId = getClientId(req);
+    const isSuperAdmin = checkSuperAdmin(req);
     
-    if (!clientId) {
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
@@ -44,15 +50,23 @@ router.post('/', async (req, res) => {
 
     // Check duplicate mobile number
     const phoneCheck = phone_1.trim();
-    const [existing] = await db.execute('SELECT * FROM customers WHERE phone_1 = ? AND client_id = ?', [phoneCheck, clientId]);
+    let dupQuery = 'SELECT * FROM customers WHERE phone_1 = ? AND ';
+    let dupParams = [phoneCheck];
+    if (clientId) {
+      dupQuery += 'client_id = ?';
+      dupParams.push(clientId);
+    } else {
+      dupQuery += 'client_id IS NULL';
+    }
+    const [existing] = await db.execute(dupQuery, dupParams);
     if (existing.length > 0) {
       return res.status(400).json({ error: 'Customer with this mobile number already exists.' });
     }
 
     const query = `
       INSERT INTO customers (
-        client_id, first_name, last_name, address_1, address_2, city, country, 
-        phone_1, phone_2, email, created_by
+        client_id, first_name, last_name, address_1, address_2, 
+        city, country, phone_1, phone_2, email, created_by
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
@@ -71,9 +85,9 @@ router.post('/', async (req, res) => {
     ];
 
     const [result] = await db.execute(query, values);
-    
+
     res.status(201).json({
-      message: 'Customer created successfully',
+      message: 'Customer registered successfully',
       customer_id: result.insertId
     });
   } catch (err) {
@@ -88,10 +102,22 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
-    const [rows] = await db.query('SELECT * FROM customers WHERE client_id = ? ORDER BY customer_id ASC', [clientId]);
+    
+    let query = 'SELECT * FROM customers WHERE ';
+    let params = [];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+    query += ' ORDER BY customer_id ASC';
+
+    const [rows] = await db.query(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -106,10 +132,21 @@ router.get('/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
-    const [rows] = await db.execute('SELECT * FROM customers WHERE customer_id = ? AND client_id = ?', [customerId, clientId]);
+
+    let query = 'SELECT * FROM customers WHERE customer_id = ? AND ';
+    let params = [customerId];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Customer not found' });
     }
@@ -127,7 +164,8 @@ router.put('/:id', async (req, res) => {
   try {
     const customerId = req.params.id;
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
@@ -145,12 +183,22 @@ router.put('/:id', async (req, res) => {
       email
     } = data;
 
-    const [rows] = await db.execute('SELECT * FROM customers WHERE customer_id = ? AND client_id = ?', [customerId, clientId]);
+    let queryExist = 'SELECT * FROM customers WHERE customer_id = ? AND ';
+    let paramsExist = [customerId];
+    if (clientId) {
+      queryExist += 'client_id = ?';
+      paramsExist.push(clientId);
+    } else {
+      queryExist += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(queryExist, paramsExist);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Customer not found' });
     }
 
     const existingCustomer = rows[0];
+
     const finalFirstName = first_name !== undefined ? first_name : existingCustomer.first_name;
     const finalLastName = last_name !== undefined ? last_name : existingCustomer.last_name;
     const finalAddress1 = address_1 !== undefined ? address_1 : existingCustomer.address_1;
@@ -162,40 +210,41 @@ router.put('/:id', async (req, res) => {
     const finalEmail = email !== undefined ? email : existingCustomer.email;
 
     // Check duplicate mobile number
-    if (finalPhone1) {
-      const [existing] = await db.execute('SELECT * FROM customers WHERE phone_1 = ? AND customer_id != ? AND client_id = ?', [finalPhone1.trim(), customerId, clientId]);
-      if (existing.length > 0) {
+    if (phone_1 !== undefined) {
+      const phoneCheck = phone_1.trim();
+      let dupQuery = 'SELECT * FROM customers WHERE phone_1 = ? AND customer_id != ? AND ';
+      let dupParams = [phoneCheck, customerId];
+      if (clientId) {
+        dupQuery += 'client_id = ?';
+        dupParams.push(clientId);
+      } else {
+        dupQuery += 'client_id IS NULL';
+      }
+      const [existingDup] = await db.execute(dupQuery, dupParams);
+      if (existingDup.length > 0) {
         return res.status(400).json({ error: 'Customer with this mobile number already exists.' });
       }
     }
 
-    const query = `
+    let updateQuery = `
       UPDATE customers SET 
-        first_name = ?, 
-        last_name = ?, 
-        address_1 = ?, 
-        address_2 = ?, 
-        city = ?, 
-        country = ?, 
-        phone_1 = ?, 
-        phone_2 = ?, 
-        email = ?
-      WHERE customer_id = ? AND client_id = ?
+        first_name = ?, last_name = ?, address_1 = ?, address_2 = ?, 
+        city = ?, country = ?, phone_1 = ?, phone_2 = ?, email = ?
+      WHERE customer_id = ? AND 
     `;
+    let updateParams = [
+      finalFirstName, finalLastName, finalAddress1, finalAddress2,
+      finalCity, finalCountry, finalPhone1, finalPhone2, finalEmail,
+      customerId
+    ];
+    if (clientId) {
+      updateQuery += 'client_id = ?';
+      updateParams.push(clientId);
+    } else {
+      updateQuery += 'client_id IS NULL';
+    }
 
-    await db.execute(query, [
-      finalFirstName,
-      finalLastName,
-      finalAddress1,
-      finalAddress2,
-      finalCity,
-      finalCountry,
-      finalPhone1,
-      finalPhone2,
-      finalEmail,
-      customerId,
-      clientId
-    ]);
+    await db.execute(updateQuery, updateParams);
 
     res.json({ message: 'Customer updated successfully' });
   } catch (err) {
@@ -205,22 +254,41 @@ router.put('/:id', async (req, res) => {
 
 /**
  * DELETE /api/customers/:id
- * Deletes a specific customer by ID and shifts subsequent IDs down.
+ * Deletes a specific customer by ID.
  */
 router.delete('/:id', async (req, res) => {
   try {
     const customerId = parseInt(req.params.id);
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    const [rows] = await db.execute('SELECT * FROM customers WHERE customer_id = ? AND client_id = ?', [customerId, clientId]);
+    let queryExist = 'SELECT * FROM customers WHERE customer_id = ? AND ';
+    let paramsExist = [customerId];
+    if (clientId) {
+      queryExist += 'client_id = ?';
+      paramsExist.push(clientId);
+    } else {
+      queryExist += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(queryExist, paramsExist);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Customer not found' });
     }
 
-    await db.execute('DELETE FROM customers WHERE customer_id = ? AND client_id = ?', [customerId, clientId]);
+    let deleteQuery = 'DELETE FROM customers WHERE customer_id = ? AND ';
+    let deleteParams = [customerId];
+    if (clientId) {
+      deleteQuery += 'client_id = ?';
+      deleteParams.push(clientId);
+    } else {
+      deleteQuery += 'client_id IS NULL';
+    }
+
+    await db.execute(deleteQuery, deleteParams);
     
     res.json({ message: 'Customer deleted successfully' });
   } catch (err) {
@@ -229,4 +297,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-

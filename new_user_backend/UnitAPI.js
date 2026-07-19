@@ -10,6 +10,11 @@ function getClientId(req) {
   return parseInt(cid);
 }
 
+// Helper to check if active user is a Super-Admin
+function checkSuperAdmin(req) {
+  return !req.user || req.user.client_id === null || req.user.client_id === undefined;
+}
+
 /**
  * POST /api/units
  * Registers a new unit.
@@ -18,8 +23,9 @@ router.post('/', async (req, res) => {
   try {
     const data = req.body.UnitModel || req.body;
     const clientId = getClientId(req);
+    const isSuperAdmin = checkSuperAdmin(req);
     
-    if (!clientId) {
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
@@ -30,13 +36,22 @@ router.post('/', async (req, res) => {
     const created_by = data.created_by || data.createdBy || 'System';
 
     if (!name) {
-      return res.status(400).json({ 
-        error: 'Missing required fields. Please ensure name is provided.' 
+      return res.status(400).json({
+        error: 'Missing required fields. Please ensure name is provided.'
       });
     }
 
-    // Check if unit already exists
-    const [existing] = await db.execute('SELECT * FROM units WHERE LOWER(name) = ? AND client_id = ?', [name.trim().toLowerCase(), clientId]);
+    // Duplicate Check
+    const nameCheck = name.trim().toLowerCase();
+    let dupQuery = 'SELECT * FROM units WHERE LOWER(name) = ? AND ';
+    let dupParams = [nameCheck];
+    if (clientId) {
+      dupQuery += 'client_id = ?';
+      dupParams.push(clientId);
+    } else {
+      dupQuery += 'client_id IS NULL';
+    }
+    const [existing] = await db.execute(dupQuery, dupParams);
     if (existing.length > 0) {
       return res.status(400).json({ error: 'This unit is already added.' });
     }
@@ -54,7 +69,7 @@ router.post('/', async (req, res) => {
     ];
 
     const [result] = await db.execute(query, values);
-    
+
     res.status(201).json({
       message: 'Unit created successfully',
       unit_id: result.insertId
@@ -71,15 +86,26 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
-    const [rows] = await db.query('SELECT * FROM units WHERE client_id = ? ORDER BY unit_id ASC', [clientId]);
-    // Map response to also include id alias for client flexibility
+
+    let query = 'SELECT * FROM units WHERE ';
+    let params = [];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+    query += ' ORDER BY unit_id ASC';
+
+    const [rows] = await db.query(query, params);
     const mappedRows = rows.map(r => ({
       ...r,
       id: r.unit_id,
-      acitve: r.active // support both spellings in return JSON
+      acitve: r.active
     }));
     res.json(mappedRows);
   } catch (err) {
@@ -95,10 +121,21 @@ router.get('/:id', async (req, res) => {
   try {
     const unitId = req.params.id;
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
-    const [rows] = await db.execute('SELECT * FROM units WHERE unit_id = ? AND client_id = ?', [unitId, clientId]);
+
+    let query = 'SELECT * FROM units WHERE unit_id = ? AND ';
+    let params = [unitId];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Unit not found' });
     }
@@ -117,16 +154,26 @@ router.put('/:id', async (req, res) => {
   try {
     const unitId = req.params.id;
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
     const data = req.body.UnitModel || req.body;
-    
+
     const { name } = data;
     const active = data.active !== undefined ? data.active : data.acitve;
 
-    const [rows] = await db.execute('SELECT * FROM units WHERE unit_id = ? AND client_id = ?', [unitId, clientId]);
+    let queryExist = 'SELECT * FROM units WHERE unit_id = ? AND ';
+    let paramsExist = [unitId];
+    if (clientId) {
+      queryExist += 'client_id = ?';
+      paramsExist.push(clientId);
+    } else {
+      queryExist += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(queryExist, paramsExist);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Unit not found' });
     }
@@ -135,25 +182,33 @@ router.put('/:id', async (req, res) => {
     const finalName = name !== undefined ? name : existingUnit.name;
     const finalActive = active !== undefined ? (active ? 1 : 0) : existingUnit.active;
 
-    // Check if unit already exists (excluding the current one)
+    // Duplicate Check
     if (name !== undefined) {
-      const [existing] = await db.execute('SELECT * FROM units WHERE LOWER(name) = ? AND unit_id != ? AND client_id = ?', [finalName.trim().toLowerCase(), unitId, clientId]);
-      if (existing.length > 0) {
+      const nameCheck = name.trim().toLowerCase();
+      let dupQuery = 'SELECT * FROM units WHERE LOWER(name) = ? AND unit_id != ? AND ';
+      let dupParams = [nameCheck, unitId];
+      if (clientId) {
+        dupQuery += 'client_id = ?';
+        dupParams.push(clientId);
+      } else {
+        dupQuery += 'client_id IS NULL';
+      }
+      const [existingDup] = await db.execute(dupQuery, dupParams);
+      if (existingDup.length > 0) {
         return res.status(400).json({ error: 'This unit is already added.' });
       }
     }
 
-    const query = `
-      UPDATE units SET name = ?, active = ?
-      WHERE unit_id = ? AND client_id = ?
-    `;
+    let updateQuery = 'UPDATE units SET name = ?, active = ? WHERE unit_id = ? AND ';
+    let updateParams = [finalName, finalActive, unitId];
+    if (clientId) {
+      updateQuery += 'client_id = ?';
+      updateParams.push(clientId);
+    } else {
+      updateQuery += 'client_id IS NULL';
+    }
 
-    await db.execute(query, [
-      finalName,
-      finalActive,
-      unitId,
-      clientId
-    ]);
+    await db.execute(updateQuery, updateParams);
 
     res.json({ message: 'Unit updated successfully' });
   } catch (err) {
@@ -163,22 +218,41 @@ router.put('/:id', async (req, res) => {
 
 /**
  * DELETE /api/units/:id
- * Deletes a specific unit by ID and shifts subsequent IDs down.
+ * Deletes a specific unit by ID.
  */
 router.delete('/:id', async (req, res) => {
   try {
     const unitId = parseInt(req.params.id);
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    const [rows] = await db.execute('SELECT * FROM units WHERE unit_id = ? AND client_id = ?', [unitId, clientId]);
+    let queryExist = 'SELECT * FROM units WHERE unit_id = ? AND ';
+    let paramsExist = [unitId];
+    if (clientId) {
+      queryExist += 'client_id = ?';
+      paramsExist.push(clientId);
+    } else {
+      queryExist += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(queryExist, paramsExist);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Unit not found' });
     }
 
-    await db.execute('DELETE FROM units WHERE unit_id = ? AND client_id = ?', [unitId, clientId]);
+    let deleteQuery = 'DELETE FROM units WHERE unit_id = ? AND ';
+    let deleteParams = [unitId];
+    if (clientId) {
+      deleteQuery += 'client_id = ?';
+      deleteParams.push(clientId);
+    } else {
+      deleteQuery += 'client_id IS NULL';
+    }
+
+    await db.execute(deleteQuery, deleteParams);
     
     res.json({ message: 'Unit deleted successfully' });
   } catch (err) {
@@ -187,4 +261,3 @@ router.delete('/:id', async (req, res) => {
 });
 
 module.exports = router;
-

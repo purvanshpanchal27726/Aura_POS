@@ -11,6 +11,11 @@ function getClientId(req) {
   return parseInt(cid);
 }
 
+// Helper to check if active user is a Super-Admin
+function checkSuperAdmin(req) {
+  return !req.user || req.user.client_id === null || req.user.client_id === undefined;
+}
+
 /**
  * POST /api/items
  * Registers a new inventory item.
@@ -19,8 +24,9 @@ router.post('/', async (req, res) => {
   try {
     const data = req.body.ItemModel || req.body || {};
     const clientId = getClientId(req);
+    const isSuperAdmin = checkSuperAdmin(req);
     
-    if (!clientId) {
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
@@ -48,62 +54,58 @@ router.post('/', async (req, res) => {
     const long_name = data.long_name !== undefined ? data.long_name : (data.longName !== undefined ? data.longName : null);
     const image = await resolveImageForStorage(data.image !== undefined ? data.image : null, null, req);
     const editable_price = data.editable_price !== undefined ? data.editable_price : (data.editablePrice !== undefined ? data.editablePrice : 0);
-    const visible = data.visible !== undefined ? data.visible : 1;
-    const base_quantity = data.base_quantity !== undefined ? data.base_quantity : (data.baseQuantity !== undefined ? data.baseQuantity : 1.00);
-    const weight_measurement = data.weight_measurement !== undefined ? data.weight_measurement : (data.weightMeasurement !== undefined ? data.weightMeasurement : 'none');
+    const pos_item = data.pos_item !== undefined ? data.pos_item : (data.posItem !== undefined ? data.posItem : 0);
+    const show_in_restaurant = data.show_in_restaurant !== undefined ? data.show_in_restaurant : (data.showInRestaurant !== undefined ? data.showInRestaurant : 0);
+    const is_hotel_service = data.is_hotel_service !== undefined ? data.is_hotel_service : (data.isHotelService !== undefined ? data.isHotelService : 0);
 
-    if (!name || sales_price === null || purchase_price === null) {
+    if (!name) {
       return res.status(400).json({
-        error: 'Missing required fields. Please ensure name, sales_price, and purchase_price are provided.'
+        error: 'Missing required fields. Please ensure name is provided.'
       });
     }
 
     // Duplicate Check
     const nameCheck = name.trim().toLowerCase();
-    const codeCheck = code && code.trim().length > 0 ? code.trim() : null;
-
-    let duplicateCheckQuery = 'SELECT * FROM items WHERE (LOWER(name) = ?';
-    let duplicateCheckValues = [nameCheck];
-    if (codeCheck) {
-      duplicateCheckQuery += ' OR code = ?';
-      duplicateCheckValues.push(codeCheck);
+    let dupQuery = 'SELECT * FROM items WHERE LOWER(name) = ? AND ';
+    let dupParams = [nameCheck];
+    if (clientId) {
+      dupQuery += 'client_id = ?';
+      dupParams.push(clientId);
+    } else {
+      dupQuery += 'client_id IS NULL';
     }
-    duplicateCheckQuery += ') AND client_id = ?';
-    duplicateCheckValues.push(clientId);
-
-    const [existing] = await db.execute(duplicateCheckQuery, duplicateCheckValues);
+    const [existing] = await db.execute(dupQuery, dupParams);
     if (existing.length > 0) {
       return res.status(400).json({ error: 'This item is already added.' });
     }
 
     const query = `
       INSERT INTO items (
-        client_id, name, short_name, long_name, description, code, image,
-        sales_price, purchase_price, editable_price, visible, 
-        tax_id, category_id, unit_id, base_quantity, weight_measurement,
-        active, created_by
+        client_id, name, code, description, category_id, unit_id, tax_id, 
+        sales_price, purchase_price, active, created_by,
+        short_name, long_name, image, editable_price, pos_item, show_in_restaurant, is_hotel_service
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
       clientId,
       name,
-      short_name,
-      long_name,
-      description,
       code || null,
-      image,
-      sales_price,
-      purchase_price,
-      editable_price ? 1 : 0,
-      visible ? 1 : 0,
-      tax_id,
+      description,
       category_id,
       unit_id,
-      base_quantity,
-      weight_measurement,
+      tax_id,
+      sales_price,
+      purchase_price,
       active ? 1 : 0,
-      created_by
+      created_by,
+      short_name,
+      long_name,
+      image,
+      editable_price ? 1 : 0,
+      pos_item ? 1 : 0,
+      show_in_restaurant ? 1 : 0,
+      is_hotel_service ? 1 : 0
     ];
 
     const [result] = await db.execute(query, values);
@@ -124,11 +126,12 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    const query = `
+    let query = `
       SELECT 
         i.*,
         c.name AS category_name,
@@ -138,11 +141,18 @@ router.get('/', async (req, res) => {
       LEFT JOIN categories c ON i.category_id = c.category_id
       LEFT JOIN units u ON i.unit_id = u.unit_id
       LEFT JOIN taxes t ON i.tax_id = t.tax_id
-      WHERE i.client_id = ?
-      ORDER BY i.item_id ASC
+      WHERE 
     `;
+    let params = [];
+    if (clientId) {
+      query += 'i.client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'i.client_id IS NULL';
+    }
+    query += ' ORDER BY i.item_id ASC';
 
-    const [rows] = await db.query(query, [clientId]);
+    const [rows] = await db.query(query, params);
 
     const mappedRows = rows.map(r => ({
       ...decorateItem(r, req),
@@ -165,11 +175,12 @@ router.get('/:id', async (req, res) => {
   try {
     const itemId = req.params.id;
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    const query = `
+    let query = `
       SELECT 
         i.*,
         c.name AS category_name,
@@ -179,21 +190,25 @@ router.get('/:id', async (req, res) => {
       LEFT JOIN categories c ON i.category_id = c.category_id
       LEFT JOIN units u ON i.unit_id = u.unit_id
       LEFT JOIN taxes t ON i.tax_id = t.tax_id
-      WHERE i.item_id = ? AND i.client_id = ?
+      WHERE i.item_id = ? AND 
     `;
+    let params = [itemId];
+    if (clientId) {
+      query += 'i.client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'i.client_id IS NULL';
+    }
 
-    const [rows] = await db.execute(query, [itemId, clientId]);
-
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Item not found' });
     }
-
-    const r = rows[0];
     res.json({
-      ...decorateItem(r, req),
-      id: r.item_id,
-      acitve: r.active,
-      desciption: r.description
+      ...decorateItem(rows[0], req),
+      id: rows[0].item_id,
+      acitve: rows[0].active,
+      desciption: rows[0].description
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -202,122 +217,120 @@ router.get('/:id', async (req, res) => {
 
 /**
  * PUT /api/items/:id
- * Updates details for a specific item.
+ * Updates details for a specific inventory item.
  */
 router.put('/:id', async (req, res) => {
   try {
     const itemId = req.params.id;
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
     const data = req.body.ItemModel || req.body || {};
 
     const { name, code } = data;
-    const description = data.description !== undefined ? data.description : data.desciption;
-    const sales_price = data.sales_price !== undefined ? data.sales_price : data.salesPrice;
-    const purchase_price = data.purchase_price !== undefined ? data.purchase_price : data.purchasePrice;
-    
+    const description = data.description !== undefined ? data.description : (data.desciption !== undefined ? data.desciption : undefined);
+    const sales_price = data.sales_price !== undefined ? data.sales_price : (data.salesPrice !== undefined ? data.salesPrice : undefined);
+    const purchase_price = data.purchase_price !== undefined ? data.purchase_price : (data.purchasePrice !== undefined ? data.purchasePrice : undefined);
+
     const parseId = (val) => {
+      if (val === undefined) return undefined;
       if (val === null || val === '' || val === 'null' || val === 0 || val === '0') return null;
       return parseInt(val);
     };
 
-    const tax_id = data.tax_id !== undefined ? parseId(data.tax_id) : (data.taxId !== undefined ? parseId(data.taxId) : undefined);
-    const category_id = data.category_id !== undefined ? parseId(data.category_id) : (data.categoryId !== undefined ? parseId(data.categoryId) : undefined);
-    const unit_id = data.unit_id !== undefined ? parseId(data.unit_id) : (data.unitId !== undefined ? parseId(data.unitId) : undefined);
+    const tax_id = parseId(data.tax_id !== undefined ? data.tax_id : data.taxId);
+    const category_id = parseId(data.category_id !== undefined ? data.category_id : data.categoryId);
+    const unit_id = parseId(data.unit_id !== undefined ? data.unit_id : data.unitId);
     
     const active = data.active !== undefined ? data.active : data.acitve;
-
+    
     // Advanced fields
-    const short_name = data.short_name !== undefined ? data.short_name : data.shortName;
-    const long_name = data.long_name !== undefined ? data.long_name : data.longName;
-    const image = data.image !== undefined ? data.image : undefined;
-    const editable_price = data.editable_price !== undefined ? data.editable_price : data.editablePrice;
-    const visible = data.visible;
-    const base_quantity = data.base_quantity !== undefined ? data.base_quantity : data.baseQuantity;
-    const weight_measurement = data.weight_measurement !== undefined ? data.weight_measurement : data.weightMeasurement;
+    const short_name = data.short_name !== undefined ? data.short_name : (data.shortName !== undefined ? data.shortName : undefined);
+    const long_name = data.long_name !== undefined ? data.long_name : (data.longName !== undefined ? data.longName : undefined);
+    const editable_price = data.editable_price !== undefined ? data.editable_price : (data.editablePrice !== undefined ? data.editablePrice : undefined);
+    const pos_item = data.pos_item !== undefined ? data.pos_item : (data.posItem !== undefined ? data.posItem : undefined);
+    const show_in_restaurant = data.show_in_restaurant !== undefined ? data.show_in_restaurant : (data.showInRestaurant !== undefined ? data.showInRestaurant : undefined);
+    const is_hotel_service = data.is_hotel_service !== undefined ? data.is_hotel_service : (data.isHotelService !== undefined ? data.isHotelService : undefined);
 
-    const [rows] = await db.execute('SELECT * FROM items WHERE item_id = ? AND client_id = ?', [itemId, clientId]);
+    let queryExist = 'SELECT * FROM items WHERE item_id = ? AND ';
+    let paramsExist = [itemId];
+    if (clientId) {
+      queryExist += 'client_id = ?';
+      paramsExist.push(clientId);
+    } else {
+      queryExist += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(queryExist, paramsExist);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Item not found' });
     }
 
-    const existing = rows[0];
+    const existingItem = rows[0];
 
-    const finalName = name !== undefined ? name : existing.name;
-    const finalDescription = description !== undefined ? description : existing.description;
-    const finalCode = code !== undefined ? code : existing.code;
-    const finalSalesPrice = sales_price !== undefined ? sales_price : existing.sales_price;
-    const finalPurchasePrice = purchase_price !== undefined ? purchase_price : existing.purchase_price;
-    
-    const finalTaxId = tax_id !== undefined ? tax_id : existing.tax_id;
-    const finalCategoryId = category_id !== undefined ? category_id : existing.category_id;
-    const finalUnitId = unit_id !== undefined ? unit_id : existing.unit_id;
-    
-    const finalActive = active !== undefined ? (active ? 1 : 0) : existing.active;
+    const finalName = name !== undefined ? name : existingItem.name;
+    const finalCode = code !== undefined ? code : existingItem.code;
+    const finalDescription = description !== undefined ? description : existingItem.description;
+    const finalCategory = category_id !== undefined ? category_id : existingItem.category_id;
+    const finalUnit = unit_id !== undefined ? unit_id : existingItem.unit_id;
+    const finalTax = tax_id !== undefined ? tax_id : existingItem.tax_id;
+    const finalSalesPrice = sales_price !== undefined ? sales_price : existingItem.sales_price;
+    const finalPurchasePrice = purchase_price !== undefined ? purchase_price : existingItem.purchase_price;
+    const finalActive = active !== undefined ? (active ? 1 : 0) : existingItem.active;
 
-    // Advanced updates
-    const finalShortName = short_name !== undefined ? short_name : existing.short_name;
-    const finalLongName = long_name !== undefined ? long_name : existing.long_name;
-    const finalImage = await resolveImageForStorage(image, existing.image, req);
-    const finalEditablePrice = editable_price !== undefined ? (editable_price ? 1 : 0) : existing.editable_price;
-    const finalVisible = visible !== undefined ? (visible ? 1 : 0) : existing.visible;
-    const finalBaseQuantity = base_quantity !== undefined ? base_quantity : existing.base_quantity;
-    const finalWeightMeasurement = weight_measurement !== undefined ? weight_measurement : existing.weight_measurement;
+    const finalShortName = short_name !== undefined ? short_name : existingItem.short_name;
+    const finalLongName = long_name !== undefined ? long_name : existingItem.long_name;
+    const finalEditablePrice = editable_price !== undefined ? (editable_price ? 1 : 0) : existingItem.editable_price;
+    const finalPosItem = pos_item !== undefined ? (pos_item ? 1 : 0) : existingItem.pos_item;
+    const finalShowInRestaurant = show_in_restaurant !== undefined ? (show_in_restaurant ? 1 : 0) : existingItem.show_in_restaurant;
+    const finalIsHotelService = is_hotel_service !== undefined ? (is_hotel_service ? 1 : 0) : existingItem.is_hotel_service;
+
+    // Handle image update securely
+    const finalImage = await resolveImageForStorage(data.image, existingItem.image, req);
 
     // Duplicate Check
-    const nameCheck = finalName ? finalName.trim().toLowerCase() : '';
-    const codeCheck = finalCode && finalCode.trim().length > 0 ? finalCode.trim() : null;
-
-    let duplicateCheckQuery = 'SELECT * FROM items WHERE (LOWER(name) = ?';
-    let duplicateCheckValues = [nameCheck];
-    if (codeCheck) {
-      duplicateCheckQuery += ' OR code = ?';
-      duplicateCheckValues.push(codeCheck);
+    if (name !== undefined) {
+      const nameCheck = name.trim().toLowerCase();
+      let dupQuery = 'SELECT * FROM items WHERE LOWER(name) = ? AND item_id != ? AND ';
+      let dupParams = [nameCheck, itemId];
+      if (clientId) {
+        dupQuery += 'client_id = ?';
+        dupParams.push(clientId);
+      } else {
+        dupQuery += 'client_id IS NULL';
+      }
+      const [existingDup] = await db.execute(dupQuery, dupParams);
+      if (existingDup.length > 0) {
+        return res.status(400).json({ error: 'This item is already added.' });
+      }
     }
-    duplicateCheckQuery += ') AND item_id != ? AND client_id = ?';
-    duplicateCheckValues.push(itemId, clientId);
 
-    const [existingDup] = await db.execute(duplicateCheckQuery, duplicateCheckValues);
-    if (existingDup.length > 0) {
-      return res.status(400).json({ error: 'This item is already added.' });
-    }
-
-    const query = `
+    let updateQuery = `
       UPDATE items SET 
-        name = ?, short_name = ?, long_name = ?, description = ?, code = ?, image = ?,
-        sales_price = ?, purchase_price = ?, editable_price = ?, visible = ?, 
-        tax_id = ?, category_id = ?, unit_id = ?, base_quantity = ?, weight_measurement = ?,
-        active = ?
-      WHERE item_id = ? AND client_id = ?
+        name = ?, code = ?, description = ?, category_id = ?, unit_id = ?, tax_id = ?, 
+        sales_price = ?, purchase_price = ?, active = ?,
+        short_name = ?, long_name = ?, image = ?, editable_price = ?, pos_item = ?, 
+        show_in_restaurant = ?, is_hotel_service = ?
+      WHERE item_id = ? AND 
     `;
-
-    await db.execute(query, [
-      finalName,
-      finalShortName,
-      finalLongName,
-      finalDescription,
-      finalCode,
-      finalImage,
-      finalSalesPrice,
-      finalPurchasePrice,
-      finalEditablePrice,
-      finalVisible,
-      finalTaxId,
-      finalCategoryId,
-      finalUnitId,
-      finalBaseQuantity,
-      finalWeightMeasurement,
-      finalActive,
-      itemId,
-      clientId
-    ]);
-
-    if (finalImage !== existing.image) {
-      deleteStoredImage(existing.image);
+    let updateParams = [
+      finalName, finalCode, finalDescription, finalCategory, finalUnit, finalTax,
+      finalSalesPrice, finalPurchasePrice, finalActive,
+      finalShortName, finalLongName, finalImage, finalEditablePrice, finalPosItem,
+      finalShowInRestaurant, finalIsHotelService,
+      itemId
+    ];
+    if (clientId) {
+      updateQuery += 'client_id = ?';
+      updateParams.push(clientId);
+    } else {
+      updateQuery += 'client_id IS NULL';
     }
+
+    await db.execute(updateQuery, updateParams);
 
     res.json({ message: 'Item updated successfully' });
   } catch (err) {
@@ -327,24 +340,43 @@ router.put('/:id', async (req, res) => {
 
 /**
  * DELETE /api/items/:id
- * Deletes a specific item and shifts subsequent IDs down.
+ * Deletes a specific item.
  */
 router.delete('/:id', async (req, res) => {
   try {
     const itemId = parseInt(req.params.id);
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    const [rows] = await db.execute('SELECT * FROM items WHERE item_id = ? AND client_id = ?', [itemId, clientId]);
+    let queryExist = 'SELECT * FROM items WHERE item_id = ? AND ';
+    let paramsExist = [itemId];
+    if (clientId) {
+      queryExist += 'client_id = ?';
+      paramsExist.push(clientId);
+    } else {
+      queryExist += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(queryExist, paramsExist);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Item not found' });
     }
 
     const imageToDelete = rows[0].image;
 
-    await db.execute('DELETE FROM items WHERE item_id = ? AND client_id = ?', [itemId, clientId]);
+    let deleteQuery = 'DELETE FROM items WHERE item_id = ? AND ';
+    let deleteParams = [itemId];
+    if (clientId) {
+      deleteQuery += 'client_id = ?';
+      deleteParams.push(clientId);
+    } else {
+      deleteQuery += 'client_id IS NULL';
+    }
+
+    await db.execute(deleteQuery, deleteParams);
     deleteStoredImage(imageToDelete);
 
     res.json({ message: 'Item deleted successfully' });
