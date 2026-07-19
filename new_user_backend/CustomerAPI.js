@@ -48,6 +48,22 @@ router.post('/', async (req, res) => {
       });
     }
 
+    // Check duplicate customer name (first_name + last_name)
+    const firstNameCheck = first_name.trim().toLowerCase();
+    const lastNameCheck = last_name.trim().toLowerCase();
+    let nameQuery = 'SELECT * FROM customers WHERE LOWER(first_name) = ? AND LOWER(last_name) = ? AND ';
+    let nameParams = [firstNameCheck, lastNameCheck];
+    if (clientId) {
+      nameQuery += 'client_id = ?';
+      nameParams.push(clientId);
+    } else {
+      nameQuery += 'client_id IS NULL';
+    }
+    const [existingName] = await db.execute(nameQuery, nameParams);
+    if (existingName.length > 0) {
+      return res.status(400).json({ error: 'Customer with this name already exists.' });
+    }
+
     // Check duplicate mobile number
     const phoneCheck = phone_1.trim();
     let dupQuery = 'SELECT * FROM customers WHERE phone_1 = ? AND ';
@@ -208,6 +224,26 @@ router.put('/:id', async (req, res) => {
     const finalPhone1 = phone_1 !== undefined ? phone_1 : existingCustomer.phone_1;
     const finalPhone2 = phone_2 !== undefined ? phone_2 : existingCustomer.phone_2;
     const finalEmail = email !== undefined ? email : existingCustomer.email;
+
+    // Check duplicate customer name (first_name + last_name)
+    if (first_name !== undefined || last_name !== undefined) {
+      const finalFN = first_name !== undefined ? first_name : existingCustomer.first_name;
+      const finalLN = last_name !== undefined ? last_name : existingCustomer.last_name;
+      const firstNameCheck = finalFN.trim().toLowerCase();
+      const lastNameCheck = finalLN.trim().toLowerCase();
+      let dupNameQuery = 'SELECT * FROM customers WHERE LOWER(first_name) = ? AND LOWER(last_name) = ? AND customer_id != ? AND ';
+      let dupNameParams = [firstNameCheck, lastNameCheck, customerId];
+      if (clientId) {
+        dupNameQuery += 'client_id = ?';
+        dupNameParams.push(clientId);
+      } else {
+        dupNameQuery += 'client_id IS NULL';
+      }
+      const [existingDupName] = await db.execute(dupNameQuery, dupNameParams);
+      if (existingDupName.length > 0) {
+        return res.status(400).json({ error: 'Customer with this name already exists.' });
+      }
+    }
 
     // Check duplicate mobile number
     if (phone_1 !== undefined) {

@@ -36,6 +36,37 @@ router.post('/', async (req, res) => {
     }
 
     // Duplicate check
+    const firstNameCheck = first_name.trim().toLowerCase();
+    const lastNameCheck = last_name.trim().toLowerCase();
+    let nameQuery = 'SELECT * FROM vendors WHERE LOWER(first_name) = ? AND LOWER(last_name) = ? AND ';
+    let nameParams = [firstNameCheck, lastNameCheck];
+    if (clientId) {
+      nameQuery += 'client_id = ?';
+      nameParams.push(clientId);
+    } else {
+      nameQuery += 'client_id IS NULL';
+    }
+    const [existingName] = await db.execute(nameQuery, nameParams);
+    if (existingName.length > 0) {
+      return res.status(400).json({ error: 'Vendor with this name already exists.' });
+    }
+
+    if (company) {
+      const companyCheck = company.trim().toLowerCase();
+      let companyQuery = 'SELECT * FROM vendors WHERE LOWER(company) = ? AND ';
+      let companyParams = [companyCheck];
+      if (clientId) {
+        companyQuery += 'client_id = ?';
+        companyParams.push(clientId);
+      } else {
+        companyQuery += 'client_id IS NULL';
+      }
+      const [existingCompany] = await db.execute(companyQuery, companyParams);
+      if (existingCompany.length > 0) {
+        return res.status(400).json({ error: 'Vendor with this company name already exists.' });
+      }
+    }
+
     const phoneCheck = phone_1.trim();
     let dupQuery = 'SELECT * FROM vendors WHERE phone_1 = ? AND ';
     let dupParams = [phoneCheck];
@@ -189,6 +220,41 @@ router.put('/:id', async (req, res) => {
     const finalEmail = email !== undefined ? email : existingVendor.email;
 
     // Duplicate check
+    if (first_name !== undefined || last_name !== undefined) {
+      const finalFN = first_name !== undefined ? first_name : existingVendor.first_name;
+      const finalLN = last_name !== undefined ? last_name : existingVendor.last_name;
+      const firstNameCheck = finalFN.trim().toLowerCase();
+      const lastNameCheck = finalLN.trim().toLowerCase();
+      let dupNameQuery = 'SELECT * FROM vendors WHERE LOWER(first_name) = ? AND LOWER(last_name) = ? AND vendor_id != ? AND ';
+      let dupNameParams = [firstNameCheck, lastNameCheck, vendorId];
+      if (clientId) {
+        dupNameQuery += 'client_id = ?';
+        dupNameParams.push(clientId);
+      } else {
+        dupNameQuery += 'client_id IS NULL';
+      }
+      const [existingDupName] = await db.execute(dupNameQuery, dupNameParams);
+      if (existingDupName.length > 0) {
+        return res.status(400).json({ error: 'Vendor with this name already exists.' });
+      }
+    }
+
+    if (company !== undefined && company !== null && company !== '') {
+      const companyCheck = company.trim().toLowerCase();
+      let dupCompanyQuery = 'SELECT * FROM vendors WHERE LOWER(company) = ? AND vendor_id != ? AND ';
+      let dupCompanyParams = [companyCheck, vendorId];
+      if (clientId) {
+        dupCompanyQuery += 'client_id = ?';
+        dupCompanyParams.push(clientId);
+      } else {
+        dupCompanyQuery += 'client_id IS NULL';
+      }
+      const [existingDupCompany] = await db.execute(dupCompanyQuery, dupCompanyParams);
+      if (existingDupCompany.length > 0) {
+        return res.status(400).json({ error: 'Vendor with this company name already exists.' });
+      }
+    }
+
     if (phone_1 !== undefined) {
       const phoneCheck = phone_1.trim();
       let dupQuery = 'SELECT * FROM vendors WHERE phone_1 = ? AND vendor_id != ? AND ';
