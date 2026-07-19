@@ -504,8 +504,31 @@ tr:hover td {
 .empty-state {
   text-align: center;
   color: var(--text-secondary);
-  padding: 3rem;
-  font-size: 1rem;
+  padding: 4rem 2rem !important;
+  font-size: 1.05rem;
+  font-weight: 500;
+}
+
+.empty-state::before {
+  content: 'inventory_2';
+  font-family: 'Material Icons';
+  font-size: 2.5rem;
+  color: var(--text-secondary);
+  background: var(--input-bg);
+  padding: 1.25rem;
+  border-radius: 50%;
+  display: block;
+  width: max-content;
+  margin: 0 auto 1rem auto;
+  line-height: 1;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  opacity: 0.6;
+}
+
+[data-theme="dark"] .empty-state::before {
+  background: #1e293b;
+  color: #94a3b8;
 }
 
 /* Form Styles */
