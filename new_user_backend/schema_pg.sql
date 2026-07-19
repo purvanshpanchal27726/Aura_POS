@@ -623,7 +623,7 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 
 -- Seed Module Groups
 INSERT INTO module_groups (group_id, name, description) VALUES
-(1, 'Kirana', 'Manage products, billing, inventory, payments'),
+(1, 'POS', 'Manage products, billing, inventory, payments'),
 (2, 'Restaurant', 'Manage tables, orders, menu, kitchen'),
 (3, 'Hotel', 'Manage rooms, bookings, guests, check in/out')
 ON CONFLICT (group_id) DO UPDATE SET 

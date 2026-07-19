@@ -69,6 +69,7 @@ pgPool.on('error', (err, client) => {
 const transactionStorage = new AsyncLocalStorage();
 
 const tablePrimaryKeyMap = {
+  clients: 'client_id',
   roles: 'role_id',
   modules: 'module_id',
   users: 'user_id',

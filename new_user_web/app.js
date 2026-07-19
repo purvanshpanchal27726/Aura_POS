@@ -3690,6 +3690,10 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error fetching client modules:', err);
     }
 
+    document.getElementById('client_admin_credentials_section').style.display = 'none';
+    document.getElementById('client_admin_username').value = '';
+    document.getElementById('client_admin_password').value = '';
+
     if (clientModal) {
       clientModal.querySelector('h2').textContent = 'Edit Client Company';
       clientModal.style.display = 'flex';
@@ -3700,6 +3704,9 @@ document.addEventListener('DOMContentLoaded', () => {
     btnNewClient.addEventListener('click', () => {
       clientForm.reset();
       clientIdInput.value = '';
+      document.getElementById('client_admin_credentials_section').style.display = 'grid';
+      document.getElementById('client_admin_username').value = '';
+      document.getElementById('client_admin_password').value = '';
       document.getElementById('client_mod_kirana').checked = true;
       document.getElementById('client_mod_restaurant').checked = false;
       document.getElementById('client_mod_hotel').checked = false;
@@ -3743,6 +3750,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const clientData = { name, gst_no, phone, email, logo_url, address, active: 1 };
+
+      if (!id) {
+        const admin_username = document.getElementById('client_admin_username').value.trim();
+        const admin_password = document.getElementById('client_admin_password').value;
+        if (!admin_username || !admin_password) {
+          alert('Admin Username and Password are required to register a company.');
+          return;
+        }
+        clientData.admin_username = admin_username;
+        clientData.admin_password = admin_password;
+      }
       const url = id ? getApiUrl(`/api/clients/${id}`) : getApiUrl('/api/clients');
       const method = id ? 'PUT' : 'POST';
 

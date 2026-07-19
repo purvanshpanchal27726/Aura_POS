@@ -22,39 +22,101 @@ router.get('/', async (req, res) => {
 
 /**
  * POST /api/clients
- * Creates a new client and initializes default settings.
+ * Creates a new client, initializes default settings, and registers their admin user.
  */
 router.post('/', async (req, res) => {
+  const connection = await db.getConnection();
   try {
-    const data = req.body.ClientModel || req.body;
-    const { name, email, phone, address, gst_no, logo_url } = data;
+    await connection.beginTransaction();
+
+    const data = req.body.ClientModel || req.body || {};
+    const { name, email, phone, address, gst_no, logo_url, admin_username, admin_password } = data;
     const active = data.active !== undefined ? data.active : 1;
 
     if (!name) {
-      return res.status(400).json({ error: 'Missing client name.' });
+      await connection.rollback();
+      return res.status(400).json({ error: 'Missing company name.' });
     }
 
+    // 1. Company Name Duplicate Check
+    const nameCheck = name.trim().toLowerCase();
+    const [existingCompany] = await connection.execute('SELECT * FROM clients WHERE LOWER(name) = ?', [nameCheck]);
+    if (existingCompany.length > 0) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Company with this name already exists.' });
+    }
+
+    // 2. Admin Username Duplicate Check
+    if (!admin_username || !admin_password) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Admin Username and Password are required.' });
+    }
+
+    const usernameCheck = admin_username.trim().toLowerCase();
+    const [existingUser] = await connection.execute('SELECT * FROM users WHERE LOWER(username) = ?', [usernameCheck]);
+    if (existingUser.length > 0) {
+      await connection.rollback();
+      return res.status(400).json({ error: 'Admin username is already taken. Please choose another one.' });
+    }
+
+    // 3. Create Client Company
     const query = `
       INSERT INTO clients (name, email, phone, address, gst_no, logo_url, active)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
     const values = [name, email || null, phone || null, address || null, gst_no || null, logo_url || null, active ? 1 : 0];
 
-    const [result] = await db.execute(query, values);
+    const [result] = await connection.execute(query, values);
     const clientId = result.insertId;
 
-    // Initialize default printer settings for this new client
-    await db.execute(`
+    // 4. Initialize default printer settings for this new client
+    await connection.execute(`
       INSERT INTO printer_settings (client_id, printer_name, printer_type, paper_size, connection, ip_address, port, auto_print, copies)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [clientId, 'Default Printer', 'thermal', 'medium', 'usb', null, 9100, 0, 1]);
 
+    // 5. Create Admin User connected to this Client
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(admin_password, 10);
+    
+    const userQuery = `
+      INSERT INTO users (
+        username, password, first_name, middle_name, last_name,
+        address_1, address_2, address_3, city, country,
+        phone_1, phone_2, email_1, email_2, role_id, client_id, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+    const userValues = [
+      admin_username.trim(),
+      hashedPassword,
+      'Admin',
+      null,
+      'User',
+      address || 'Company Address',
+      null,
+      null,
+      'City',
+      'India',
+      phone || '0000000000',
+      null,
+      email || 'admin@example.com',
+      null,
+      2, // Role ID 2 (Admin)
+      clientId,
+      'System'
+    ];
+    await connection.execute(userQuery, userValues);
+
+    await connection.commit();
     res.status(201).json({
-      message: 'Client created successfully',
+      message: 'Client and admin user created successfully',
       client_id: clientId
     });
   } catch (err) {
+    await connection.rollback().catch(() => {});
     res.status(500).json({ error: err.message });
+  } finally {
+    connection.release();
   }
 });
 
@@ -75,6 +137,16 @@ router.put('/:id', async (req, res) => {
     }
 
     const existing = rows[0];
+
+    // Company Name Duplicate Check on Update
+    if (name !== undefined) {
+      const nameCheck = name.trim().toLowerCase();
+      const [existingDup] = await db.execute('SELECT * FROM clients WHERE LOWER(name) = ? AND client_id != ?', [nameCheck, clientId]);
+      if (existingDup.length > 0) {
+        return res.status(400).json({ error: 'Company with this name already exists.' });
+      }
+    }
+
     const query = `
       UPDATE clients 
       SET name = ?, email = ?, phone = ?, address = ?, gst_no = ?, logo_url = ?, active = ?
