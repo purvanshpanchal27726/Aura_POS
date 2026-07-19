@@ -6,6 +6,14 @@ const db = require('./db');
 
 const router = express.Router();
 
+// Middleware to restrict write operations to Super-Admin (1) and Admin (2)
+const checkWriteAccess = (req, res, next) => {
+  if (!req.user || (req.user.role_id !== 1 && req.user.role_id !== 2)) {
+    return res.status(403).json({ error: 'Access denied: Only admins and super-admins can manage users.' });
+  }
+  next();
+};
+
 const algorithm = 'aes-256-cbc';
 const secret = process.env.ENCRYPTION_KEY;
 if (!secret) {
@@ -50,7 +58,7 @@ const decryptPassword = (encryptedText) => {
  * POST /api/users
  * Registers a new user.
  */
-router.post('/', async (req, res) => {
+router.post('/', checkWriteAccess, async (req, res) => {
   try {
     const data = req.body.UserModel || req.body;
     
@@ -78,6 +86,13 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ 
         error: 'Missing required fields. Please ensure username, password, first_name, last_name, address_1, city, country, phone_1, email_1 are provided.' 
       });
+    }
+
+    // Check duplicate username
+    const usernameCheck = username.trim().toLowerCase();
+    const [existingUser] = await db.execute('SELECT * FROM users WHERE LOWER(username) = ?', [usernameCheck]);
+    if (existingUser.length > 0) {
+      return res.status(400).json({ error: 'Username is already taken.' });
     }
 
     // Check if this is the first user (PostgreSQL COUNT returns string, must parseInt)
@@ -154,7 +169,7 @@ router.get('/', async (req, res) => {
  * PUT /api/users/:id
  * Updates details for a specific user.
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', checkWriteAccess, async (req, res) => {
   try {
     const userId = req.params.id;
     const data = req.body.UserModel || req.body;
@@ -180,6 +195,15 @@ router.put('/:id', async (req, res) => {
     const [rows] = await db.execute('SELECT * FROM users WHERE user_id = ?', [userId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check duplicate username
+    if (username !== undefined) {
+      const usernameCheck = username.trim().toLowerCase();
+      const [existingDup] = await db.execute('SELECT * FROM users WHERE LOWER(username) = ? AND user_id != ?', [usernameCheck, userId]);
+      if (existingDup.length > 0) {
+        return res.status(400).json({ error: 'Username is already taken.' });
+      }
     }
 
     const existingUser = rows[0];
@@ -356,7 +380,7 @@ router.post('/login', async (req, res) => {
  * DELETE /api/users/:id
  * Deletes a specific user by ID and shifts IDs down.
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', checkWriteAccess, async (req, res) => {
   try {
     const userId = parseInt(req.params.id);
 

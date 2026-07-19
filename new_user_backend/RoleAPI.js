@@ -3,11 +3,19 @@ const db = require('./db');
 
 const router = express.Router();
 
+// Middleware to restrict write operations to Super-Admin (1) and Admin (2)
+const checkWriteAccess = (req, res, next) => {
+  if (!req.user || (req.user.role_id !== 1 && req.user.role_id !== 2)) {
+    return res.status(403).json({ error: 'Access denied: Only admins and super-admins can manage roles.' });
+  }
+  next();
+};
+
 /**
  * POST /api/roles
  * Registers a new role.
  */
-router.post('/', async (req, res) => {
+router.post('/', checkWriteAccess, async (req, res) => {
   try {
     const data = req.body.RoleModel || req.body;
     const { name } = data;
@@ -18,6 +26,13 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ 
         error: 'Missing required fields. Please ensure name is provided.' 
       });
+    }
+
+    // Duplicate Check
+    const nameCheck = name.trim().toLowerCase();
+    const [existing] = await db.execute('SELECT * FROM roles WHERE LOWER(name) = ?', [nameCheck]);
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Role with this name already exists.' });
     }
 
     const query = `
@@ -62,10 +77,32 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/roles/:id
+ * Fetches a single role by ID.
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const roleId = req.params.id;
+    const [rows] = await db.execute('SELECT * FROM roles WHERE role_id = ?', [roleId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Role not found' });
+    }
+    const r = rows[0];
+    res.json({
+      ...r,
+      id: r.role_id,
+      acitve: r.active
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * PUT /api/roles/:id
  * Updates details for a specific role.
  */
-router.put('/:id', async (req, res) => {
+router.put('/:id', checkWriteAccess, async (req, res) => {
   try {
     const roleId = req.params.id;
     const data = req.body.RoleModel || req.body;
@@ -80,6 +117,15 @@ router.put('/:id', async (req, res) => {
     const existingRole = rows[0];
     const finalName = name !== undefined ? name : existingRole.name;
     const finalActive = active !== undefined ? (active ? 1 : 0) : existingRole.active;
+
+    // Duplicate Check
+    if (name !== undefined) {
+      const nameCheck = name.trim().toLowerCase();
+      const [existingDup] = await db.execute('SELECT * FROM roles WHERE LOWER(name) = ? AND role_id != ?', [nameCheck, roleId]);
+      if (existingDup.length > 0) {
+        return res.status(400).json({ error: 'Role with this name already exists.' });
+      }
+    }
 
     const query = `
       UPDATE roles SET name = ?, active = ?
@@ -100,9 +146,9 @@ router.put('/:id', async (req, res) => {
 
 /**
  * DELETE /api/roles/:id
- * Deletes a specific role by ID and shifts subsequent IDs down.
+ * Deletes a specific role by ID.
  */
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', checkWriteAccess, async (req, res) => {
   try {
     const roleId = parseInt(req.params.id);
 
