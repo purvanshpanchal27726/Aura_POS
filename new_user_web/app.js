@@ -3827,8 +3827,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const checkAuthSession = () => {
     const storedUser = localStorage.getItem('pos_active_user');
+    const lockoutOverlay = document.getElementById('licenseLockoutOverlay');
+    const amcBanner = document.getElementById('amcWarningBanner');
+
     if (storedUser) {
       activeUser = JSON.parse(storedUser);
+      
+      // Enforce license validation if present
+      if (activeUser.license) {
+        const lic = activeUser.license;
+        if (lic.status === 'Expired' || lic.status === 'Suspended') {
+          if (lockoutOverlay) {
+            lockoutOverlay.style.display = 'flex';
+            document.getElementById('lockoutClientName').textContent = activeUser.client_name || 'Client Company';
+            document.getElementById('lockoutLicenseKey').textContent = lic.license_key || 'N/A';
+            document.getElementById('lockoutExpiryDate').textContent = lic.valid_to ? new Date(lic.valid_to).toLocaleDateString() : 'N/A';
+          }
+          if (amcBanner) amcBanner.style.display = 'none';
+        } else {
+          if (lockoutOverlay) lockoutOverlay.style.display = 'none';
+          if (lic.status === 'AMC Expired') {
+            if (amcBanner) amcBanner.style.display = 'flex';
+          } else {
+            if (amcBanner) amcBanner.style.display = 'none';
+          }
+        }
+      } else {
+        if (lockoutOverlay) lockoutOverlay.style.display = 'none';
+        if (amcBanner) amcBanner.style.display = 'none';
+      }
+
       if (loginOverlay) loginOverlay.style.display = 'none';
       if (loggedInUsername) loggedInUsername.textContent = activeUser.username;
       
@@ -3840,10 +3868,24 @@ document.addEventListener('DOMContentLoaded', () => {
       switchScreen('dashboard');
     } else {
       activeUser = null;
+      if (lockoutOverlay) lockoutOverlay.style.display = 'none';
+      if (amcBanner) amcBanner.style.display = 'none';
       if (loginOverlay) loginOverlay.style.display = 'flex';
       if (loggedInUsername) loggedInUsername.textContent = 'Guest';
     }
   };
+
+  // Bind lockout logout button
+  const lockoutLogoutBtn = document.getElementById('lockoutLogoutBtn');
+  if (lockoutLogoutBtn) {
+    lockoutLogoutBtn.addEventListener('click', () => {
+      localStorage.removeItem('pos_active_user');
+      localStorage.removeItem('pos_auth_token');
+      const lockoutOverlay = document.getElementById('licenseLockoutOverlay');
+      if (lockoutOverlay) lockoutOverlay.style.display = 'none';
+      checkAuthSession();
+    });
+  }
 
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {

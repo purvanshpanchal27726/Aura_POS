@@ -289,9 +289,10 @@ router.post('/login', async (req, res) => {
     }
 
     const query = `
-      SELECT u.*, r.name AS role_name 
+      SELECT u.*, r.name AS role_name, c.name AS client_name
       FROM users u 
       LEFT JOIN roles r ON u.role_id = r.role_id 
+      LEFT JOIN clients c ON u.client_id = c.client_id
       WHERE u.username = ?
     `;
     const [rows] = await db.execute(query, [username]);
@@ -331,6 +332,8 @@ router.post('/login', async (req, res) => {
     // Fetch client modules if client_id is set
     let clientModules = [];
     let printerSettings = null;
+    let licenseInfo = null;
+
     if (user.client_id) {
       const [modulesRows] = await db.execute(`
         SELECT mg.name 
@@ -344,8 +347,79 @@ router.post('/login', async (req, res) => {
       if (printerRows.length > 0) {
         printerSettings = printerRows[0];
       }
+
+      // Fetch license status for this company
+      const [licenseRows] = await db.execute(
+        'SELECT * FROM license_info WHERE client_id = ? ORDER BY license_id DESC LIMIT 1',
+        [user.client_id]
+      );
+      let license = licenseRows[0];
+      if (!license) {
+        // Auto-create a default 1-year trial license if not found
+        const defaultLicenseKey = `POS-${user.client_id}-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+        const today = new Date();
+        const expiry = new Date();
+        expiry.setFullYear(today.getFullYear() + 1);
+
+        const validFrom = today.toISOString().split('T')[0];
+        const validTo = expiry.toISOString().split('T')[0];
+
+        await db.execute(`
+          INSERT INTO license_info (client_id, license_key, valid_from, valid_to, amc_start_date, amc_end_date, status)
+          VALUES (?, ?, ?, ?, ?, ?, 'Active')
+        `, [
+          user.client_id,
+          defaultLicenseKey,
+          validFrom,
+          validTo,
+          validFrom,
+          validTo
+        ]);
+        const [refetched] = await db.execute(
+          'SELECT * FROM license_info WHERE client_id = ? ORDER BY license_id DESC LIMIT 1',
+          [user.client_id]
+        );
+        license = refetched[0];
+      }
+
+      // Calculate status and remaining days
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const expiry = new Date(license.valid_to);
+      expiry.setHours(0, 0, 0, 0);
+      const amcExpiry = new Date(license.amc_end_date);
+      amcExpiry.setHours(0, 0, 0, 0);
+
+      const diffTime = expiry - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      let finalStatus = license.status;
+      if (finalStatus === 'Active') {
+        if (diffDays <= 0) {
+          finalStatus = 'Expired';
+        } else if (today > amcExpiry) {
+          finalStatus = 'AMC Expired';
+        } else if (diffDays <= 30) {
+          finalStatus = 'Renewal Due';
+        }
+      }
+
+      licenseInfo = {
+        license_key: license.license_key,
+        valid_from: license.valid_from,
+        valid_to: license.valid_to,
+        amc_start_date: license.amc_start_date,
+        amc_end_date: license.amc_end_date,
+        status: finalStatus,
+        remaining_days: diffDays
+      };
     } else {
       clientModules = ['ALL']; // Super-Admin has all modules
+      licenseInfo = {
+        status: 'Active',
+        remaining_days: 9999,
+        message: 'Super-Admin Account'
+      };
     }
 
     const jwtSecret = process.env.JWT_SECRET || 'mySuperSecretJWTKeyForPOSSystem2026';
@@ -368,7 +442,8 @@ router.post('/login', async (req, res) => {
         ...user,
         id: user.user_id,
         clientModules: clientModules,
-        printerSettings: printerSettings
+        printerSettings: printerSettings,
+        license: licenseInfo
       }
     });
   } catch (err) {

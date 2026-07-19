@@ -10,6 +10,27 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <!-- AMC Warning Banner -->
+  <div id="amcWarningBanner" style="display: none; background: #fffbeb; border-bottom: 1.5px solid #fef3c7; color: #d97706; padding: 0.75rem 1.5rem; font-size: 0.9rem; font-weight: 500; text-align: center; justify-content: center; align-items: center; gap: 8px; z-index: 9999; position: relative;">
+    <span class="material-icons" style="font-size: 1.2rem;">warning</span>
+    <span><strong>Notice:</strong> Your Annual Maintenance Contract (AMC) has expired. Please contact Vanshee Infotech to renew support.</span>
+  </div>
+
+  <!-- License Lockout Overlay -->
+  <div id="licenseLockoutOverlay" style="display: none; justify-content: center; align-items: center; background: rgba(15, 23, 42, 0.98); z-index: 11000; position: fixed; top: 0; left: 0; width: 100%; height: 100%; color: #fff; font-family: sans-serif;">
+    <div style="max-width: 450px; width: 90%; padding: 2.5rem; border-radius: 16px; background: #1e293b; border: 1px solid #334155; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);">
+      <span class="material-icons" style="font-size: 4rem; color: #ef4444; margin-bottom: 1rem;">block</span>
+      <h2 style="margin-bottom: 0.5rem; font-size: 1.75rem; font-weight: 700; color: #f1f5f9;">POS Access Suspended</h2>
+      <p style="color: #94a3b8; line-height: 1.5; margin-bottom: 1.5rem;">Your client subscription license has expired or has been suspended. Please contact the system administrator at Vanshee Infotech to restore access.</p>
+      <div style="background: #0f172a; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.9rem; text-align: left; border: 1px solid #1e293b; color: #cbd5e1; margin-bottom: 1.5rem;">
+        <div><strong>Company:</strong> <span id="lockoutClientName">N/A</span></div>
+        <div><strong>License Key:</strong> <span id="lockoutLicenseKey">N/A</span></div>
+        <div><strong>Expired On:</strong> <span id="lockoutExpiryDate">N/A</span></div>
+      </div>
+      <button type="button" id="lockoutLogoutBtn" class="btn btn-primary" style="width: 100%; background: #ef4444; border: none; padding: 0.75rem; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Logout</button>
+    </div>
+  </div>
+
   <!-- Login / Signup Overlay -->
   <div id="loginOverlay" class="modal-overlay" style="display: flex; justify-content: center; align-items: center; background: var(--bg-color); z-index: 10000; position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
     <div class="modal-card" style="max-width: 400px; width: 90%; padding: 2.5rem; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main);">

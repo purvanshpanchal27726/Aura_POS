@@ -15,6 +15,7 @@ import 'item_listing.dart';
 import 'vendor_listing.dart';
 import 'receipt_listing.dart';
 import 'login_screen.dart';
+import 'license_lockout_screen.dart';
 import 'role_listing.dart';
 import 'role_permissions.dart';
 import 'sales_billing.dart';
@@ -573,6 +574,25 @@ class _MainLayoutState extends State<MainLayout> {
           _saveUser(user);
         },
       );
+    }
+
+    // License Lockout Check
+    if (activeUser != null && activeUser!['license'] != null) {
+      final license = activeUser!['license'] as Map<String, dynamic>;
+      final status = license['status']?.toString();
+      if (status == 'Expired' || status == 'Suspended') {
+        return LicenseLockoutScreen(
+          clientName: activeUser!['client_name']?.toString() ?? 'Client Company',
+          licenseKey: license['license_key']?.toString() ?? 'N/A',
+          expiryDate: license['valid_to']?.toString() ?? 'N/A',
+          onLogout: () async {
+            await _clearUser();
+            setState(() {
+              activeUser = null;
+            });
+          },
+        );
+      }
     }
 
     return Scaffold(
@@ -1135,7 +1155,44 @@ class _MainLayoutState extends State<MainLayout> {
           ],
         ),
       ),
-      body: _screens[_currentIndex],
+      body: (() {
+        final hasAmcExpired = activeUser != null &&
+            activeUser!['license'] != null &&
+            (activeUser!['license'] as Map<String, dynamic>)['status']?.toString() == 'AMC Expired';
+            
+        if (hasAmcExpired) {
+          return Column(
+            children: [
+              Container(
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFFFBEB),
+                  border: Border(bottom: BorderSide(color: Color(0xFFFEF3C7), width: 1.5)),
+                ),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Notice: Your Annual Maintenance Contract (AMC) has expired. Please contact Vanshee Infotech to renew support.',
+                        style: GoogleFonts.inter(
+                          color: const Color(0xFFB45309),
+                          fontSize: 12.0,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(child: _screens[_currentIndex]),
+            ],
+          );
+        }
+        return _screens[_currentIndex];
+      })(),
     );
   }
 }
