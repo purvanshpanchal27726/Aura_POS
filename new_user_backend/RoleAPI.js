@@ -111,15 +111,10 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Role not found' });
     }
 
-    await db.query('START TRANSACTION');
     await db.execute('DELETE FROM roles WHERE role_id = ?', [roleId]);
-    await db.execute('UPDATE roles SET role_id = role_id - 1 WHERE role_id > ?', [roleId]);
-    await db.execute('ALTER TABLE roles AUTO_INCREMENT = 1');
-    await db.query('COMMIT');
     
     res.json({ message: 'Role deleted successfully' });
   } catch (err) {
-    await db.query('ROLLBACK').catch(() => {});
     res.status(500).json({ error: err.message });
   }
 });

@@ -177,15 +177,10 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Category not found' });
     }
 
-    await db.query('START TRANSACTION');
     await db.execute('DELETE FROM categories WHERE category_id = ? AND client_id = ?', [categoryId, clientId]);
-    await db.execute('UPDATE categories SET category_id = category_id - 1 WHERE category_id > ? AND client_id = ?', [categoryId, clientId]);
-    await db.execute('ALTER TABLE categories AUTO_INCREMENT = 1');
-    await db.query('COMMIT');
 
     res.json({ message: 'Category deleted successfully' });
   } catch (err) {
-    await db.query('ROLLBACK').catch(() => {});
     res.status(500).json({ error: err.message });
   }
 });

@@ -168,15 +168,10 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Tax not found' });
     }
 
-    await db.query('START TRANSACTION');
     await db.execute('DELETE FROM taxes WHERE tax_id = ? AND client_id = ?', [taxId, clientId]);
-    await db.execute('UPDATE taxes SET tax_id = tax_id - 1 WHERE tax_id > ? AND client_id = ?', [taxId, clientId]);
-    await db.execute('ALTER TABLE taxes AUTO_INCREMENT = 1');
-    await db.query('COMMIT');
     
     res.json({ message: 'Tax deleted successfully' });
   } catch (err) {
-    await db.query('ROLLBACK').catch(() => {});
     res.status(500).json({ error: err.message });
   }
 });

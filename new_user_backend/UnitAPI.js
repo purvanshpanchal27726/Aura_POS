@@ -178,15 +178,10 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Unit not found' });
     }
 
-    await db.query('START TRANSACTION');
     await db.execute('DELETE FROM units WHERE unit_id = ? AND client_id = ?', [unitId, clientId]);
-    await db.execute('UPDATE units SET unit_id = unit_id - 1 WHERE unit_id > ? AND client_id = ?', [unitId, clientId]);
-    await db.execute('ALTER TABLE units AUTO_INCREMENT = 1');
-    await db.query('COMMIT');
     
     res.json({ message: 'Unit deleted successfully' });
   } catch (err) {
-    await db.query('ROLLBACK').catch(() => {});
     res.status(500).json({ error: err.message });
   }
 });

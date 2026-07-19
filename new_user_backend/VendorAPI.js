@@ -222,15 +222,10 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Vendor not found' });
     }
 
-    await db.query('START TRANSACTION');
     await db.execute('DELETE FROM vendors WHERE vendor_id = ? AND client_id = ?', [vendorId, clientId]);
-    await db.execute('UPDATE vendors SET vendor_id = vendor_id - 1 WHERE vendor_id > ? AND client_id = ?', [vendorId, clientId]);
-    await db.execute('ALTER TABLE vendors AUTO_INCREMENT = 1');
-    await db.query('COMMIT');
     
     res.json({ message: 'Vendor deleted successfully' });
   } catch (err) {
-    await db.query('ROLLBACK').catch(() => {});
     res.status(500).json({ error: err.message });
   }
 });

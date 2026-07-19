@@ -344,16 +344,11 @@ router.delete('/:id', async (req, res) => {
 
     const imageToDelete = rows[0].image;
 
-    await db.query('START TRANSACTION');
     await db.execute('DELETE FROM items WHERE item_id = ? AND client_id = ?', [itemId, clientId]);
-    await db.execute('UPDATE items SET item_id = item_id - 1 WHERE item_id > ? AND client_id = ?', [itemId, clientId]);
-    await db.execute('ALTER TABLE items AUTO_INCREMENT = 1');
-    await db.query('COMMIT');
     deleteStoredImage(imageToDelete);
 
     res.json({ message: 'Item deleted successfully' });
   } catch (err) {
-    await db.query('ROLLBACK').catch(() => {});
     res.status(500).json({ error: err.message });
   }
 });

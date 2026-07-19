@@ -220,15 +220,10 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Customer not found' });
     }
 
-    await db.query('START TRANSACTION');
     await db.execute('DELETE FROM customers WHERE customer_id = ? AND client_id = ?', [customerId, clientId]);
-    await db.execute('UPDATE customers SET customer_id = customer_id - 1 WHERE customer_id > ? AND client_id = ?', [customerId, clientId]);
-    await db.execute('ALTER TABLE customers AUTO_INCREMENT = 1');
-    await db.query('COMMIT');
     
     res.json({ message: 'Customer deleted successfully' });
   } catch (err) {
-    await db.query('ROLLBACK').catch(() => {});
     res.status(500).json({ error: err.message });
   }
 });
