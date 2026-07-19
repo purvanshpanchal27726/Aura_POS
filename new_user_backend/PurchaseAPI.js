@@ -10,6 +10,11 @@ function getClientId(req) {
   return parseInt(cid);
 }
 
+// Helper to check if active user is a Super-Admin
+function checkSuperAdmin(req) {
+  return !req.user || req.user.role_id === 1 || req.user.client_id === null || req.user.client_id === undefined;
+}
+
 /**
  * POST /api/purchase
  * Saves a new Purchase Invoice under active tenant client_id.
@@ -20,7 +25,8 @@ router.post('/', async (req, res) => {
     await connection.beginTransaction();
 
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       await connection.rollback();
       return res.status(400).json({ error: 'Client ID required' });
     }
@@ -88,7 +94,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({ message: 'Purchase invoice saved successfully', purchase_id: purchaseId });
   } catch (err) {
-    await connection.rollback();
+    await connection.rollback().catch(() => {});
     res.status(500).json({ error: err.message });
   } finally {
     connection.release();
@@ -102,20 +108,28 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    const query = `
+    let query = `
       SELECT pm.*, 
              CONCAT(v.first_name, ' ', v.last_name) AS vendor_name,
              v.company AS vendor_company,
              v.phone_1 AS vendor_phone
       FROM purchase_master pm
       LEFT JOIN vendors v ON pm.vendor_id = v.vendor_id
-      WHERE pm.client_id = ?
-      ORDER BY pm.purchase_id ASC
+      WHERE 
     `;
+    let params = [];
+    if (clientId) {
+      query += 'pm.client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'pm.client_id IS NULL';
+    }
+    query += ' ORDER BY pm.purchase_id ASC';
 
-    const [rows] = await db.execute(query, [clientId]);
+    const [rows] = await db.execute(query, params);
     res.json(rows.map(r => ({ ...r, id: r.purchase_id })));
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -129,9 +143,10 @@ router.get('/', async (req, res) => {
 router.get('/details/all', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    const query = `
+    let query = `
       SELECT pd.*, pm.purchase_date, pm.purchase_bill_no, pm.vendor_id, pm.created_by,
              CONCAT(v.first_name, ' ', v.last_name) AS vendor_name, v.company AS vendor_company,
              i.name AS item_name, i.category_id, cat.name AS category_name
@@ -140,10 +155,18 @@ router.get('/details/all', async (req, res) => {
       LEFT JOIN vendors v ON pm.vendor_id = v.vendor_id
       LEFT JOIN items i ON pd.item_id = i.item_id
       LEFT JOIN categories cat ON i.category_id = cat.category_id
-      WHERE pm.client_id = ?
-      ORDER BY pm.purchase_id DESC, pd.purchase_detail_id ASC
+      WHERE 
     `;
-    const [rows] = await db.execute(query, [clientId]);
+    let params = [];
+    if (clientId) {
+      query += 'pm.client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'pm.client_id IS NULL';
+    }
+    query += ' ORDER BY pm.purchase_id DESC, pd.purchase_detail_id ASC';
+
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -157,11 +180,12 @@ router.get('/details/all', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const purchaseId = req.params.id;
 
-    const masterQuery = `
+    let masterQuery = `
       SELECT pm.*, 
              CONCAT(v.first_name, ' ', v.last_name) AS vendor_name,
              v.company AS vendor_company,
@@ -170,10 +194,17 @@ router.get('/:id', async (req, res) => {
              v.city AS vendor_city
       FROM purchase_master pm
       LEFT JOIN vendors v ON pm.vendor_id = v.vendor_id
-      WHERE pm.purchase_id = ? AND pm.client_id = ?
+      WHERE pm.purchase_id = ? AND 
     `;
+    let masterParams = [purchaseId];
+    if (clientId) {
+      masterQuery += 'pm.client_id = ?';
+      masterParams.push(clientId);
+    } else {
+      masterQuery += 'pm.client_id IS NULL';
+    }
 
-    const [masterRows] = await db.execute(masterQuery, [purchaseId, clientId]);
+    const [masterRows] = await db.execute(masterQuery, masterParams);
     if (masterRows.length === 0) {
       return res.status(404).json({ error: 'Purchase invoice not found' });
     }
@@ -204,16 +235,35 @@ router.get('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const purchaseId = parseInt(req.params.id);
-    const [rows] = await db.execute('SELECT * FROM purchase_master WHERE purchase_id = ? AND client_id = ?', [purchaseId, clientId]);
+
+    let query = 'SELECT * FROM purchase_master WHERE purchase_id = ? AND ';
+    let params = [purchaseId];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Purchase invoice not found' });
     }
 
-    await db.execute('DELETE FROM purchase_master WHERE purchase_id = ? AND client_id = ?', [purchaseId, clientId]);
-    
+    let deleteQuery = 'DELETE FROM purchase_master WHERE purchase_id = ? AND ';
+    let deleteParams = [purchaseId];
+    if (clientId) {
+      deleteQuery += 'client_id = ?';
+      deleteParams.push(clientId);
+    } else {
+      deleteQuery += 'client_id IS NULL';
+    }
+
+    await db.execute(deleteQuery, deleteParams);
     res.json({ message: 'Purchase invoice deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -11,6 +11,11 @@ function getClientId(req) {
   return parseInt(cid);
 }
 
+// Helper to check if active user is a Super-Admin
+function checkSuperAdmin(req) {
+  return !req.user || req.user.role_id === 1 || req.user.client_id === null || req.user.client_id === undefined;
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // 📋 TABLES MANAGEMENT
 // ─────────────────────────────────────────────────────────────────────────
@@ -19,12 +24,20 @@ function getClientId(req) {
 router.get('/tables', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    const [rows] = await db.execute(
-      'SELECT * FROM restaurant_tables WHERE client_id = ? AND active = 1 ORDER BY table_no',
-      [clientId]
-    );
+    let query = 'SELECT * FROM restaurant_tables WHERE active = 1 AND ';
+    let params = [];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+    query += ' ORDER BY table_no';
+
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -35,7 +48,8 @@ router.get('/tables', async (req, res) => {
 router.post('/tables', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { table_no, section, capacity } = req.body;
     if (!table_no) return res.status(400).json({ error: 'Table number is required' });
@@ -58,31 +72,44 @@ router.post('/tables', async (req, res) => {
 router.put('/tables/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     const { table_no, section, capacity, status } = req.body;
 
-    const [rows] = await db.execute(
-      'SELECT * FROM restaurant_tables WHERE table_id = ? AND client_id = ?',
-      [id, clientId]
-    );
+    let query = 'SELECT * FROM restaurant_tables WHERE table_id = ? AND ';
+    let params = [id];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Table not found' });
 
-    await db.execute(
-      `UPDATE restaurant_tables 
-       SET table_no = ?, section = ?, capacity = ?, status = ? 
-       WHERE table_id = ? AND client_id = ?`,
-      [
-        table_no !== undefined ? table_no : rows[0].table_no,
-        section !== undefined ? section : rows[0].section,
-        capacity !== undefined ? capacity : rows[0].capacity,
-        status !== undefined ? status : rows[0].status,
-        id,
-        clientId
-      ]
-    );
+    let updateQuery = `
+      UPDATE restaurant_tables 
+      SET table_no = ?, section = ?, capacity = ?, status = ? 
+      WHERE table_id = ? AND 
+    `;
+    let updateParams = [
+      table_no !== undefined ? table_no : rows[0].table_no,
+      section !== undefined ? section : rows[0].section,
+      capacity !== undefined ? capacity : rows[0].capacity,
+      status !== undefined ? status : rows[0].status,
+      id
+    ];
+    if (clientId) {
+      updateQuery += 'client_id = ?';
+      updateParams.push(clientId);
+    } else {
+      updateQuery += 'client_id IS NULL';
+    }
 
+    await db.execute(updateQuery, updateParams);
     res.json({ message: 'Table updated successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -93,25 +120,38 @@ router.put('/tables/:id', async (req, res) => {
 router.delete('/tables/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
-    const [rows] = await db.execute(
-      'SELECT * FROM restaurant_tables WHERE table_id = ? AND client_id = ?',
-      [id, clientId]
-    );
+
+    let query = 'SELECT * FROM restaurant_tables WHERE table_id = ? AND ';
+    let params = [id];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Table not found' });
 
-    await db.execute(
-      'UPDATE restaurant_tables SET active = 0 WHERE table_id = ? AND client_id = ?',
-      [id, clientId]
-    );
+    let deleteQuery = 'UPDATE restaurant_tables SET active = 0 WHERE table_id = ? AND ';
+    let deleteParams = [id];
+    if (clientId) {
+      deleteQuery += 'client_id = ?';
+      deleteParams.push(clientId);
+    } else {
+      deleteQuery += 'client_id IS NULL';
+    }
+
+    await db.execute(deleteQuery, deleteParams);
     res.json({ message: 'Table deleted successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ─────────────────────────────────────────────────────────────────────────
 // 🍔 MENU CATEGORIES
@@ -120,12 +160,20 @@ router.delete('/tables/:id', async (req, res) => {
 router.get('/menu/categories', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    const [rows] = await db.execute(
-      'SELECT * FROM menu_categories WHERE client_id = ? AND active = 1 ORDER BY name',
-      [clientId]
-    );
+    let query = 'SELECT * FROM menu_categories WHERE active = 1 AND ';
+    let params = [];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+    query += ' ORDER BY name';
+
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -135,7 +183,8 @@ router.get('/menu/categories', async (req, res) => {
 router.post('/menu/categories', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { name, image_url } = req.body;
     if (!name) return res.status(400).json({ error: 'Category name required' });
@@ -153,18 +202,34 @@ router.post('/menu/categories', async (req, res) => {
 router.put('/menu/categories/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     const { name, image_url } = req.body;
 
-    const [rows] = await db.execute('SELECT * FROM menu_categories WHERE category_id = ? AND client_id = ?', [id, clientId]);
+    let query = 'SELECT * FROM menu_categories WHERE category_id = ? AND ';
+    let params = [id];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Category not found' });
 
-    await db.execute(
-      'UPDATE menu_categories SET name = ?, image_url = ? WHERE category_id = ? AND client_id = ?',
-      [name !== undefined ? name : rows[0].name, image_url !== undefined ? image_url : rows[0].image_url, id, clientId]
-    );
+    let updateQuery = 'UPDATE menu_categories SET name = ?, image_url = ? WHERE category_id = ? AND ';
+    let updateParams = [name !== undefined ? name : rows[0].name, image_url !== undefined ? image_url : rows[0].image_url, id];
+    if (clientId) {
+      updateQuery += 'client_id = ?';
+      updateParams.push(clientId);
+    } else {
+      updateQuery += 'client_id IS NULL';
+    }
+
+    await db.execute(updateQuery, updateParams);
     res.json({ message: 'Category updated' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -174,16 +239,26 @@ router.put('/menu/categories/:id', async (req, res) => {
 router.delete('/menu/categories/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
-    await db.execute('UPDATE menu_categories SET active = 0 WHERE category_id = ? AND client_id = ?', [id, clientId]);
+
+    let query = 'UPDATE menu_categories SET active = 0 WHERE category_id = ? AND ';
+    let params = [id];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    await db.execute(query, params);
     res.json({ message: 'Category deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ─────────────────────────────────────────────────────────────────────────
 // 🍕 MENU ITEMS
@@ -192,16 +267,25 @@ router.delete('/menu/categories/:id', async (req, res) => {
 router.get('/menu/items', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    const [rows] = await db.execute(
-      `SELECT mi.*, mc.name AS category_name 
-       FROM menu_items mi
-       LEFT JOIN menu_categories mc ON mi.category_id = mc.category_id
-       WHERE mi.client_id = ? AND mi.active = 1 
-       ORDER BY mi.name`,
-      [clientId]
-    );
+    let query = `
+      SELECT mi.*, mc.name AS category_name 
+      FROM menu_items mi
+      LEFT JOIN menu_categories mc ON mi.category_id = mc.category_id
+      WHERE mi.active = 1 AND 
+    `;
+    let params = [];
+    if (clientId) {
+      query += 'mi.client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'mi.client_id IS NULL';
+    }
+    query += ' ORDER BY mi.name';
+
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -211,7 +295,8 @@ router.get('/menu/items', async (req, res) => {
 router.post('/menu/items', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { category_id, name, description, price, image_url, preparation_time, kitchen_dept, gst_percent, is_veg } = req.body;
     if (!name || price === undefined) return res.status(400).json({ error: 'Name and price are required' });
@@ -243,35 +328,51 @@ router.post('/menu/items', async (req, res) => {
 router.put('/menu/items/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     const { category_id, name, description, price, image_url, preparation_time, kitchen_dept, gst_percent, is_veg, available } = req.body;
 
-    const [rows] = await db.execute('SELECT * FROM menu_items WHERE menu_item_id = ? AND client_id = ?', [id, clientId]);
+    let query = 'SELECT * FROM menu_items WHERE menu_item_id = ? AND ';
+    let params = [id];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Menu item not found' });
 
-    await db.execute(
-      `UPDATE menu_items 
-       SET category_id = ?, name = ?, description = ?, price = ?, image_url = ?, 
-           preparation_time = ?, kitchen_dept = ?, gst_percent = ?, is_veg = ?, available = ?
-       WHERE menu_item_id = ? AND client_id = ?`,
-      [
-        category_id !== undefined ? category_id : rows[0].category_id,
-        name !== undefined ? name : rows[0].name,
-        description !== undefined ? description : rows[0].description,
-        price !== undefined ? price : rows[0].price,
-        image_url !== undefined ? image_url : rows[0].image_url,
-        preparation_time !== undefined ? preparation_time : rows[0].preparation_time,
-        kitchen_dept !== undefined ? kitchen_dept : rows[0].kitchen_dept,
-        gst_percent !== undefined ? gst_percent : rows[0].gst_percent,
-        is_veg !== undefined ? (is_veg ? 1 : 0) : rows[0].is_veg,
-        available !== undefined ? (available ? 1 : 0) : rows[0].available,
-        id,
-        clientId
-      ]
-    );
+    let updateQuery = `
+      UPDATE menu_items 
+      SET category_id = ?, name = ?, description = ?, price = ?, image_url = ?, 
+          preparation_time = ?, kitchen_dept = ?, gst_percent = ?, is_veg = ?, available = ?
+      WHERE menu_item_id = ? AND 
+    `;
+    let updateParams = [
+      category_id !== undefined ? category_id : rows[0].category_id,
+      name !== undefined ? name : rows[0].name,
+      description !== undefined ? description : rows[0].description,
+      price !== undefined ? price : rows[0].price,
+      image_url !== undefined ? image_url : rows[0].image_url,
+      preparation_time !== undefined ? preparation_time : rows[0].preparation_time,
+      kitchen_dept !== undefined ? kitchen_dept : rows[0].kitchen_dept,
+      gst_percent !== undefined ? gst_percent : rows[0].gst_percent,
+      is_veg !== undefined ? (is_veg ? 1 : 0) : rows[0].is_veg,
+      available !== undefined ? (available ? 1 : 0) : rows[0].available,
+      id
+    ];
+    if (clientId) {
+      updateQuery += 'client_id = ?';
+      updateParams.push(clientId);
+    } else {
+      updateQuery += 'client_id IS NULL';
+    }
 
+    await db.execute(updateQuery, updateParams);
     res.json({ message: 'Menu item updated' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -281,16 +382,26 @@ router.put('/menu/items/:id', async (req, res) => {
 router.delete('/menu/items/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
-    await db.execute('UPDATE menu_items SET active = 0 WHERE menu_item_id = ? AND client_id = ?', [id, clientId]);
+
+    let query = 'UPDATE menu_items SET active = 0 WHERE menu_item_id = ? AND ';
+    let params = [id];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    await db.execute(query, params);
     res.json({ message: 'Menu item deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ─────────────────────────────────────────────────────────────────────────
 // 🔔 ORDERS & KITCHEN ORDERS (KDS)
@@ -300,18 +411,27 @@ router.delete('/menu/items/:id', async (req, res) => {
 router.get('/orders', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    const [rows] = await db.execute(
-      `SELECT ro.*, rt.table_no, rt.section, c.name AS customer_name, u.username AS waiter_name
-       FROM restaurant_orders ro
-       LEFT JOIN restaurant_tables rt ON ro.table_id = rt.table_id
-       LEFT JOIN customers c ON ro.customer_id = c.customer_id
-       LEFT JOIN users u ON ro.waiter_id = u.user_id
-       WHERE ro.client_id = ?
-       ORDER BY ro.order_id DESC`,
-      [clientId]
-    );
+    let query = `
+      SELECT ro.*, rt.table_no, rt.section, CONCAT(c.first_name, ' ', c.last_name) AS customer_name, u.username AS waiter_name
+      FROM restaurant_orders ro
+      LEFT JOIN restaurant_tables rt ON ro.table_id = rt.table_id
+      LEFT JOIN customers c ON ro.customer_id = c.customer_id
+      LEFT JOIN users u ON ro.waiter_id = u.user_id
+      WHERE 
+    `;
+    let params = [];
+    if (clientId) {
+      query += 'ro.client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'ro.client_id IS NULL';
+    }
+    query += ' ORDER BY ro.order_id DESC';
+
+    const [rows] = await db.execute(query, params);
 
     // Fetch items for each order
     for (let order of rows) {
@@ -335,7 +455,8 @@ router.get('/orders', async (req, res) => {
 router.post('/orders', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { table_id, customer_id, waiter_id, order_type, items, notes } = req.body;
 
@@ -357,7 +478,16 @@ router.post('/orders', async (req, res) => {
     let grandTotal = 0;
     if (items && items.length > 0) {
       for (let item of items) {
-        const [menuItem] = await db.execute('SELECT price FROM menu_items WHERE menu_item_id = ?', [item.menu_item_id]);
+        let menuQuery = 'SELECT price FROM menu_items WHERE menu_item_id = ? AND ';
+        let menuParams = [item.menu_item_id];
+        if (clientId) {
+          menuQuery += 'client_id = ?';
+          menuParams.push(clientId);
+        } else {
+          menuQuery += 'client_id IS NULL';
+        }
+
+        const [menuItem] = await db.execute(menuQuery, menuParams);
         if (menuItem.length > 0) {
           const itemPrice = parseFloat(menuItem[0].price);
           const itemQty = parseFloat(item.quantity || 1);
@@ -388,19 +518,38 @@ router.post('/orders', async (req, res) => {
 router.post('/orders/:id/items', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     const { items } = req.body;
 
-    const [order] = await db.execute('SELECT * FROM restaurant_orders WHERE order_id = ? AND client_id = ?', [id, clientId]);
+    let query = 'SELECT * FROM restaurant_orders WHERE order_id = ? AND ';
+    let params = [id];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [order] = await db.execute(query, params);
     if (order.length === 0) return res.status(404).json({ error: 'Order not found' });
 
     let orderTotal = parseFloat(order[0].total || 0);
 
     if (items && items.length > 0) {
       for (let item of items) {
-        const [menuItem] = await db.execute('SELECT price FROM menu_items WHERE menu_item_id = ?', [item.menu_item_id]);
+        let menuQuery = 'SELECT price FROM menu_items WHERE menu_item_id = ? AND ';
+        let menuParams = [item.menu_item_id];
+        if (clientId) {
+          menuQuery += 'client_id = ?';
+          menuParams.push(clientId);
+        } else {
+          menuQuery += 'client_id IS NULL';
+        }
+
+        const [menuItem] = await db.execute(menuQuery, menuParams);
         if (menuItem.length > 0) {
           const itemPrice = parseFloat(menuItem[0].price);
           const itemQty = parseFloat(item.quantity || 1);
@@ -431,12 +580,22 @@ router.post('/orders/:id/items', async (req, res) => {
 router.put('/orders/:id/status', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
-    const { status } = req.body; // pending/accepted/preparing/ready/served/billed/cancelled
+    const { status } = req.body;
 
-    const [rows] = await db.execute('SELECT * FROM restaurant_orders WHERE order_id = ? AND client_id = ?', [id, clientId]);
+    let query = 'SELECT * FROM restaurant_orders WHERE order_id = ? AND ';
+    let params = [id];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Order not found' });
 
     await db.execute('UPDATE restaurant_orders SET status = ? WHERE order_id = ?', [status, id]);
@@ -460,17 +619,18 @@ router.put('/orders/:id/status', async (req, res) => {
 router.put('/orders/items/:itemId/status', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { itemId } = req.params;
-    const { status, chef_id } = req.body; // pending/preparing/ready/served
+    const { status, chef_id } = req.body;
 
     const [itemRows] = await db.execute(
       `SELECT roi.*, ro.client_id 
        FROM restaurant_order_items roi
        JOIN restaurant_orders ro ON roi.order_id = ro.order_id
-       WHERE roi.id = ? AND ro.client_id = ?`,
-      [itemId, clientId]
+       WHERE roi.id = ? AND ${clientId ? 'ro.client_id = ?' : 'ro.client_id IS NULL'}`,
+      clientId ? [itemId, clientId] : [itemId]
     );
 
     if (itemRows.length === 0) return res.status(404).json({ error: 'Order item not found' });
@@ -493,25 +653,32 @@ router.put('/orders/items/:itemId/status', async (req, res) => {
 router.get('/kitchen/queue', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    const [rows] = await db.execute(
-      `SELECT roi.*, mi.name AS item_name, mi.kitchen_dept, ro.table_id, rt.table_no, ro.order_type, ro.created_date AS order_time
-       FROM restaurant_order_items roi
-       JOIN restaurant_orders ro ON roi.order_id = ro.order_id
-       JOIN menu_items mi ON roi.menu_item_id = mi.menu_item_id
-       LEFT JOIN restaurant_tables rt ON ro.table_id = rt.table_id
-       WHERE ro.client_id = ? AND roi.status IN ('pending', 'preparing')
-       ORDER BY ro.order_id ASC, roi.id ASC`,
-      [clientId]
-    );
+    let query = `
+      SELECT roi.*, mi.name AS item_name, mi.kitchen_dept, ro.table_id, rt.table_no, ro.order_type, ro.created_date AS order_time
+      FROM restaurant_order_items roi
+      JOIN restaurant_orders ro ON roi.order_id = ro.order_id
+      JOIN menu_items mi ON roi.menu_item_id = mi.menu_item_id
+      LEFT JOIN restaurant_tables rt ON ro.table_id = rt.table_id
+      WHERE roi.status IN ('pending', 'preparing') AND 
+    `;
+    let params = [];
+    if (clientId) {
+      query += 'ro.client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'ro.client_id IS NULL';
+    }
+    query += ' ORDER BY ro.order_id ASC, roi.id ASC';
 
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
-
 
 // ─────────────────────────────────────────────────────────────────────────
 // 📱 PUBLIC QR CODE ORDERING (No Authentication Required)
@@ -529,17 +696,43 @@ router.get('/public/menu/:qr_token', async (req, res) => {
     const clientId = tables[0].client_id;
 
     // Fetch client metadata (Name and logo)
-    const [clientRows] = await db.execute('SELECT name, logo_url, address FROM clients WHERE client_id = ?', [clientId]);
+    let clientQuery = 'SELECT name, logo_url, address FROM clients WHERE ';
+    let clientParams = [];
+    if (clientId) {
+      clientQuery += 'client_id = ?';
+      clientParams.push(clientId);
+    } else {
+      clientQuery += 'client_id IS NULL';
+    }
+
+    const [clientRows] = await db.execute(clientQuery, clientParams);
     if (clientRows.length === 0) return res.status(404).json({ error: 'Client not found' });
 
     // Fetch active menu categories
-    const [categories] = await db.execute('SELECT * FROM menu_categories WHERE client_id = ? AND active = 1 ORDER BY name', [clientId]);
+    let catQuery = 'SELECT * FROM menu_categories WHERE active = 1 AND ';
+    let catParams = [];
+    if (clientId) {
+      catQuery += 'client_id = ?';
+      catParams.push(clientId);
+    } else {
+      catQuery += 'client_id IS NULL';
+    }
+    catQuery += ' ORDER BY name';
+
+    const [categories] = await db.execute(catQuery, catParams);
 
     // Fetch active and available menu items
-    const [items] = await db.execute(
-      'SELECT * FROM menu_items WHERE client_id = ? AND active = 1 AND available = 1 ORDER BY name',
-      [clientId]
-    );
+    let itemQuery = 'SELECT * FROM menu_items WHERE active = 1 AND available = 1 AND ';
+    let itemParams = [];
+    if (clientId) {
+      itemQuery += 'client_id = ?';
+      itemParams.push(clientId);
+    } else {
+      itemQuery += 'client_id IS NULL';
+    }
+    itemQuery += ' ORDER BY name';
+
+    const [items] = await db.execute(itemQuery, itemParams);
 
     res.json({
       client: clientRows[0],
@@ -571,7 +764,16 @@ router.post('/public/order/:qr_token', async (req, res) => {
     // Check if customer phone is provided and create/resolve customer ID
     let customerId = null;
     if (customer_phone) {
-      const [existing] = await db.execute('SELECT customer_id FROM customers WHERE phone = ? AND client_id = ?', [customer_phone, clientId]);
+      let custQuery = 'SELECT customer_id FROM customers WHERE phone = ? AND ';
+      let custParams = [customer_phone];
+      if (clientId) {
+        custQuery += 'client_id = ?';
+        custParams.push(clientId);
+      } else {
+        custQuery += 'client_id IS NULL';
+      }
+
+      const [existing] = await db.execute(custQuery, custParams);
       if (existing.length > 0) {
         customerId = existing[0].customer_id;
       } else {
@@ -599,7 +801,16 @@ router.post('/public/order/:qr_token', async (req, res) => {
     let grandTotal = 0;
     if (items && items.length > 0) {
       for (let item of items) {
-        const [menuItem] = await db.execute('SELECT price FROM menu_items WHERE menu_item_id = ? AND client_id = ?', [item.menu_item_id, clientId]);
+        let menuQuery = 'SELECT price FROM menu_items WHERE menu_item_id = ? AND ';
+        let menuParams = [item.menu_item_id];
+        if (clientId) {
+          menuQuery += 'client_id = ?';
+          menuParams.push(clientId);
+        } else {
+          menuQuery += 'client_id IS NULL';
+        }
+
+        const [menuItem] = await db.execute(menuQuery, menuParams);
         if (menuItem.length > 0) {
           const itemPrice = parseFloat(menuItem[0].price);
           const itemQty = parseFloat(item.quantity || 1);

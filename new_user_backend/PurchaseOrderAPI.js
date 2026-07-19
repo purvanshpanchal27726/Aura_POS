@@ -10,20 +10,34 @@ function getClientId(req) {
   return parseInt(cid);
 }
 
+// Helper to check if active user is a Super-Admin
+function checkSuperAdmin(req) {
+  return !req.user || req.user.role_id === 1 || req.user.client_id === null || req.user.client_id === undefined;
+}
+
 // Get all purchase orders
 router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    const [rows] = await db.execute(
-      `SELECT po.*, CONCAT(v.first_name, ' ', v.last_name) AS vendor_name, v.company AS vendor_company
-       FROM purchase_orders po
-       LEFT JOIN vendors v ON po.vendor_id = v.vendor_id
-       WHERE po.client_id = ?
-       ORDER BY po.po_id DESC`,
-      [clientId]
-    );
+    let query = `
+      SELECT po.*, CONCAT(v.first_name, ' ', v.last_name) AS vendor_name, v.company AS vendor_company
+      FROM purchase_orders po
+      LEFT JOIN vendors v ON po.vendor_id = v.vendor_id
+      WHERE 
+    `;
+    let params = [];
+    if (clientId) {
+      query += 'po.client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'po.client_id IS NULL';
+    }
+    query += ' ORDER BY po.po_id DESC';
+
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -34,17 +48,25 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
-    const [po] = await db.execute(
-      `SELECT po.*, CONCAT(v.first_name, ' ', v.last_name) AS vendor_name, v.company AS vendor_company
-       FROM purchase_orders po
-       LEFT JOIN vendors v ON po.vendor_id = v.vendor_id
-       WHERE po.po_id = ? AND po.client_id = ?`,
-      [id, clientId]
-    );
+    let query = `
+      SELECT po.*, CONCAT(v.first_name, ' ', v.last_name) AS vendor_name, v.company AS vendor_company
+      FROM purchase_orders po
+      LEFT JOIN vendors v ON po.vendor_id = v.vendor_id
+      WHERE po.po_id = ? AND 
+    `;
+    let params = [id];
+    if (clientId) {
+      query += 'po.client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'po.client_id IS NULL';
+    }
 
+    const [po] = await db.execute(query, params);
     if (po.length === 0) return res.status(404).json({ error: 'Purchase Order not found' });
 
     const [items] = await db.execute('SELECT * FROM purchase_order_items WHERE po_id = ?', [id]);
@@ -65,7 +87,8 @@ router.post('/', async (req, res) => {
     await connection.beginTransaction();
 
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       await connection.rollback();
       return res.status(400).json({ error: 'Client ID required' });
     }
@@ -96,7 +119,7 @@ router.post('/', async (req, res) => {
     await connection.commit();
     res.status(201).json({ po_id: poId, message: 'Purchase Order created successfully' });
   } catch (err) {
-    await connection.rollback();
+    await connection.rollback().catch(() => {});
     res.status(500).json({ error: err.message });
   } finally {
     connection.release();
@@ -107,12 +130,22 @@ router.post('/', async (req, res) => {
 router.put('/:id/status', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     const { status } = req.body;
 
-    const [rows] = await db.execute('SELECT * FROM purchase_orders WHERE po_id = ? AND client_id = ?', [id, clientId]);
+    let query = 'SELECT * FROM purchase_orders WHERE po_id = ? AND ';
+    let params = [id];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Purchase Order not found' });
 
     await db.execute('UPDATE purchase_orders SET status = ? WHERE po_id = ?', [status, id]);
@@ -129,15 +162,25 @@ router.post('/:id/grn', async (req, res) => {
     await connection.beginTransaction();
 
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       await connection.rollback();
       return res.status(400).json({ error: 'Client ID required' });
     }
 
     const { id } = req.params;
-    const { received_by, notes, items } = req.body; // items: array of { item_name, quantity_ordered, quantity_received }
+    const { received_by, notes, items } = req.body;
 
-    const [po] = await connection.execute('SELECT * FROM purchase_orders WHERE po_id = ? AND client_id = ?', [id, clientId]);
+    let query = 'SELECT * FROM purchase_orders WHERE po_id = ? AND ';
+    let params = [id];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [po] = await connection.execute(query, params);
     if (po.length === 0) {
       await connection.rollback();
       return res.status(404).json({ error: 'Purchase order not found' });
@@ -164,10 +207,16 @@ router.post('/:id/grn', async (req, res) => {
 
       if (qReceived > 0) {
         // Find if this item name exists in client inventory
-        const [invRows] = await connection.execute(
-          'SELECT * FROM inventory WHERE LOWER(item_name) = LOWER(?) AND client_id = ?',
-          [item.item_name.trim(), clientId]
-        );
+        let invQuery = 'SELECT * FROM inventory WHERE LOWER(item_name) = LOWER(?) AND ';
+        let invParams = [item.item_name.trim()];
+        if (clientId) {
+          invQuery += 'client_id = ?';
+          invParams.push(clientId);
+        } else {
+          invQuery += 'client_id IS NULL';
+        }
+
+        const [invRows] = await connection.execute(invQuery, invParams);
 
         let invId;
         if (invRows.length === 0) {
@@ -182,10 +231,15 @@ router.post('/:id/grn', async (req, res) => {
           invId = invRows[0].inventory_id;
           // Increment existing stock level
           const newStock = parseFloat(invRows[0].current_stock || 0) + qReceived;
-          await connection.execute(
-            'UPDATE inventory SET current_stock = ? WHERE inventory_id = ?',
-            [newStock, invId]
-          );
+          let updateInvQuery = 'UPDATE inventory SET current_stock = ? WHERE inventory_id = ? AND ';
+          let updateInvParams = [newStock, invId];
+          if (clientId) {
+            updateInvQuery += 'client_id = ?';
+            updateInvParams.push(clientId);
+          } else {
+            updateInvQuery += 'client_id IS NULL';
+          }
+          await connection.execute(updateInvQuery, updateInvParams);
         }
 
         // Write Stock Movement Log
@@ -203,7 +257,7 @@ router.post('/:id/grn', async (req, res) => {
     await connection.commit();
     res.status(201).json({ grn_id: grnId, message: 'GRN completed and stock levels updated successfully!' });
   } catch (err) {
-    await connection.rollback();
+    await connection.rollback().catch(() => {});
     res.status(500).json({ error: err.message });
   } finally {
     connection.release();

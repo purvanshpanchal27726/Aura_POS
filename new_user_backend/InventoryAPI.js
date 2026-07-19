@@ -10,16 +10,29 @@ function getClientId(req) {
   return parseInt(cid);
 }
 
+// Helper to check if active user is a Super-Admin
+function checkSuperAdmin(req) {
+  return !req.user || req.user.role_id === 1 || req.user.client_id === null || req.user.client_id === undefined;
+}
+
 // Get client inventory
 router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    const [rows] = await db.execute(
-      'SELECT * FROM inventory WHERE client_id = ? ORDER BY item_name',
-      [clientId]
-    );
+    let query = 'SELECT * FROM inventory WHERE ';
+    let params = [];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+    query += ' ORDER BY item_name';
+
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -30,7 +43,8 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { item_name, sku, barcode, unit, min_stock, batch_no, expiry_date } = req.body;
     if (!item_name) return res.status(400).json({ error: 'Item name is required' });
@@ -60,31 +74,47 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     const { item_name, sku, barcode, unit, min_stock, batch_no, expiry_date } = req.body;
 
-    const [rows] = await db.execute('SELECT * FROM inventory WHERE inventory_id = ? AND client_id = ?', [id, clientId]);
+    let query = 'SELECT * FROM inventory WHERE inventory_id = ? AND ';
+    let params = [id];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Item not found in inventory' });
 
-    await db.execute(
-      `UPDATE inventory 
-       SET item_name = ?, sku = ?, barcode = ?, unit = ?, min_stock = ?, batch_no = ?, expiry_date = ? 
-       WHERE inventory_id = ? AND client_id = ?`,
-      [
-        item_name !== undefined ? item_name : rows[0].item_name,
-        sku !== undefined ? sku : rows[0].sku,
-        barcode !== undefined ? barcode : rows[0].barcode,
-        unit !== undefined ? unit : rows[0].unit,
-        min_stock !== undefined ? min_stock : rows[0].min_stock,
-        batch_no !== undefined ? batch_no : rows[0].batch_no,
-        expiry_date !== undefined ? expiry_date : rows[0].expiry_date,
-        id,
-        clientId
-      ]
-    );
+    let updateQuery = `
+      UPDATE inventory 
+      SET item_name = ?, sku = ?, barcode = ?, unit = ?, min_stock = ?, batch_no = ?, expiry_date = ? 
+      WHERE inventory_id = ? AND 
+    `;
+    let updateParams = [
+      item_name !== undefined ? item_name : rows[0].item_name,
+      sku !== undefined ? sku : rows[0].sku,
+      barcode !== undefined ? barcode : rows[0].barcode,
+      unit !== undefined ? unit : rows[0].unit,
+      min_stock !== undefined ? min_stock : rows[0].min_stock,
+      batch_no !== undefined ? batch_no : rows[0].batch_no,
+      expiry_date !== undefined ? expiry_date : rows[0].expiry_date,
+      id
+    ];
+    if (clientId) {
+      updateQuery += 'client_id = ?';
+      updateParams.push(clientId);
+    } else {
+      updateQuery += 'client_id IS NULL';
+    }
 
+    await db.execute(updateQuery, updateParams);
     res.json({ message: 'Inventory item details updated successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -98,7 +128,8 @@ router.post('/movement', async (req, res) => {
     await connection.beginTransaction();
 
     const clientId = getClientId(req);
-    if (!clientId) {
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
       await connection.rollback();
       return res.status(400).json({ error: 'Client ID required' });
     }
@@ -110,10 +141,16 @@ router.post('/movement', async (req, res) => {
     }
 
     // 1. Check if inventory item exists
-    const [invRows] = await connection.execute(
-      'SELECT * FROM inventory WHERE inventory_id = ? AND client_id = ?',
-      [inventory_id, clientId]
-    );
+    let query = 'SELECT * FROM inventory WHERE inventory_id = ? AND ';
+    let params = [inventory_id];
+    if (clientId) {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL';
+    }
+
+    const [invRows] = await connection.execute(query, params);
     if (invRows.length === 0) {
       await connection.rollback();
       return res.status(404).json({ error: 'Inventory record not found' });
@@ -142,15 +179,20 @@ router.post('/movement', async (req, res) => {
     );
 
     // 3. Update current_stock on inventory item
-    await connection.execute(
-      'UPDATE inventory SET current_stock = ? WHERE inventory_id = ? AND client_id = ?',
-      [newStock, inventory_id, clientId]
-    );
+    let updateStockQuery = 'UPDATE inventory SET current_stock = ? WHERE inventory_id = ? AND ';
+    let updateStockParams = [newStock, inventory_id];
+    if (clientId) {
+      updateStockQuery += 'client_id = ?';
+      updateStockParams.push(clientId);
+    } else {
+      updateStockQuery += 'client_id IS NULL';
+    }
+    await connection.execute(updateStockQuery, updateStockParams);
 
     await connection.commit();
     res.json({ message: 'Stock movement posted successfully', current_stock: newStock });
   } catch (err) {
-    await connection.rollback();
+    await connection.rollback().catch(() => {});
     res.status(500).json({ error: err.message });
   } finally {
     connection.release();
@@ -161,16 +203,25 @@ router.post('/movement', async (req, res) => {
 router.get('/movements', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) return res.status(400).json({ error: 'Client ID required' });
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    const [rows] = await db.execute(
-      `SELECT sm.*, inv.item_name, inv.unit
-       FROM stock_movements sm
-       JOIN inventory inv ON sm.inventory_id = inv.inventory_id
-       WHERE sm.client_id = ?
-       ORDER BY sm.movement_id DESC`,
-      [clientId]
-    );
+    let query = `
+      SELECT sm.*, inv.item_name, inv.unit
+      FROM stock_movements sm
+      JOIN inventory inv ON sm.inventory_id = inv.inventory_id
+      WHERE 
+    `;
+    let params = [];
+    if (clientId) {
+      query += 'sm.client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'sm.client_id IS NULL';
+    }
+    query += ' ORDER BY sm.movement_id DESC';
+
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
