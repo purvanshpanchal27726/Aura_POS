@@ -886,7 +886,7 @@ class _UserListingScreenState extends State<UserListingScreen> {
                 return DataRow(cells: [
                   DataCell(
                     Text(
-                      user['user_id'].toString(),
+                      (user['display_id'] ?? user['user_id']).toString(),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
