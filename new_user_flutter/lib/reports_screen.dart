@@ -1976,7 +1976,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         final isActive = i['active'] == true || i['active'] == 1;
 
         return DataRow(cells: [
-          DataCell(Text(i['item_id']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.bold))),
+          DataCell(Text((i['display_id'] ?? i['item_id'])?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.bold))),
           DataCell(Text(i['code'] ?? 'N/A')),
           DataCell(Text(i['name'] ?? '')),
           DataCell(Text(i['category_name'] ?? 'N/A')),
@@ -2003,7 +2003,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       return _filteredRecords.map((c) {
         final isActive = c['active'] == true || c['active'] == 1;
         return DataRow(cells: [
-          DataCell(Text(c['category_id']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.bold))),
+          DataCell(Text((c['display_id'] ?? c['category_id'])?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.bold))),
           DataCell(Text(c['name'] ?? '')),
           DataCell(
             Container(
@@ -2026,7 +2026,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
         final bCount = c['bills_count'] ?? 0;
         final tSpent = double.tryParse(c['total_spent']?.toString() ?? '0') ?? 0.0;
         return DataRow(cells: [
-          DataCell(Text(c['customer_id']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.bold))),
+          DataCell(Text((c['display_id'] ?? c['customer_id'])?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.bold))),
           DataCell(Text('${c['first_name'] ?? ''} ${c['last_name'] ?? ''}')),
           DataCell(Text(c['address_1'] ?? '')),
           DataCell(Text('${c['city'] ?? ''}, ${c['country'] ?? ''}')),
@@ -2038,7 +2038,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     } else if (_selectedReportType == 'user') {
       return _filteredRecords.map((u) {
         return DataRow(cells: [
-          DataCell(Text(u['user_id']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.bold))),
+          DataCell(Text((u['display_id'] ?? u['user_id'])?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.bold))),
           DataCell(Text(u['username'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold))),
           DataCell(Text('${u['first_name'] ?? ''} ${u['last_name'] ?? ''}')),
           DataCell(Text('${u['city'] ?? ''}, ${u['country'] ?? ''}')),

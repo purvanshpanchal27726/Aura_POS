@@ -922,7 +922,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <tr>
-          <td>${user.user_id}</td>
+          <td>${user.display_id || user.user_id}</td>
           <td>${user.username}</td>
           <td>${name}</td>
           <td>${location}</td>
@@ -1235,7 +1235,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <tr>
-          <td>${c.customer_id}</td>
+          <td>${c.display_id || c.customer_id}</td>
           <td>${fullName}</td>
           <td>${address}</td>
           <td>${location}</td>
@@ -1503,7 +1503,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <tr>
-          <td>${u.unit_id}</td>
+          <td>${u.display_id || u.unit_id}</td>
           <td>${u.name}</td>
           <td><span class="status-badge ${statusClass}">${statusText}</span></td>
           <td>${createdDate}</td>
@@ -1725,7 +1725,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <tr>
-          <td>${t.tax_id}</td>
+          <td>${t.display_id || t.tax_id}</td>
           <td>${combinedTaxName}</td>
           <td><span class="status-badge ${statusClass}">${statusText}</span></td>
           <td>${createdDate}</td>
@@ -1942,7 +1942,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <tr>
-          <td>${c.category_id}</td>
+          <td>${c.display_id || c.category_id}</td>
           <td>${c.name}</td>
           <td><span class="status-badge ${statusClass}">${statusText}</span></td>
           <td>${createdDate}</td>
@@ -2566,7 +2566,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const contact = `${v.phone_1} | ${v.email}`;
       return `
         <tr>
-          <td>${v.vendor_id}</td>
+          <td>${v.display_id || v.vendor_id}</td>
           <td>${fullName}</td>
           <td>${v.company || 'N/A'}</td>
           <td>${address}</td>
@@ -5360,7 +5360,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const dateStr = `${cDate.getDate()}/${cDate.getMonth()+1}/${cDate.getFullYear()}`;
             return `
               <tr>
-                <td>${c.category_id}</td>
+                <td>${c.display_id || c.category_id}</td>
                 <td><strong>${c.name}</strong></td>
                 <td>
                   <span class="status-badge ${c.status == 1 ? 'status-active' : 'status-inactive'}">
@@ -6453,7 +6453,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     tbody.innerHTML = allMenuCategories.map(c => `
       <tr>
-        <td><strong>${c.category_id}</strong></td>
+        <td><strong>${c.display_id || c.category_id}</strong></td>
         <td><strong>${c.name}</strong></td>
         <td>${c.image_url || 'None'}</td>
         <td style="text-align: center;">
@@ -7271,7 +7271,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const dateStr = `${dateVal.getDate()}/${dateVal.getMonth()+1}/${dateVal.getFullYear()}`;
       return `
         <tr>
-          <td><strong>#G-${g.guest_id}</strong></td>
+          <td><strong>#G-${g.display_id || g.guest_id}</strong></td>
           <td><strong>${g.name}</strong></td>
           <td>${g.phone}</td>
           <td>${g.email || 'N/A'}</td>
@@ -7703,7 +7703,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <tr style="${isLow ? 'background: rgba(239, 68, 68, 0.08);' : ''}">
-          <td><strong>#INV-${i.inventory_id}</strong></td>
+          <td><strong>#INV-${i.display_id || i.inventory_id}</strong></td>
           <td><strong>${i.item_name}</strong></td>
           <td>${i.sku || 'N/A'}</td>
           <td>${i.barcode || 'N/A'}</td>

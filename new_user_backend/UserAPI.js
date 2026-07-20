@@ -147,14 +147,28 @@ router.post('/', checkWriteAccess, async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const query = `
-      SELECT u.*, r.name AS role_name, c.name AS client_name 
+    const clientId = req.headers['x-client-id'];
+    const isSuperAdmin = !req.user || req.user.role_id === 1 || req.user.client_id === null || req.user.client_id === undefined;
+
+    let query = `
+      SELECT u.*, ROW_NUMBER() OVER(ORDER BY u.user_id ASC)::integer AS display_id, r.name AS role_name, c.name AS client_name 
       FROM users u 
       LEFT JOIN roles r ON u.role_id = r.role_id 
       LEFT JOIN clients c ON u.client_id = c.client_id
-      ORDER BY u.user_id ASC
     `;
-    const [rows] = await db.query(query);
+    let params = [];
+
+    if (isSuperAdmin && (!clientId || clientId === 'null')) {
+      // Super admin with no specific client context: show all non-super-admin users OR all users
+      query += ' WHERE u.client_id IS NOT NULL ORDER BY u.user_id ASC';
+    } else {
+      // Client admin: show only users belonging to their client
+      const cid = parseInt(clientId || req.user?.client_id);
+      query += ' WHERE u.client_id = $1 ORDER BY u.user_id ASC';
+      params.push(cid);
+    }
+
+    const [rows] = await db.execute(query, params);
     const cleanedRows = rows.map(row => {
       delete row.password;
       return row;
@@ -192,7 +206,7 @@ router.put('/:id', checkWriteAccess, async (req, res) => {
       client_id
     } = data;
 
-    const [rows] = await db.execute('SELECT * FROM users WHERE user_id = ?', [userId]);
+    const [rows] = await db.execute('SELECT * FROM users WHERE user_id = $1', [userId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -200,7 +214,7 @@ router.put('/:id', checkWriteAccess, async (req, res) => {
     // Check duplicate username
     if (username !== undefined) {
       const usernameCheck = username.trim().toLowerCase();
-      const [existingDup] = await db.execute('SELECT * FROM users WHERE LOWER(username) = ? AND user_id != ?', [usernameCheck, userId]);
+      const [existingDup] = await db.execute('SELECT * FROM users WHERE LOWER(username) = $1 AND user_id != $2', [usernameCheck, userId]);
       if (existingDup.length > 0) {
         return res.status(400).json({ error: 'Username is already taken.' });
       }

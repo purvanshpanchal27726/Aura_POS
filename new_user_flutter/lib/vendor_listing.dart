@@ -791,7 +791,7 @@ class _VendorListingScreenState extends State<VendorListingScreen> {
                 return DataRow(cells: [
                   DataCell(
                     Text(
-                      vendor['vendor_id'].toString(),
+                      (vendor['display_id'] ?? vendor['vendor_id']).toString(),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),

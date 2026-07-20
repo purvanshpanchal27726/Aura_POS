@@ -93,17 +93,17 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    let query = 'SELECT * FROM taxes WHERE ';
+    let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY tax_id ASC)::integer AS display_id FROM taxes WHERE ';
     let params = [];
     if (clientId) {
-      query += 'client_id = ?';
+      query += 'client_id = $1';
       params.push(clientId);
     } else {
       query += 'client_id IS NULL';
     }
     query += ' ORDER BY tax_id ASC';
 
-    const [rows] = await db.query(query, params);
+    const [rows] = await db.execute(query, params);
     const mappedRows = rows.map(r => ({
       ...r,
       id: r.tax_id,

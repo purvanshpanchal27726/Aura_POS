@@ -646,7 +646,7 @@ class _UnitListingScreenState extends State<UnitListingScreen> {
                 return DataRow(cells: [
                   DataCell(
                     Text(
-                      unit['unit_id'].toString(),
+                      (unit['display_id'] ?? unit['unit_id']).toString(),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),

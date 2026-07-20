@@ -91,17 +91,17 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    let query = 'SELECT * FROM units WHERE ';
+    let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY unit_id ASC)::integer AS display_id FROM units WHERE ';
     let params = [];
     if (clientId) {
-      query += 'client_id = ?';
+      query += 'client_id = $1';
       params.push(clientId);
     } else {
       query += 'client_id IS NULL';
     }
     query += ' ORDER BY unit_id ASC';
 
-    const [rows] = await db.query(query, params);
+    const [rows] = await db.execute(query, params);
     const mappedRows = rows.map(r => ({
       ...r,
       id: r.unit_id,

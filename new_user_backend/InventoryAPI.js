@@ -22,10 +22,10 @@ router.get('/', async (req, res) => {
     const isSuperAdmin = checkSuperAdmin(req);
     if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    let query = 'SELECT * FROM inventory WHERE ';
+    let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY inventory_id ASC)::integer AS display_id FROM inventory WHERE ';
     let params = [];
     if (clientId) {
-      query += 'client_id = ?';
+      query += 'client_id = $1';
       params.push(clientId);
     } else {
       query += 'client_id IS NULL';
@@ -48,6 +48,19 @@ router.post('/', async (req, res) => {
 
     const { item_name, sku, barcode, unit, min_stock, batch_no, expiry_date } = req.body;
     if (!item_name) return res.status(400).json({ error: 'Item name is required' });
+
+    // Check for duplicate item_name
+    const nameCheck = item_name.trim().toLowerCase();
+    let dupQuery = 'SELECT inventory_id FROM inventory WHERE LOWER(item_name) = ? AND ';
+    let dupParams = [nameCheck];
+    if (clientId) {
+      dupQuery += 'client_id = ?';
+      dupParams.push(clientId);
+    } else {
+      dupQuery += 'client_id IS NULL';
+    }
+    const [dupRows] = await db.execute(dupQuery, dupParams);
+    if (dupRows.length > 0) return res.status(400).json({ error: 'Inventory item with this name already exists.' });
 
     const [result] = await db.execute(
       `INSERT INTO inventory (client_id, item_name, sku, barcode, unit, min_stock, batch_no, expiry_date) 
@@ -91,6 +104,21 @@ router.put('/:id', async (req, res) => {
 
     const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Item not found in inventory' });
+
+    // Check duplicate item_name (excluding itself)
+    if (item_name !== undefined) {
+      const nameCheck = item_name.trim().toLowerCase();
+      let dupQuery = 'SELECT inventory_id FROM inventory WHERE LOWER(item_name) = ? AND inventory_id != ? AND ';
+      let dupParams = [nameCheck, id];
+      if (clientId) {
+        dupQuery += 'client_id = ?';
+        dupParams.push(clientId);
+      } else {
+        dupQuery += 'client_id IS NULL';
+      }
+      const [dupRows] = await db.execute(dupQuery, dupParams);
+      if (dupRows.length > 0) return res.status(400).json({ error: 'Inventory item with this name already exists.' });
+    }
 
     let updateQuery = `
       UPDATE inventory 

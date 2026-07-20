@@ -27,10 +27,10 @@ router.get('/tables', async (req, res) => {
     const isSuperAdmin = checkSuperAdmin(req);
     if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    let query = 'SELECT * FROM restaurant_tables WHERE active = 1 AND ';
+    let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY table_id ASC)::integer AS display_id FROM restaurant_tables WHERE active = 1 AND ';
     let params = [];
     if (clientId) {
-      query += 'client_id = ?';
+      query += 'client_id = $1';
       params.push(clientId);
     } else {
       query += 'client_id IS NULL';
@@ -53,6 +53,18 @@ router.post('/tables', async (req, res) => {
 
     const { table_no, section, capacity } = req.body;
     if (!table_no) return res.status(400).json({ error: 'Table number is required' });
+
+    // Check for duplicate table_no within the same client
+    let dupQuery = 'SELECT table_id FROM restaurant_tables WHERE table_no = ? AND ';
+    let dupParams = [table_no];
+    if (clientId) {
+      dupQuery += 'client_id = ?';
+      dupParams.push(clientId);
+    } else {
+      dupQuery += 'client_id IS NULL';
+    }
+    const [dupRows] = await db.execute(dupQuery, dupParams);
+    if (dupRows.length > 0) return res.status(400).json({ error: 'Table with this number already exists.' });
 
     // Generate a unique qr_token for the table
     const qr_token = 'QR_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now();
@@ -89,6 +101,20 @@ router.put('/tables/:id', async (req, res) => {
 
     const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Table not found' });
+
+    // Check duplicate table_no (excluding itself)
+    if (table_no !== undefined) {
+      let dupQuery = 'SELECT table_id FROM restaurant_tables WHERE table_no = ? AND table_id != ? AND ';
+      let dupParams = [table_no, id];
+      if (clientId) {
+        dupQuery += 'client_id = ?';
+        dupParams.push(clientId);
+      } else {
+        dupQuery += 'client_id IS NULL';
+      }
+      const [dupRows] = await db.execute(dupQuery, dupParams);
+      if (dupRows.length > 0) return res.status(400).json({ error: 'Table with this number already exists.' });
+    }
 
     let updateQuery = `
       UPDATE restaurant_tables 
@@ -163,10 +189,10 @@ router.get('/menu/categories', async (req, res) => {
     const isSuperAdmin = checkSuperAdmin(req);
     if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    let query = 'SELECT * FROM menu_categories WHERE active = 1 AND ';
+    let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY category_id ASC)::integer AS display_id FROM menu_categories WHERE active = 1 AND ';
     let params = [];
     if (clientId) {
-      query += 'client_id = ?';
+      query += 'client_id = $1';
       params.push(clientId);
     } else {
       query += 'client_id IS NULL';
@@ -188,6 +214,19 @@ router.post('/menu/categories', async (req, res) => {
 
     const { name, image_url } = req.body;
     if (!name) return res.status(400).json({ error: 'Category name required' });
+
+    // Check for duplicate category name
+    const nameCheck = name.trim().toLowerCase();
+    let dupQuery = 'SELECT category_id FROM menu_categories WHERE LOWER(name) = ? AND active = 1 AND ';
+    let dupParams = [nameCheck];
+    if (clientId) {
+      dupQuery += 'client_id = ?';
+      dupParams.push(clientId);
+    } else {
+      dupQuery += 'client_id IS NULL';
+    }
+    const [dupRows] = await db.execute(dupQuery, dupParams);
+    if (dupRows.length > 0) return res.status(400).json({ error: 'Menu category with this name already exists.' });
 
     const [result] = await db.execute(
       'INSERT INTO menu_categories (client_id, name, image_url) VALUES (?, ?, ?)',
@@ -219,6 +258,21 @@ router.put('/menu/categories/:id', async (req, res) => {
 
     const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Category not found' });
+
+    // Check duplicate name (excluding itself)
+    if (name !== undefined) {
+      const nameCheck = name.trim().toLowerCase();
+      let dupQuery = 'SELECT category_id FROM menu_categories WHERE LOWER(name) = ? AND category_id != ? AND active = 1 AND ';
+      let dupParams = [nameCheck, id];
+      if (clientId) {
+        dupQuery += 'client_id = ?';
+        dupParams.push(clientId);
+      } else {
+        dupQuery += 'client_id IS NULL';
+      }
+      const [dupRows] = await db.execute(dupQuery, dupParams);
+      if (dupRows.length > 0) return res.status(400).json({ error: 'Menu category with this name already exists.' });
+    }
 
     let updateQuery = 'UPDATE menu_categories SET name = ?, image_url = ? WHERE category_id = ? AND ';
     let updateParams = [name !== undefined ? name : rows[0].name, image_url !== undefined ? image_url : rows[0].image_url, id];
@@ -271,14 +325,14 @@ router.get('/menu/items', async (req, res) => {
     if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     let query = `
-      SELECT mi.*, mc.name AS category_name 
+      SELECT mi.*, ROW_NUMBER() OVER(ORDER BY mi.menu_item_id ASC)::integer AS display_id, mc.name AS category_name 
       FROM menu_items mi
       LEFT JOIN menu_categories mc ON mi.category_id = mc.category_id
       WHERE mi.active = 1 AND 
     `;
     let params = [];
     if (clientId) {
-      query += 'mi.client_id = ?';
+      query += 'mi.client_id = $1';
       params.push(clientId);
     } else {
       query += 'mi.client_id IS NULL';
@@ -300,6 +354,19 @@ router.post('/menu/items', async (req, res) => {
 
     const { category_id, name, description, price, image_url, preparation_time, kitchen_dept, gst_percent, is_veg } = req.body;
     if (!name || price === undefined) return res.status(400).json({ error: 'Name and price are required' });
+
+    // Check for duplicate menu item name
+    const nameCheck = name.trim().toLowerCase();
+    let dupQuery = 'SELECT menu_item_id FROM menu_items WHERE LOWER(name) = ? AND active = 1 AND ';
+    let dupParams = [nameCheck];
+    if (clientId) {
+      dupQuery += 'client_id = ?';
+      dupParams.push(clientId);
+    } else {
+      dupQuery += 'client_id IS NULL';
+    }
+    const [dupRows] = await db.execute(dupQuery, dupParams);
+    if (dupRows.length > 0) return res.status(400).json({ error: 'Menu item with this name already exists.' });
 
     const [result] = await db.execute(
       `INSERT INTO menu_items 
@@ -345,6 +412,21 @@ router.put('/menu/items/:id', async (req, res) => {
 
     const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Menu item not found' });
+
+    // Check duplicate name (excluding itself)
+    if (name !== undefined) {
+      const nameCheck = name.trim().toLowerCase();
+      let dupQuery = 'SELECT menu_item_id FROM menu_items WHERE LOWER(name) = ? AND menu_item_id != ? AND active = 1 AND ';
+      let dupParams = [nameCheck, id];
+      if (clientId) {
+        dupQuery += 'client_id = ?';
+        dupParams.push(clientId);
+      } else {
+        dupQuery += 'client_id IS NULL';
+      }
+      const [dupRows] = await db.execute(dupQuery, dupParams);
+      if (dupRows.length > 0) return res.status(400).json({ error: 'Menu item with this name already exists.' });
+    }
 
     let updateQuery = `
       UPDATE menu_items 

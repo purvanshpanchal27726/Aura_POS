@@ -73,8 +73,7 @@ router.post('/', async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    // Check if user already exists
-    let userId;
+    // Check for duplicate phone number
     let queryExisting = 'SELECT user_id FROM users WHERE phone_1 = ? AND ';
     let paramsExisting = [phone];
     if (clientId) {
@@ -83,13 +82,32 @@ router.post('/', async (req, res) => {
     } else {
       queryExisting += 'client_id IS NULL';
     }
-
     const [existing] = await conn.execute(queryExisting, paramsExisting);
-
     if (existing.length > 0) {
-      userId = existing[0].user_id;
+      await conn.rollback();
+      conn.release();
+      return res.status(400).json({ error: 'Employee with this phone number already exists.' });
+    }
+
+    // Check for duplicate name
+    let nameCheckQuery = 'SELECT user_id FROM users WHERE LOWER(first_name) = ? AND LOWER(last_name) = ? AND ';
+    let nameCheckParams = [first_name.trim().toLowerCase(), last_name.trim().toLowerCase()];
+    if (clientId) {
+      nameCheckQuery += 'client_id = ?';
+      nameCheckParams.push(clientId);
     } else {
-      // Create user entry
+      nameCheckQuery += 'client_id IS NULL';
+    }
+    const [nameRows] = await conn.execute(nameCheckQuery, nameCheckParams);
+    if (nameRows.length > 0) {
+      await conn.rollback();
+      conn.release();
+      return res.status(400).json({ error: 'Employee with this name already exists.' });
+    }
+
+    // Create user entry
+    let userId;
+    {
       const plainPassword = password || designation?.toLowerCase() || '123456';
       const hashedPassword = await bcrypt.hash(plainPassword, 10);
       const generatedUsername = `${first_name.toLowerCase()}_${phone.slice(-4)}`;

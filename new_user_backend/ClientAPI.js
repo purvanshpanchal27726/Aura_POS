@@ -40,7 +40,7 @@ router.post('/', async (req, res) => {
 
     // 1. Company Name Duplicate Check
     const nameCheck = name.trim().toLowerCase();
-    const [existingCompany] = await connection.execute('SELECT * FROM clients WHERE LOWER(name) = ?', [nameCheck]);
+    const [existingCompany] = await connection.execute('SELECT * FROM clients WHERE LOWER(name) = $1', [nameCheck]);
     if (existingCompany.length > 0) {
       await connection.rollback();
       return res.status(400).json({ error: 'Company with this name already exists.' });
@@ -53,7 +53,7 @@ router.post('/', async (req, res) => {
     }
 
     const usernameCheck = admin_username.trim().toLowerCase();
-    const [existingUser] = await connection.execute('SELECT * FROM users WHERE LOWER(username) = ?', [usernameCheck]);
+    const [existingUser] = await connection.execute('SELECT * FROM users WHERE LOWER(username) = $1', [usernameCheck]);
     if (existingUser.length > 0) {
       await connection.rollback();
       return res.status(400).json({ error: 'Admin username is already taken. Please choose another one.' });
@@ -62,7 +62,7 @@ router.post('/', async (req, res) => {
     // 3. Create Client Company
     const query = `
       INSERT INTO clients (name, email, phone, address, gst_no, logo_url, active)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
     `;
     const values = [name, email || null, phone || null, address || null, gst_no || null, logo_url || null, active ? 1 : 0];
 
@@ -72,7 +72,7 @@ router.post('/', async (req, res) => {
     // 4. Initialize default printer settings for this new client
     await connection.execute(`
       INSERT INTO printer_settings (client_id, printer_name, printer_type, paper_size, connection, ip_address, port, auto_print, copies)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     `, [clientId, 'Default Printer', 'thermal', 'medium', 'usb', null, 9100, 0, 1]);
 
     // 5. Create Admin User connected to this Client
@@ -84,14 +84,14 @@ router.post('/', async (req, res) => {
         username, password, first_name, middle_name, last_name,
         address_1, address_2, address_3, city, country,
         phone_1, phone_2, email_1, email_2, role_id, client_id, created_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
     `;
     const userValues = [
       admin_username.trim(),
       hashedPassword,
-      'Admin',
+      name,           // Use company name as first_name
       null,
-      'User',
+      'Admin',
       address || 'Company Address',
       null,
       null,
@@ -101,7 +101,7 @@ router.post('/', async (req, res) => {
       null,
       email || 'admin@example.com',
       null,
-      2, // Role ID 2 (Admin)
+      2,              // Role ID 2 = Admin (company admin)
       clientId,
       'System'
     ];
@@ -131,7 +131,7 @@ router.put('/:id', async (req, res) => {
     const { name, email, phone, address, gst_no, logo_url } = data;
     const active = data.active !== undefined ? data.active : 1;
 
-    const [rows] = await db.execute('SELECT * FROM clients WHERE client_id = ?', [clientId]);
+    const [rows] = await db.execute('SELECT * FROM clients WHERE client_id = $1', [clientId]);
     if (rows.length === 0) {
       return res.status(404).json({ error: 'Client not found.' });
     }
@@ -141,7 +141,7 @@ router.put('/:id', async (req, res) => {
     // Company Name Duplicate Check on Update
     if (name !== undefined) {
       const nameCheck = name.trim().toLowerCase();
-      const [existingDup] = await db.execute('SELECT * FROM clients WHERE LOWER(name) = ? AND client_id != ?', [nameCheck, clientId]);
+      const [existingDup] = await db.execute('SELECT * FROM clients WHERE LOWER(name) = $1 AND client_id != $2', [nameCheck, clientId]);
       if (existingDup.length > 0) {
         return res.status(400).json({ error: 'Company with this name already exists.' });
       }
@@ -152,7 +152,7 @@ router.put('/:id', async (req, res) => {
       SET name = ?, email = ?, phone = ?, address = ?, gst_no = ?, logo_url = ?, active = ?
       WHERE client_id = ?
     `;
-    const values = [
+    const values2 = [
       name !== undefined ? name : existing.name,
       email !== undefined ? email : existing.email,
       phone !== undefined ? phone : existing.phone,
@@ -163,7 +163,11 @@ router.put('/:id', async (req, res) => {
       clientId
     ];
 
-    await db.execute(query, values);
+    await db.execute(`
+      UPDATE clients 
+      SET name = $1, email = $2, phone = $3, address = $4, gst_no = $5, logo_url = $6, active = $7
+      WHERE client_id = $8
+    `, values2);
     res.json({ message: 'Client updated successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -177,7 +181,7 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const clientId = req.params.id;
-    await db.execute('UPDATE clients SET active = 0 WHERE client_id = ?', [clientId]);
+    await db.execute('UPDATE clients SET active = 0 WHERE client_id = $1', [clientId]);
     res.json({ message: 'Client deactivated successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -191,13 +195,13 @@ router.delete('/:id', async (req, res) => {
 router.get('/:id/modules', async (req, res) => {
   try {
     const clientId = req.params.id;
-    const [rows] = await db.execute(`
+    const [rows2] = await db.execute(`
       SELECT cm.group_id, mg.name 
       FROM client_modules cm
       JOIN module_groups mg ON cm.group_id = mg.group_id
-      WHERE cm.client_id = ? AND cm.enabled = 1
+      WHERE cm.client_id = $1 AND cm.enabled = 1
     `, [clientId]);
-    res.json(rows);
+    res.json(rows2);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

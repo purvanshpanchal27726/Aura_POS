@@ -27,10 +27,10 @@ router.get('/rooms', async (req, res) => {
     const isSuperAdmin = checkSuperAdmin(req);
     if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
-    let query = 'SELECT room_id, client_id, room_no, type AS room_type, price_per_night, status, floor, amenities, active FROM hotel_rooms WHERE active = 1 AND ';
+    let query = 'SELECT room_id, client_id, room_no, type AS room_type, price_per_night, status, floor, amenities, active, ROW_NUMBER() OVER(ORDER BY room_id ASC)::integer AS display_id FROM hotel_rooms WHERE active = 1 AND ';
     let params = [];
     if (clientId) {
-      query += 'client_id = ?';
+      query += 'client_id = $1';
       params.push(clientId);
     } else {
       query += 'client_id IS NULL';
@@ -55,6 +55,18 @@ router.post('/rooms', async (req, res) => {
     if (!room_no || !room_type || price_per_night === undefined) {
       return res.status(400).json({ error: 'Room number, type, and price per night are required' });
     }
+
+    // Check for duplicate room_no
+    let dupQuery = 'SELECT room_id FROM hotel_rooms WHERE room_no = ? AND ';
+    let dupParams = [room_no];
+    if (clientId) {
+      dupQuery += 'client_id = ?';
+      dupParams.push(clientId);
+    } else {
+      dupQuery += 'client_id IS NULL';
+    }
+    const [dupRows] = await db.execute(dupQuery, dupParams);
+    if (dupRows.length > 0) return res.status(400).json({ error: 'Room with this number already exists.' });
 
     const [result] = await db.execute(
       'INSERT INTO hotel_rooms (client_id, room_no, type, price_per_night, status) VALUES (?, ?, ?, ?, ?)',
@@ -88,6 +100,20 @@ router.put('/rooms/:id', async (req, res) => {
 
     const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Room not found' });
+
+    // Check duplicate room_no (excluding itself)
+    if (room_no !== undefined) {
+      let dupQuery = 'SELECT room_id FROM hotel_rooms WHERE room_no = ? AND room_id != ? AND ';
+      let dupParams = [room_no, id];
+      if (clientId) {
+        dupQuery += 'client_id = ?';
+        dupParams.push(clientId);
+      } else {
+        dupQuery += 'client_id IS NULL';
+      }
+      const [dupRows] = await db.execute(dupQuery, dupParams);
+      if (dupRows.length > 0) return res.status(400).json({ error: 'Room with this number already exists.' });
+    }
 
     let updateQuery = `
       UPDATE hotel_rooms 
@@ -154,12 +180,13 @@ router.get('/guests', async (req, res) => {
     let query = `
       SELECT guest_id, client_id, CONCAT(first_name, ' ', last_name) AS name, 
              first_name, last_name, phone, email, id_type AS id_proof_type, 
-             id_number AS id_proof_no, address, loyalty_points 
+             id_number AS id_proof_no, address, loyalty_points,
+             ROW_NUMBER() OVER(ORDER BY guest_id ASC)::integer AS display_id
       FROM hotel_guests WHERE 
     `;
     let params = [];
     if (clientId) {
-      query += 'client_id = ?';
+      query += 'client_id = $1';
       params.push(clientId);
     } else {
       query += 'client_id IS NULL';
@@ -182,6 +209,18 @@ router.post('/guests', async (req, res) => {
 
     const { name, phone, email, id_proof_type, id_proof_no } = req.body;
     if (!name || !phone) return res.status(400).json({ error: 'Name and phone are required' });
+
+    // Check for duplicate phone number
+    let dupQuery = 'SELECT guest_id FROM hotel_guests WHERE phone = ? AND ';
+    let dupParams = [phone];
+    if (clientId) {
+      dupQuery += 'client_id = ?';
+      dupParams.push(clientId);
+    } else {
+      dupQuery += 'client_id IS NULL';
+    }
+    const [dupRows] = await db.execute(dupQuery, dupParams);
+    if (dupRows.length > 0) return res.status(400).json({ error: 'Guest with this phone number already exists.' });
 
     const nameParts = (name || '').trim().split(/\s+/);
     const firstName = nameParts[0] || 'Guest';
@@ -220,6 +259,20 @@ router.put('/guests/:id', async (req, res) => {
 
     const [rows] = await db.execute(query, params);
     if (rows.length === 0) return res.status(404).json({ error: 'Guest not found' });
+
+    // Check duplicate phone (excluding itself)
+    if (phone !== undefined) {
+      let dupQuery = 'SELECT guest_id FROM hotel_guests WHERE phone = ? AND guest_id != ? AND ';
+      let dupParams = [phone, id];
+      if (clientId) {
+        dupQuery += 'client_id = ?';
+        dupParams.push(clientId);
+      } else {
+        dupQuery += 'client_id IS NULL';
+      }
+      const [dupRows] = await db.execute(dupQuery, dupParams);
+      if (dupRows.length > 0) return res.status(400).json({ error: 'Guest with this phone number already exists.' });
+    }
 
     let firstName = rows[0].first_name;
     let lastName = rows[0].last_name;

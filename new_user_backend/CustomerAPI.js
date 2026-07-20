@@ -123,17 +123,17 @@ router.get('/', async (req, res) => {
       return res.status(400).json({ error: 'Client ID required' });
     }
     
-    let query = 'SELECT * FROM customers WHERE ';
+    let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY customer_id ASC)::integer AS display_id FROM customers WHERE ';
     let params = [];
     if (clientId) {
-      query += 'client_id = ?';
+      query += 'client_id = $1';
       params.push(clientId);
     } else {
       query += 'client_id IS NULL';
     }
     query += ' ORDER BY customer_id ASC';
 
-    const [rows] = await db.query(query, params);
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });

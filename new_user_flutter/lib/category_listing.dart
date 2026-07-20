@@ -573,7 +573,7 @@ class _CategoryListingScreenState extends State<CategoryListingScreen> {
               return DataRow(cells: [
                 DataCell(
                   Text(
-                    category['category_id'].toString(),
+                    (category['display_id'] ?? category['category_id']).toString(),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),

@@ -726,7 +726,7 @@ class _CustomerListingScreenState extends State<CustomerListingScreen> {
                 return DataRow(cells: [
                   DataCell(
                     Text(
-                      customer['customer_id'].toString(),
+                      (customer['display_id'] ?? customer['customer_id']).toString(),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),

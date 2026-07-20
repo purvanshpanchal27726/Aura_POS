@@ -134,6 +134,7 @@ router.get('/', async (req, res) => {
     let query = `
       SELECT 
         i.*,
+        ROW_NUMBER() OVER(ORDER BY i.item_id ASC)::integer AS display_id,
         c.name AS category_name,
         u.name AS unit_name,
         t.name AS tax_name
@@ -145,14 +146,14 @@ router.get('/', async (req, res) => {
     `;
     let params = [];
     if (clientId) {
-      query += 'i.client_id = ?';
+      query += 'i.client_id = $1';
       params.push(clientId);
     } else {
       query += 'i.client_id IS NULL';
     }
     query += ' ORDER BY i.item_id ASC';
 
-    const [rows] = await db.query(query, params);
+    const [rows] = await db.execute(query, params);
 
     const mappedRows = rows.map(r => ({
       ...decorateItem(r, req),

@@ -649,7 +649,7 @@ class _TaxListingScreenState extends State<TaxListingScreen> {
                 return DataRow(cells: [
                   DataCell(
                     Text(
-                      tax['tax_id'].toString(),
+                      (tax['display_id'] ?? tax['tax_id']).toString(),
                       style: GoogleFonts.inter(fontWeight: FontWeight.bold),
                     ),
                   ),
