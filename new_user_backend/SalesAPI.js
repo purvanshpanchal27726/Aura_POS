@@ -128,6 +128,46 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/sales/details/all
+ * Fetches all sales detail lines with date, customer, user, category, and item name.
+ */
+router.get('/details/all', async (req, res) => {
+  try {
+    const clientId = getClientId(req);
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
+    let query = `
+      SELECT sd.*, sm.sales_date, sm.sales_bill_no, sm.customer_id, sm.created_by,
+             CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+             i.name AS item_name, i.category_id, cat.name AS category_name,
+             sd.qty AS quantity, sd.total AS item_amount
+      FROM sales_detail sd
+      JOIN sales_master sm ON sd.sales_id = sm.sales_id
+      LEFT JOIN customers c ON sm.customer_id = c.customer_id
+      LEFT JOIN items i ON sd.item_id = i.item_id
+      LEFT JOIN categories cat ON i.category_id = cat.category_id
+      WHERE 
+    `;
+    let params = [];
+    if (clientId) {
+      query += 'sm.client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'sm.client_id IS NULL';
+    }
+    query += ' ORDER BY sm.sales_id DESC, sd.sales_detail_id ASC';
+
+    const [rows] = await db.execute(query, params);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * GET /api/sales/:id
  * Fetches a single invoice details (master + items).
  */

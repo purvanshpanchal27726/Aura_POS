@@ -5309,7 +5309,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           reportsResultBody.innerHTML = filtered.map(i => `
             <tr>
-              <td>${i.item_id}</td>
+              <td>${i.display_id || i.item_id}</td>
               <td>${i.code || '--'}</td>
               <td><strong>${i.name}</strong></td>
               <td>${i.category_name || '--'}</td>
@@ -5433,7 +5433,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             return `
               <tr>
-                <td>${c.customer_id}</td>
+                <td>${c.display_id || c.customer_id}</td>
                 <td><strong>${name}</strong></td>
                 <td>${contacts}</td>
                 <td>${loc}</td>
@@ -5488,7 +5488,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const contacts = [u.phone_1, u.email_1].filter(p => p && p.trim() !== '').join(' | ') || 'N/A';
             return `
               <tr>
-                <td>${u.user_id}</td>
+                <td>${u.display_id || u.user_id}</td>
                 <td>${u.username}</td>
                 <td><strong>${name}</strong></td>
                 <td>${loc}</td>
