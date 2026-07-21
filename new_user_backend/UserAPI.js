@@ -6,6 +6,19 @@ const db = require('./db');
 
 const router = express.Router();
 
+// Helper to get client_id from headers or query params or user token
+function getClientId(req) {
+  const cid = req.headers['x-client-id'] || req.query.client_id;
+  if (cid && cid !== 'null' && cid !== 'undefined') {
+    return parseInt(cid);
+  }
+  return req.user?.client_id || null;
+}
+
+function checkSuperAdmin(req) {
+  return !req.user || req.user.client_id === null || req.user.client_id === undefined;
+}
+
 // Middleware to restrict write operations to Super-Admin (1) and Admin (2)
 const checkWriteAccess = (req, res, next) => {
   if (!req.user || (req.user.role_id !== 1 && req.user.role_id !== 2)) {
@@ -101,6 +114,9 @@ router.post('/', checkWriteAccess, async (req, res) => {
     const finalRoleId = isFirstUser ? 1 : (role_id ? parseInt(role_id) : 3);
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    const targetClientId = client_id !== undefined && client_id !== null && client_id !== ''
+      ? parseInt(client_id)
+      : getClientId(req);
 
     const query = `
       INSERT INTO users (
@@ -126,7 +142,7 @@ router.post('/', checkWriteAccess, async (req, res) => {
       email_1,
       email_2 || null,
       finalRoleId,
-      client_id ? parseInt(client_id) : null,
+      targetClientId,
       created_by || 'System'
     ];
 
@@ -147,26 +163,28 @@ router.post('/', checkWriteAccess, async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const clientId = req.headers['x-client-id'];
-    const isSuperAdmin = !req.user || req.user.role_id === 1 || req.user.client_id === null || req.user.client_id === undefined;
+    const clientId = getClientId(req);
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (!clientId && !isSuperAdmin) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
 
     let query = `
       SELECT u.*, ROW_NUMBER() OVER(ORDER BY u.user_id ASC)::integer AS display_id, r.name AS role_name, c.name AS client_name 
       FROM users u 
       LEFT JOIN roles r ON u.role_id = r.role_id 
       LEFT JOIN clients c ON u.client_id = c.client_id
+      WHERE 
     `;
     let params = [];
 
-    if (isSuperAdmin && (!clientId || clientId === 'null')) {
-      // Super admin with no specific client context: show all non-super-admin users OR all users
-      query += ' WHERE u.client_id IS NOT NULL ORDER BY u.user_id ASC';
+    if (clientId) {
+      query += 'u.client_id = $1';
+      params.push(clientId);
     } else {
-      // Client admin: show only users belonging to their client
-      const cid = parseInt(clientId || req.user?.client_id);
-      query += ' WHERE u.client_id = $1 ORDER BY u.user_id ASC';
-      params.push(cid);
+      query += 'u.client_id IS NULL';
     }
+    query += ' ORDER BY u.user_id ASC';
 
     const [rows] = await db.execute(query, params);
     const cleanedRows = rows.map(row => {
