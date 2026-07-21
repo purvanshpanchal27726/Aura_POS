@@ -47,7 +47,8 @@ DROP TABLE IF EXISTS license_info CASCADE;
 -- 1. Roles
 CREATE TABLE IF NOT EXISTS roles (
     role_id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
+    name VARCHAR(50) NOT NULL,
     active SMALLINT DEFAULT 1,
     created_by VARCHAR(255) DEFAULT 'System',
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
