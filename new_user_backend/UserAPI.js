@@ -182,7 +182,12 @@ router.get('/', async (req, res) => {
       query += 'u.client_id = $1';
       params.push(clientId);
     } else {
-      query += 'u.client_id IS NULL';
+      if (isSuperAdmin) {
+        // Super Admin default context: show all registered users in the database
+        query += '1=1';
+      } else {
+        query += 'u.client_id IS NULL';
+      }
     }
     query += ' ORDER BY u.user_id ASC';
 
