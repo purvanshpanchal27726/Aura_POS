@@ -525,6 +525,44 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeUser = null;
   let allUsersList = [];
   let permissionsData = [];
+  let allRolesList = [];
+
+  const configureUserFormState = (userToEdit = null) => {
+    const isSuperAdminUser = activeUser && (activeUser.role_id == 1 || activeUser.role_id === '1') && (!activeUser.client_id || activeUser.client_id === 'null' || activeUser.client_id === 'undefined');
+
+    // 1. Role dropdown filtering: Hide Super Admin role for Client Admins
+    const selectRole = document.getElementById('user_role_id');
+    if (selectRole && allRolesList.length > 0) {
+      const currentVal = userToEdit ? (userToEdit.role_id || '') : selectRole.value;
+      const availableRoles = isSuperAdminUser
+        ? allRolesList
+        : allRolesList.filter(r => r.role_id != 1 && (r.name || '').toLowerCase() !== 'super admin');
+
+      selectRole.innerHTML = '<option value="">Select Role</option>' + 
+        availableRoles.map(r => `<option value="${r.role_id}">${r.name}</option>`).join('');
+
+      if (currentVal) {
+        selectRole.value = currentVal;
+      }
+    }
+
+    // 2. Client Company (Tenant) field visibility & value locking
+    const selectClient = document.getElementById('user_client_id');
+    if (selectClient) {
+      const clientFieldGroup = selectClient.closest('.form-field');
+      if (isSuperAdminUser) {
+        if (clientFieldGroup) clientFieldGroup.style.display = '';
+        if (userToEdit) {
+          selectClient.value = userToEdit.client_id || '';
+        }
+      } else {
+        if (clientFieldGroup) clientFieldGroup.style.display = 'none';
+        if (activeUser && activeUser.client_id) {
+          selectClient.value = activeUser.client_id.toString();
+        }
+      }
+    }
+  };
 
   // Global fetch interceptor to append activeUser's client_id in x-client-id header and JWT token
   const originalFetch = window.fetch;
@@ -750,11 +788,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = await permRes.json();
         permissionsData = data.permissions;
         
-        // Populate user role options in form dropdown dynamically
-        const selectRole = document.getElementById('user_role_id');
-        if (selectRole && data.roles) {
-          selectRole.innerHTML = '<option value="">Select Role</option>' + 
-            data.roles.map(r => `<option value="${r.role_id}">${r.name}</option>`).join('');
+        if (data.roles) {
+          allRolesList = data.roles;
+          configureUserFormState();
         }
 
         // Apply navigation permissions since permissionsData is loaded
@@ -975,15 +1011,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    const selectRole = document.getElementById('user_role_id');
-    if (selectRole) {
-      selectRole.value = user.role_id || '';
-    }
-
-    const selectClient = document.getElementById('user_client_id');
-    if (selectClient) {
-      selectClient.value = user.client_id || '';
-    }
+    configureUserFormState(user);
 
     // Hide username and password fields for edit mode
     const credentialSection = document.getElementById('credentialSection');
@@ -1056,15 +1084,7 @@ document.addEventListener('DOMContentLoaded', () => {
       passwordInput.setAttribute('type', 'password');
     }
 
-    const selectRole = document.getElementById('user_role_id');
-    if (selectRole) {
-      selectRole.value = '';
-    }
-
-    const selectClient = document.getElementById('user_client_id');
-    if (selectClient) {
-      selectClient.value = '';
-    }
+    configureUserFormState(null);
 
     if (btnTogglePassword) {
       const icon = btnTogglePassword.querySelector('.material-icons');
@@ -1162,6 +1182,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const formData = new FormData(userForm);
     const data = Object.fromEntries(formData.entries());
     const id = userIdInput.value;
+
+    const isSuperAdminUser = activeUser && (activeUser.role_id == 1 || activeUser.role_id === '1') && (!activeUser.client_id || activeUser.client_id === 'null' || activeUser.client_id === 'undefined');
+    if (!isSuperAdminUser && activeUser && activeUser.client_id) {
+      data.client_id = activeUser.client_id.toString();
+    }
 
     const url = id ? getApiUrl(`/api/users/${id}`) : getApiUrl('/api/users');
     const method = id ? 'PUT' : 'POST';
@@ -3589,6 +3614,7 @@ document.addEventListener('DOMContentLoaded', () => {
       userClientSelect.innerHTML = '<option value="">Super Admin (All Clients)</option>' +
         allClients.map(c => `<option value="${c.client_id}">${c.name}</option>`).join('');
     }
+    configureUserFormState();
   };
 
   const renderClients = (list) => {

@@ -383,7 +383,13 @@ class _UserListingScreenState extends State<UserListingScreen> {
                                     ),
                                     hint: Text('Select Role', style: GoogleFonts.inter(fontSize: 13)),
                                     dropdownColor: isDark ? const Color(0xFF151D30) : Colors.white,
-                                    items: roles.map<DropdownMenuItem<int>>((r) {
+                                    items: roles.where((r) {
+                                      final isSuperAdmin = widget.roleId == 1;
+                                      if (!isSuperAdmin) {
+                                        return r['role_id'] != 1 && (r['name'] ?? '').toString().toLowerCase() != 'super admin';
+                                      }
+                                      return true;
+                                    }).map<DropdownMenuItem<int>>((r) {
                                       return DropdownMenuItem<int>(
                                         value: r['role_id'],
                                         child: Text(r['name'] ?? '', style: GoogleFonts.inter(fontSize: 13.5)),

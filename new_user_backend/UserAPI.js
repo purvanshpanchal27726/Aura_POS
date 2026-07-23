@@ -113,10 +113,15 @@ router.post('/', checkWriteAccess, async (req, res) => {
     const isFirstUser = parseInt(countResult[0].count) === 0;
     const finalRoleId = isFirstUser ? 1 : (role_id ? parseInt(role_id) : 3);
 
+    const isCallerSuperAdmin = checkSuperAdmin(req);
+    if (!isCallerSuperAdmin && finalRoleId === 1) {
+      return res.status(403).json({ error: 'Super Admin role can only be assigned by Super Admin.' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const targetClientId = client_id !== undefined && client_id !== null && client_id !== ''
-      ? parseInt(client_id)
-      : getClientId(req);
+    const targetClientId = isCallerSuperAdmin
+      ? (client_id !== undefined && client_id !== null && client_id !== '' ? parseInt(client_id) : null)
+      : (req.user?.client_id || getClientId(req));
 
     const query = `
       INSERT INTO users (
@@ -264,8 +269,15 @@ router.put('/:id', checkWriteAccess, async (req, res) => {
     const finalEmail1 = email_1 !== undefined ? email_1 : existingUser.email_1;
     const finalEmail2 = email_2 !== undefined ? email_2 : existingUser.email_2;
 
-    const role_id = data.role_id !== undefined ? data.role_id : existingUser.role_id;
-    const finalClientId = client_id !== undefined ? (client_id ? parseInt(client_id) : null) : existingUser.client_id;
+    const isCallerSuperAdmin = checkSuperAdmin(req);
+    const role_id = data.role_id !== undefined ? parseInt(data.role_id) : existingUser.role_id;
+    if (!isCallerSuperAdmin && role_id === 1) {
+      return res.status(403).json({ error: 'Super Admin role can only be assigned by Super Admin.' });
+    }
+
+    const finalClientId = isCallerSuperAdmin
+      ? (client_id !== undefined ? (client_id ? parseInt(client_id) : null) : existingUser.client_id)
+      : (req.user?.client_id || existingUser.client_id);
 
     const query = `
       UPDATE users SET 
