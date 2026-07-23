@@ -62,19 +62,20 @@ router.post('/', async (req, res) => {
     const newSalesId = masterResult.insertId;
 
     const detailQuery = `
-      INSERT INTO sales_detail (
-        sales_id, item_id, rate, qty, tax, total
-      ) VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO sales_details (
+        sales_id, item_id, rate, quantity, item_amount
+      ) VALUES (?, ?, ?, ?, ?)
     `;
 
     for (const it of items) {
+      const qty = parseFloat(it.quantity !== undefined ? it.quantity : (it.qty !== undefined ? it.qty : 1));
+      const amt = parseFloat(it.item_amount !== undefined ? it.item_amount : (it.total !== undefined ? it.total : 0));
       const detailValues = [
         newSalesId,
         parseInt(it.item_id),
-        parseFloat(it.rate),
-        parseFloat(it.qty),
-        parseFloat(it.tax || 0.00),
-        parseFloat(it.total)
+        parseFloat(it.rate || 0),
+        qty,
+        amt
       ];
       await connection.execute(detailQuery, detailValues);
     }
@@ -113,14 +114,14 @@ router.get('/', async (req, res) => {
     `;
     let params = [];
     if (clientId) {
-      query += 'sm.client_id = ?';
+      query += 'sm.client_id = $1';
       params.push(clientId);
     } else {
       query += 'sm.client_id IS NULL';
     }
     query += ' ORDER BY sm.sales_id DESC';
 
-    const [rows] = await db.query(query, params);
+    const [rows] = await db.execute(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -143,8 +144,8 @@ router.get('/details/all', async (req, res) => {
       SELECT sd.*, sm.sales_date, sm.sales_bill_no, sm.customer_id, sm.created_by,
              CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
              i.name AS item_name, i.category_id, cat.name AS category_name,
-             sd.qty AS quantity, sd.total AS item_amount
-      FROM sales_detail sd
+             sd.quantity, sd.item_amount
+      FROM sales_details sd
       JOIN sales_master sm ON sd.sales_id = sm.sales_id
       LEFT JOIN customers c ON sm.customer_id = c.customer_id
       LEFT JOIN items i ON sd.item_id = i.item_id
@@ -153,7 +154,7 @@ router.get('/details/all', async (req, res) => {
     `;
     let params = [];
     if (clientId) {
-      query += 'sm.client_id = ?';
+      query += 'sm.client_id = $1';
       params.push(clientId);
     } else {
       query += 'sm.client_id IS NULL';
@@ -185,11 +186,11 @@ router.get('/:id', async (req, res) => {
              CONCAT(c.first_name, ' ', c.last_name) AS customer_name
       FROM sales_master sm
       LEFT JOIN customers c ON sm.customer_id = c.customer_id
-      WHERE sm.sales_id = ? AND 
+      WHERE sm.sales_id = $1 AND 
     `;
     let masterParams = [salesId];
     if (clientId) {
-      masterQuery += 'sm.client_id = ?';
+      masterQuery += 'sm.client_id = $2';
       masterParams.push(clientId);
     } else {
       masterQuery += 'sm.client_id IS NULL';
@@ -202,9 +203,9 @@ router.get('/:id', async (req, res) => {
 
     const [details] = await db.execute(`
       SELECT sd.*, i.name AS item_name, i.code AS item_code
-      FROM sales_detail sd
+      FROM sales_details sd
       JOIN items i ON sd.item_id = i.item_id
-      WHERE sd.sales_id = ?
+      WHERE sd.sales_id = $1
     `, [salesId]);
 
     res.json({
@@ -229,10 +230,10 @@ router.delete('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    let queryExist = 'SELECT * FROM sales_master WHERE sales_id = ? AND ';
+    let queryExist = 'SELECT * FROM sales_master WHERE sales_id = $1 AND ';
     let paramsExist = [salesId];
     if (clientId) {
-      queryExist += 'client_id = ?';
+      queryExist += 'client_id = $2';
       paramsExist.push(clientId);
     } else {
       queryExist += 'client_id IS NULL';
@@ -243,10 +244,10 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Invoice not found' });
     }
 
-    let deleteQuery = 'DELETE FROM sales_master WHERE sales_id = ? AND ';
+    let deleteQuery = 'DELETE FROM sales_master WHERE sales_id = $1 AND ';
     let deleteParams = [salesId];
     if (clientId) {
-      deleteQuery += 'client_id = ?';
+      deleteQuery += 'client_id = $2';
       deleteParams.push(clientId);
     } else {
       deleteQuery += 'client_id IS NULL';
