@@ -132,7 +132,11 @@ router.get('/', async (req, res) => {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      if (isSuperAdmin) {
+        query += '1=1';
+      } else {
+        query += 'client_id IS NULL';
+      }
     }
     query += ' ORDER BY vendor_id ASC';
 

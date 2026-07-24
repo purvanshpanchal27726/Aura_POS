@@ -74,14 +74,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Glassmorphic Toast Notification Alert Generator
   const showToast = (title, message, type = 'info', duration = 4500) => {
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
     let iconName = 'info';
     if (type === 'success') iconName = 'check_circle';
     if (type === 'warning') iconName = 'warning';
     if (type === 'danger') iconName = 'error';
+
+    // Live update top persistent status bar
+    updateSystemStatus(`${title}: ${message}`, iconName, type === 'danger');
+
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
     
     toast.innerHTML = `
       <div class="toast-icon"><span class="material-icons">${iconName}</span></div>
@@ -526,6 +530,31 @@ document.addEventListener('DOMContentLoaded', () => {
   let allUsersList = [];
   let permissionsData = [];
   let allRolesList = [];
+
+  const updateSystemStatus = (msg, icon = 'check_circle', isError = false) => {
+    const toastElem = document.getElementById('systemStatusToast');
+    const toastIcon = document.getElementById('statusToastIcon');
+    const toastMsg = document.getElementById('statusToastMessage');
+    const toastTime = document.getElementById('statusToastTimestamp');
+
+    if (toastMsg) {
+      toastMsg.textContent = msg;
+    }
+    if (toastIcon) {
+      toastIcon.textContent = icon;
+      toastIcon.style.color = isError ? '#ef4444' : '#4ade80';
+    }
+    if (toastElem) {
+      toastElem.style.background = isError 
+        ? 'linear-gradient(90deg, #450a0a, #1e1b4b)' 
+        : 'linear-gradient(90deg, #0f172a, #1e293b)';
+      toastElem.style.borderColor = isError ? '#991b1b' : '#334155';
+    }
+    if (toastTime) {
+      const now = new Date();
+      toastTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+  };
 
   const configureUserFormState = (userToEdit = null) => {
     const isSuperAdminUser = activeUser && (activeUser.role_id == 1 || activeUser.role_id === '1') && (!activeUser.client_id || activeUser.client_id === 'null' || activeUser.client_id === 'undefined');

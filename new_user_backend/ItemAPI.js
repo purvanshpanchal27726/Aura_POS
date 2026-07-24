@@ -79,6 +79,13 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'This item is already added.' });
     }
 
+    let finalCode = code && String(code).trim() !== '' ? String(code).trim() : null;
+    if (!finalCode) {
+      const [countRes] = await db.execute('SELECT COUNT(*) AS count FROM items');
+      const nextNum = parseInt(countRes[0].count) + 1;
+      finalCode = `ITM-${String(nextNum).padStart(3, '0')}`;
+    }
+
     const query = `
       INSERT INTO items (
         client_id, name, code, description, category_id, unit_id, tax_id, 
@@ -90,7 +97,7 @@ router.post('/', async (req, res) => {
     const values = [
       clientId,
       name,
-      code || null,
+      finalCode,
       description,
       category_id,
       unit_id,
@@ -149,7 +156,11 @@ router.get('/', async (req, res) => {
       query += 'i.client_id = $1';
       params.push(clientId);
     } else {
-      query += 'i.client_id IS NULL';
+      if (isSuperAdmin) {
+        query += '1=1';
+      } else {
+        query += 'i.client_id IS NULL';
+      }
     }
     query += ' ORDER BY i.item_id ASC';
 
