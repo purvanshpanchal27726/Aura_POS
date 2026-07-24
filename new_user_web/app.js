@@ -6195,6 +6195,236 @@ document.addEventListener('DOMContentLoaded', () => {
     btnExportCSV.addEventListener('click', exportReportToCSV);
   }
 
+  // --- Global Command Palette / Quick Search (Ctrl+K) Implementation ---
+  const cmdModal = document.getElementById('cmdPaletteModal');
+  const cmdInput = document.getElementById('cmdSearchInput');
+  const cmdResults = document.getElementById('cmdResultsList');
+  const btnQuickSearch = document.getElementById('btnQuickSearch');
+  let cmdActiveFilter = 'all';
+  let cmdSelectedIndex = 0;
+  let cmdCurrentMatches = [];
+
+  const openCommandPalette = () => {
+    if (!cmdModal) return;
+    cmdModal.style.display = 'flex';
+    if (cmdInput) {
+      cmdInput.value = '';
+      cmdInput.focus();
+    }
+    renderCommandResults();
+  };
+
+  const closeCommandPalette = () => {
+    if (cmdModal) {
+      cmdModal.style.display = 'none';
+    }
+  };
+
+  if (btnQuickSearch) {
+    btnQuickSearch.addEventListener('click', openCommandPalette);
+  }
+
+  // Keyboard shortcut Ctrl+K or Cmd+K
+  window.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      if (cmdModal && cmdModal.style.display === 'flex') {
+        closeCommandPalette();
+      } else {
+        openCommandPalette();
+      }
+    }
+    if (e.key === 'Escape' && cmdModal && cmdModal.style.display === 'flex') {
+      closeCommandPalette();
+    }
+  });
+
+  if (cmdModal) {
+    cmdModal.addEventListener('click', (e) => {
+      if (e.target === cmdModal) closeCommandPalette();
+    });
+  }
+
+  // Filter Chip Tabs Click Listeners
+  const filterChips = document.querySelectorAll('.cmd-filter-chip');
+  filterChips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      filterChips.forEach(c => {
+        c.classList.remove('active');
+        c.style.background = 'var(--card-bg)';
+        c.style.borderColor = 'var(--border-color)';
+        c.style.color = 'var(--text-secondary)';
+      });
+      chip.classList.add('active');
+      chip.style.background = 'var(--primary-color)';
+      chip.style.borderColor = 'var(--primary-color)';
+      chip.style.color = 'white';
+
+      cmdActiveFilter = chip.getAttribute('data-filter');
+      renderCommandResults();
+    });
+  });
+
+  const renderCommandResults = () => {
+    if (!cmdResults) return;
+    const query = cmdInput ? cmdInput.value.trim().toLowerCase() : '';
+    let matches = [];
+
+    // 1. Modules / Navigation Screens
+    if (cmdActiveFilter === 'all' || cmdActiveFilter === 'screen') {
+      Object.keys(screens).forEach(key => {
+        const s = screens[key];
+        const title = s.title || key;
+        if (!query || title.toLowerCase().includes(query)) {
+          matches.push({
+            type: 'screen',
+            icon: s.menu?.querySelector('.material-icons')?.textContent || 'apps',
+            title: title,
+            subtitle: 'Module / Navigation Screen',
+            action: () => switchScreen(key)
+          });
+        }
+      });
+    }
+
+    // 2. Items
+    if (cmdActiveFilter === 'all' || cmdActiveFilter === 'item') {
+      if (Array.isArray(allItems)) {
+        allItems.forEach(item => {
+          const name = item.name || '';
+          const code = item.code || '';
+          const catName = item.category_name || '';
+          if (!query || name.toLowerCase().includes(query) || code.toLowerCase().includes(query) || catName.toLowerCase().includes(query)) {
+            matches.push({
+              type: 'item',
+              icon: 'inventory_2',
+              title: `${name} ${code ? `(${code})` : ''}`,
+              subtitle: `Stock Item • ₹${parseFloat(item.sales_price || 0).toFixed(2)} • ${catName || 'General'}`,
+              action: () => {
+                switchScreen('item');
+                editItem(item.item_id);
+              }
+            });
+          }
+        });
+      }
+    }
+
+    // 3. Customers
+    if (cmdActiveFilter === 'all' || cmdActiveFilter === 'customer') {
+      if (Array.isArray(allCustomers)) {
+        allCustomers.forEach(cust => {
+          const fullName = `${cust.first_name || ''} ${cust.last_name || ''}`.trim();
+          const phone = cust.phone_1 || '';
+          const email = cust.email || '';
+          if (!query || fullName.toLowerCase().includes(query) || phone.includes(query) || email.toLowerCase().includes(query)) {
+            matches.push({
+              type: 'customer',
+              icon: 'contact_mail',
+              title: fullName,
+              subtitle: `Customer • ${phone || 'No phone'} • ${cust.city || ''}`,
+              action: () => {
+                switchScreen('customer_listing');
+                editCustomer(cust.customer_id);
+              }
+            });
+          }
+        });
+      }
+    }
+
+    // 4. Users
+    if (cmdActiveFilter === 'all' || cmdActiveFilter === 'user') {
+      if (Array.isArray(allUsersList)) {
+        allUsersList.forEach(u => {
+          const username = u.username || '';
+          const roleName = u.role_name || 'User';
+          const name = `${u.first_name || ''} ${u.last_name || ''}`.trim();
+          if (!query || username.toLowerCase().includes(query) || name.toLowerCase().includes(query) || roleName.toLowerCase().includes(query)) {
+            matches.push({
+              type: 'user',
+              icon: 'person',
+              title: `${username} (${name})`,
+              subtitle: `System User • Role: ${roleName}`,
+              action: () => {
+                switchScreen('user_listing');
+                editUser(u.user_id);
+              }
+            });
+          }
+        });
+      }
+    }
+
+    cmdCurrentMatches = matches.slice(0, 30);
+    if (cmdSelectedIndex >= cmdCurrentMatches.length) cmdSelectedIndex = 0;
+
+    if (cmdCurrentMatches.length === 0) {
+      cmdResults.innerHTML = `
+        <div style="padding: 2rem; text-align: center; color: var(--text-secondary);">
+          <span class="material-icons" style="font-size: 2.5rem; color: var(--border-color); margin-bottom: 0.5rem;">search_off</span>
+          <div>No results found for "${query}"</div>
+        </div>
+      `;
+      return;
+    }
+
+    cmdResults.innerHTML = cmdCurrentMatches.map((m, idx) => `
+      <div class="cmd-item-row ${idx === cmdSelectedIndex ? 'selected' : ''}" data-index="${idx}" style="display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1.25rem; cursor: pointer; transition: background 0.15s ease; border-left: 3px solid ${idx === cmdSelectedIndex ? 'var(--primary-color)' : 'transparent'}; background: ${idx === cmdSelectedIndex ? 'var(--input-bg)' : 'transparent'};">
+        <div style="display: flex; align-items: center; gap: 0.85rem;">
+          <div style="width: 34px; height: 34px; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--primary-color);">
+            <span class="material-icons" style="font-size: 1.1rem;">${m.icon}</span>
+          </div>
+          <div>
+            <div style="font-weight: 600; color: var(--text-main); font-size: 0.92rem;">${m.title}</div>
+            <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px;">${m.subtitle}</div>
+          </div>
+        </div>
+        <span class="material-icons" style="font-size: 1.1rem; color: var(--text-secondary); opacity: ${idx === cmdSelectedIndex ? '1' : '0'}; transition: opacity 0.15s ease;">subdirectory_arrow_left</span>
+      </div>
+    `).join('');
+
+    const rows = cmdResults.querySelectorAll('.cmd-item-row');
+    rows.forEach(r => {
+      r.addEventListener('click', () => {
+        const idx = parseInt(r.getAttribute('data-index'));
+        if (cmdCurrentMatches[idx] && cmdCurrentMatches[idx].action) {
+          cmdCurrentMatches[idx].action();
+          closeCommandPalette();
+        }
+      });
+    });
+  };
+
+  if (cmdInput) {
+    cmdInput.addEventListener('input', () => {
+      cmdSelectedIndex = 0;
+      renderCommandResults();
+    });
+
+    cmdInput.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (cmdCurrentMatches.length > 0) {
+          cmdSelectedIndex = (cmdSelectedIndex + 1) % cmdCurrentMatches.length;
+          renderCommandResults();
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (cmdCurrentMatches.length > 0) {
+          cmdSelectedIndex = (cmdSelectedIndex - 1 + cmdCurrentMatches.length) % cmdCurrentMatches.length;
+          renderCommandResults();
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (cmdCurrentMatches[cmdSelectedIndex] && cmdCurrentMatches[cmdSelectedIndex].action) {
+          cmdCurrentMatches[cmdSelectedIndex].action();
+          closeCommandPalette();
+        }
+      }
+    });
+  }
+
   // --- App Mode / Restaurant POS Mode State and Listeners ---
   const settingAppMode = document.getElementById('settingAppMode');
   let appMode = localStorage.getItem('appMode') || 'retail';
