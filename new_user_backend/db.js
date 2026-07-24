@@ -297,6 +297,17 @@ db.initDb = async function() {
 
     try {
       await this.query(`
+        ALTER TABLE items ADD COLUMN IF NOT EXISTS pos_item SMALLINT DEFAULT 0;
+        ALTER TABLE items ADD COLUMN IF NOT EXISTS show_in_restaurant SMALLINT DEFAULT 0;
+        ALTER TABLE items ADD COLUMN IF NOT EXISTS is_hotel_service SMALLINT DEFAULT 0;
+      `);
+      console.log('[DB Migrate] Verified items.pos_item, show_in_restaurant, is_hotel_service columns.');
+    } catch (err) {
+      console.log('[DB Migrate] items ALTER statement noticed:', err.message);
+    }
+
+    try {
+      await this.query(`
         CREATE TABLE IF NOT EXISTS license_info (
           license_id SERIAL PRIMARY KEY,
           license_key VARCHAR(255) NOT NULL,

@@ -531,6 +531,25 @@ document.addEventListener('DOMContentLoaded', () => {
   let permissionsData = [];
   let allRolesList = [];
 
+  let statusToastTimeout = null;
+
+  const dismissSystemStatusToast = () => {
+    const toastElem = document.getElementById('systemStatusToast');
+    if (toastElem) {
+      toastElem.style.opacity = '0';
+      setTimeout(() => {
+        if (toastElem.style.opacity === '0') {
+          toastElem.style.display = 'none';
+        }
+      }, 350);
+    }
+  };
+
+  const btnDismissToast = document.getElementById('btnDismissStatusToast');
+  if (btnDismissToast) {
+    btnDismissToast.addEventListener('click', dismissSystemStatusToast);
+  }
+
   const updateSystemStatus = (msg, icon = 'check_circle', isError = false) => {
     const toastElem = document.getElementById('systemStatusToast');
     const toastIcon = document.getElementById('statusToastIcon');
@@ -545,6 +564,10 @@ document.addEventListener('DOMContentLoaded', () => {
       toastIcon.style.color = isError ? '#ef4444' : '#4ade80';
     }
     if (toastElem) {
+      toastElem.style.display = 'flex';
+      setTimeout(() => {
+        toastElem.style.opacity = '1';
+      }, 10);
       toastElem.style.background = isError 
         ? 'linear-gradient(90deg, #450a0a, #1e1b4b)' 
         : 'linear-gradient(90deg, #0f172a, #1e293b)';
@@ -554,6 +577,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const now = new Date();
       toastTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
+
+    // Auto-dismiss notification after 4 seconds
+    if (statusToastTimeout) {
+      clearTimeout(statusToastTimeout);
+    }
+    statusToastTimeout = setTimeout(() => {
+      dismissSystemStatusToast();
+    }, 4000);
   };
 
   const configureUserFormState = (userToEdit = null) => {
