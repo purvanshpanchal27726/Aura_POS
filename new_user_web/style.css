@@ -1672,6 +1672,200 @@ body.print-report-active th, body.print-report-active td {
   font-size: 14px !important;
   font-family: inherit !important;
   padding: 0.5in !important;
+.support-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--primary-color);
+}
+
+.support-icon-wrapper {
+  width: 52px;
+  height: 52px;
+  background-color: rgba(79, 70, 229, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.support-icon-wrapper .material-icons {
+  color: var(--primary-color);
+  font-size: 28px;
+}
+
+.support-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.support-details h3 {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+}
+
+.support-details p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.support-action {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.support-card:hover .support-action {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+/* License & AMC Management Styles */
+.license-status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+}
+.license-status-badge.active {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+.license-status-badge.due {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+.license-status-badge.expired {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Pay options in checkout */
+.pay-option {
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  background: var(--input-bg);
+  transition: all 0.2s ease;
+}
+.pay-option.active {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 2px var(--primary-color) inset;
+}
+
+/* Cash Flow Dashboard styling */
+.cashflow-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+.cashflow-card {
+  padding: 1.25rem;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  text-align: center;
+}
+.cashflow-card .label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+.cashflow-card .value {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+.cashflow-card.inflow .value {
+  color: #10b981;
+}
+.cashflow-card.outflow .value {
+  color: #ef4444;
+}
+.cashflow-card.net .value {
+  color: var(--primary-color);
+}
+.cashflow-card.balance .value {
+  color: var(--text-main);
+}
+
+.cashflow-charts-container {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+@media (max-width: 900px) {
+  .cashflow-charts-container {
+    grid-template-columns: 1fr;
+  }
+}
+.cashflow-chart-wrapper {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+.cashflow-chart-wrapper h4 {
+  margin: 0 0 1rem 0;
+  color: var(--text-main);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}/* Print dimensions styling for Small, Medium, Large sizes */
+#printReceiptContent.receipt-small {
+  width: 58mm !important;
+  font-size: 10px !important;
+  font-family: monospace !important;
+  padding: 0.1in !important;
+}
+#printReceiptContent.receipt-small table {
+  font-size: 10px !important;
+}
+
+#printReceiptContent.receipt-medium {
+  width: 80mm !important;
+  font-size: 12px !important;
+  font-family: monospace !important;
+  padding: 0.2in !important;
+}
+#printReceiptContent.receipt-medium table {
+  font-size: 12px !important;
+}
+
+#printReceiptContent.receipt-large {
+  width: 100% !important;
+  max-width: 210mm !important; /* A4 width */
+  font-size: 14px !important;
+  font-family: inherit !important;
+  padding: 0.5in !important;
 }
 #printReceiptContent.receipt-large table {
   font-size: 14px !important;
@@ -1686,5 +1880,128 @@ body.print-report-active th, body.print-report-active td {
   }
   body:not(.print-report-active) #printReceiptContent.receipt-large {
     width: 210mm !important;
+  }
+}
+
+/* ==========================================================================
+   Mobile Adaptive Layout & Touch Optimization System
+   ========================================================================== */
+
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 64px;
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-color);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 9999;
+  justify-content: space-around;
+  align-items: center;
+  backdrop-filter: blur(12px);
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 500;
+  gap: 2px;
+  cursor: pointer;
+  width: 20%;
+  height: 100%;
+  transition: all 0.2s ease;
+}
+
+.mobile-nav-item.active {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.mobile-nav-item span.material-icons {
+  font-size: 1.35rem;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-bottom: 64px;
+  }
+
+  .mobile-bottom-nav {
+    display: flex;
+  }
+
+  .container {
+    padding: 0.75rem !important;
+  }
+
+  .app-bar {
+    padding: 0.5rem 0.75rem !important;
+  }
+  #appBarTitle {
+    font-size: 1.05rem !important;
+  }
+  #btnQuickSearch {
+    margin-left: 0.25rem !important;
+    padding: 0.3rem 0.5rem !important;
+  }
+  #btnQuickSearch .search-label,
+  #btnQuickSearch kbd {
+    display: none !important;
+  }
+  .theme-select-container {
+    display: none !important;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+
+  .form-grid.col-2,
+  .form-grid.col-3,
+  .form-grid.col-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  .modal-card {
+    width: 95% !important;
+    padding: 1.25rem !important;
+    border-radius: 12px !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+  }
+
+  .table-responsive,
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  button, .btn {
+    min-height: 42px;
+    touch-action: manipulation;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr !important;
+  }
+  #loggedInUsername {
+    max-width: 75px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.8rem !important;
   }
 }

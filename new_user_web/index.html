@@ -3060,6 +3060,30 @@
     </div>
   </div>
 
+  <!-- Mobile Native Bottom Navigation Bar (Active on <= 768px screens) -->
+  <nav id="mobileBottomNav" class="mobile-bottom-nav">
+    <button type="button" class="mobile-nav-item active" data-target="dashboard">
+      <span class="material-icons">dashboard</span>
+      <span>Home</span>
+    </button>
+    <button type="button" class="mobile-nav-item" data-target="pos">
+      <span class="material-icons">receipt_long</span>
+      <span>Billing</span>
+    </button>
+    <button type="button" class="mobile-nav-item" data-target="item">
+      <span class="material-icons">inventory_2</span>
+      <span>Items</span>
+    </button>
+    <button type="button" class="mobile-nav-item" data-target="reports">
+      <span class="material-icons">analytics</span>
+      <span>Reports</span>
+    </button>
+    <button type="button" class="mobile-nav-item" data-target="drawer">
+      <span class="material-icons">menu</span>
+      <span>Menu</span>
+    </button>
+  </nav>
+
   <div id="toastContainer" style="z-index: 99999 !important; position: fixed;"></div>
   <script src="app.js"></script>
 </body>

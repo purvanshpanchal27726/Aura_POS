@@ -894,6 +894,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // Sync Mobile Bottom Navigation Active Tab State
+    updateMobileNavActiveState(screenName);
+
     // Automatically retract the drawer overlay upon tab click
     if (sideDrawer) {
       sideDrawer.style.display = 'none';
@@ -8746,6 +8749,33 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.fetchLicenseDetails = fetchLicenseDetails;
+
+  // --- Mobile Adaptive Navigation Bar Controller ---
+  const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
+  mobileNavItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const target = item.getAttribute('data-target');
+      mobileNavItems.forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+
+      if (target === 'drawer') {
+        if (sideDrawer) sideDrawer.style.display = 'flex';
+      } else {
+        switchScreen(target);
+      }
+    });
+  });
+
+  const updateMobileNavActiveState = (screenKey) => {
+    mobileNavItems.forEach(item => {
+      const target = item.getAttribute('data-target');
+      if (target === screenKey) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  };
 
   // Session Check initialization
   checkAuthSession();
