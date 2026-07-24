@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
 <body>
   <!-- AMC Warning Banner -->
@@ -889,13 +890,16 @@
           <!-- JS will populate DatePickers and Category/Item/Customer/Vendor/User options dynamically -->
         </div>
 
-        <div class="form-actions" style="margin-top: 1.5rem; display: flex; gap: 0.75rem; justify-content: flex-start; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+        <div class="form-actions" style="margin-top: 1.5rem; display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: flex-start; border-top: 1px solid var(--border-color); padding-top: 1rem;">
           <button type="button" id="btnGenerateReport" class="btn btn-primary" style="padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: bold;">Generate Report</button>
           <button type="button" id="btnPrintReport" class="btn btn-secondary" style="padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: bold; display: flex; align-items: center; gap: 0.5rem;">
             <span class="material-icons" style="font-size: 18px;">print</span> Print Report
           </button>
-          <button type="button" id="btnExportCSV" class="btn btn-success" style="padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; background-color: #10b981; color: white; border: none;">
-            <span class="material-icons" style="font-size: 18px;">download</span> Export CSV
+          <button type="button" id="btnExportPDF" class="btn" style="padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; background-color: #ef4444; color: white; border: none; cursor: pointer;">
+            <span class="material-icons" style="font-size: 18px;">picture_as_pdf</span> Export PDF
+          </button>
+          <button type="button" id="btnExportCSV" class="btn btn-success" style="padding: 0.6rem 1.25rem; border-radius: 8px; font-weight: bold; display: flex; align-items: center; gap: 0.5rem; background-color: #10b981; color: white; border: none; cursor: pointer;">
+            <span class="material-icons" style="font-size: 18px;">file_download</span> Export Excel / CSV
           </button>
         </div>
       </div>

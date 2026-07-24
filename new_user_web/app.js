@@ -6118,6 +6118,79 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const exportReportToPDF = () => {
+    if (!reportsResultHeader || !reportsResultBody) return;
+    const rows = reportsResultBody.querySelectorAll('tr');
+    if (rows.length === 0 || reportsResultBody.querySelector('.empty-state')) {
+      showToast('Export Error', 'No report data available to export to PDF.', 'warning');
+      return;
+    }
+
+    const typeName = reportTypeSelect ? reportTypeSelect.options[reportTypeSelect.selectedIndex].text : 'Report';
+    const start = document.getElementById('filterStartDate')?.value || 'Start';
+    const end = document.getElementById('filterEndDate')?.value || 'End';
+    const dateStr = new Date().toISOString().split('T')[0];
+
+    const pdfContainer = document.createElement('div');
+    pdfContainer.style.padding = '20px';
+    pdfContainer.style.background = '#ffffff';
+    pdfContainer.style.color = '#0f172a';
+    pdfContainer.style.fontFamily = 'Helvetica, Arial, sans-serif';
+
+    pdfContainer.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px;">
+        <div>
+          <h2 style="margin: 0; color: #0f172a; font-size: 20px; font-weight: bold;">Vanshee POS System</h2>
+          <p style="margin: 4px 0 0 0; color: #64748b; font-size: 11px;">Official Business Report</p>
+        </div>
+        <div style="text-align: right;">
+          <h3 style="margin: 0; color: #2563eb; font-size: 16px; text-transform: uppercase;">${typeName}</h3>
+          <p style="margin: 4px 0 0 0; color: #64748b; font-size: 11px;">Period: ${start} to ${end} | Generated: ${new Date().toLocaleDateString()}</p>
+        </div>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 11px; margin-top: 10px;">
+        <thead>
+          <tr style="background-color: #f1f5f9; color: #0f172a; text-align: left;">
+            ${reportsResultHeader.innerHTML}
+          </tr>
+        </thead>
+        <tbody>
+          ${reportsResultBody.innerHTML}
+        </tbody>
+      </table>
+      <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 10px; color: #94a3b8; text-align: center;">
+        Generated automatically by Vanshee POS Management System
+      </div>
+    `;
+
+    if (typeof html2pdf !== 'undefined') {
+      const opt = {
+        margin:       0.4,
+        filename:     `Vanshee_POS_${reportTypeSelect?.value || 'report'}_${dateStr}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+      };
+      showToast('Exporting PDF', 'Generating styled PDF document...', 'info');
+      html2pdf().set(opt).from(pdfContainer).save().then(() => {
+        showToast('Export Success', 'PDF document exported successfully!', 'success');
+      });
+    } else {
+      const metaDate = document.getElementById('printReportMetaDate');
+      if (metaDate) {
+        metaDate.innerHTML = `Report: <strong>${typeName}</strong><br>Period: ${start} to ${end}<br>Exported: ${new Date().toLocaleString()}`;
+      }
+      document.body.classList.add('print-report-active');
+      window.print();
+      document.body.classList.remove('print-report-active');
+    }
+  };
+
+  const btnExportPDF = document.getElementById('btnExportPDF');
+  if (btnExportPDF) {
+    btnExportPDF.addEventListener('click', exportReportToPDF);
+  }
+
   if (btnExportCSV) {
     btnExportCSV.addEventListener('click', exportReportToCSV);
   }
