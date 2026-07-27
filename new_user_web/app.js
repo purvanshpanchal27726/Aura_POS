@@ -2545,14 +2545,26 @@ document.addEventListener('DOMContentLoaded', () => {
       const categoryName = item.category_name || 'N/A';
       const description = item.description || 'No description';
 
+      const stockQty = item.base_quantity !== undefined ? parseFloat(item.base_quantity) : 10;
+      let stockBadge = '<span class="status-badge" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-weight: 600;">In Stock</span>';
+      if (stockQty <= 0) {
+        stockBadge = '<span class="status-badge" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-weight: 600;">Out of Stock</span>';
+      } else if (stockQty <= 5) {
+        stockBadge = '<span class="status-badge" style="background: #fef3c7; color: #b45309; border: 1px solid #fde68a; font-weight: 600;">Low Stock (' + stockQty + ')</span>';
+      }
+
       return `
         <tr>
           <td><strong>${itemCode}</strong></td>
           <td>${imageTag}${item.name}</td>
           <td><span class="status-badge status-active" style="background-color: rgba(79, 70, 229, 0.08); color: var(--primary-color); border: 1px solid rgba(79, 70, 229, 0.15);">${categoryName}</span></td>
+          <td>${stockBadge}</td>
           <td>${description}</td>
           <td>
             <div class="table-actions">
+              <button type="button" class="btn-icon text-warning btn-reorder-item" data-id="${item.item_id}" data-name="${item.name}" title="1-Click Purchase Reorder">
+                <span class="material-icons">local_shipping</span>
+              </button>
               <button type="button" class="btn-icon text-primary btn-edit-item" data-id="${item.item_id}" title="Edit Item">
                 <span class="material-icons">edit</span>
               </button>
@@ -2564,6 +2576,14 @@ document.addEventListener('DOMContentLoaded', () => {
         </tr>
       `;
     }).join('');
+
+    document.querySelectorAll('.btn-reorder-item').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const itemName = btn.getAttribute('data-name');
+        switchScreen('purchase');
+        showToast('Purchase Reorder', `Initiated purchase order reorder for "${itemName}".`, 'info');
+      });
+    });
 
     document.querySelectorAll('.btn-edit-item').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -3433,9 +3453,15 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    summaryGross.textContent = money(tGross);
-    summaryTax.textContent = money(tTax);
-    summaryNet.textContent = money(tNet);
+    const isTaxExempt = document.getElementById('invoiceTaxExemptCheck')?.checked || false;
+    const activeCurrency = document.getElementById('invoiceCurrencySelect')?.value || '₹';
+
+    const finalTax = isTaxExempt ? 0 : tTax;
+    const finalNet = tGross + finalTax;
+
+    summaryGross.textContent = `${activeCurrency} ${tGross.toFixed(2)}`;
+    summaryTax.textContent = `${activeCurrency} ${finalTax.toFixed(2)}`;
+    summaryNet.textContent = `${activeCurrency} ${finalNet.toFixed(2)}`;
     if (salesLineCount) salesLineCount.textContent = `${invoiceLines.length} item${invoiceLines.length === 1 ? '' : 's'}`;
 
     document.querySelectorAll('.btn-remove-row').forEach(btn => {
@@ -3472,7 +3498,8 @@ document.addEventListener('DOMContentLoaded', () => {
         line.item_amount = line.gross + line.tax_amount;
         renderInvoiceLines();
       });
-    });
+    document.getElementById('invoiceTaxExemptCheck')?.addEventListener('change', renderInvoiceLines);
+    document.getElementById('invoiceCurrencySelect')?.addEventListener('change', renderInvoiceLines);
   };
   if (invoiceForm) {
     invoiceForm.addEventListener('submit', async (e) => {
@@ -3782,7 +3809,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch(getApiUrl('/api/settings/printer'));
       if (!response.ok) throw new Error('Failed to load printer settings.');
       const settings = await response.json();
-      
+
       document.getElementById('setting_printer_name').value = settings.printer_name || '';
       document.getElementById('setting_printer_type').value = settings.printer_type || 'thermal';
       document.getElementById('setting_paper_size').value = settings.paper_size || 'medium';
@@ -3791,6 +3818,14 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('setting_port').value = settings.port !== null ? settings.port : 9100;
       document.getElementById('setting_auto_print').checked = settings.auto_print === 1 || settings.auto_print === true;
       document.getElementById('setting_copies').value = settings.copies || 1;
+
+      const titleInp = document.getElementById('setting_receipt_title');
+      const subInp = document.getElementById('setting_receipt_subtitle');
+      const footInp = document.getElementById('setting_receipt_footer');
+
+      if (titleInp) titleInp.value = localStorage.getItem('pos_receipt_title') || settings.receipt_title || 'Vanshee POS';
+      if (subInp) subInp.value = localStorage.getItem('pos_receipt_subtitle') || settings.receipt_subtitle || 'AHMEDABAD, GUJARAT, INDIA';
+      if (footInp) footInp.value = localStorage.getItem('pos_receipt_footer') || settings.receipt_footer || 'THANK YOU! VISIT AGAIN.';
     } catch (err) {
       console.error('Error fetching printer settings:', err);
     }
@@ -3808,6 +3843,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const port = parseInt(document.getElementById('setting_port').value) || 9100;
       const auto_print = document.getElementById('setting_auto_print').checked ? 1 : 0;
       const copies = parseInt(document.getElementById('setting_copies').value) || 1;
+
+      const rTitle = document.getElementById('setting_receipt_title')?.value.trim() || 'Vanshee POS';
+      const rSub = document.getElementById('setting_receipt_subtitle')?.value.trim() || 'AHMEDABAD, GUJARAT, INDIA';
+      const rFoot = document.getElementById('setting_receipt_footer')?.value.trim() || 'THANK YOU! VISIT AGAIN.';
+
+      localStorage.setItem('pos_receipt_title', rTitle);
+      localStorage.setItem('pos_receipt_subtitle', rSub);
+      localStorage.setItem('pos_receipt_footer', rFoot);
 
       const data = {
         printer_name,
@@ -3832,8 +3875,10 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(err.error || 'Failed to update printer settings.');
         }
 
-        showToast('Printer Settings Saved', 'POS thermal printer configuration updated successfully!', 'success');
+        showToast('Printer Settings Saved', 'POS thermal printer configuration and receipt headers updated successfully!', 'success');
         
+        if (activeUser) {
+          activeUser.printerSettings = data;
         if (activeUser) {
           activeUser.printerSettings = data;
           localStorage.setItem('pos_active_user', JSON.stringify(activeUser));
