@@ -1472,9 +1472,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch(getApiUrl('/api/customers'));
       if (!response.ok) throw new Error('Failed to fetch customers');
       allCustomers = await response.json();
+      localStorage.setItem('pos_cached_customers', JSON.stringify(allCustomers));
       renderCustomers(allCustomers);
     } catch (err) {
-      console.error(err);
+      console.warn('Offline fallback for customers:', err);
+      const cached = localStorage.getItem('pos_cached_customers');
+      if (cached) {
+        allCustomers = JSON.parse(cached);
+        renderCustomers(allCustomers);
+        showToast('Offline Mode', 'Loaded customer directory from local storage cache.', 'warning');
+      }
     }
   };
 
@@ -3496,12 +3503,68 @@ document.addEventListener('DOMContentLoaded', () => {
         openPrintReceipt(result.sales_id);
         fetchInvoiceSetup();
       } catch (err) {
-        alert(`Error: ${err.message}`);
+        if (!navigator.onLine || (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')))) {
+          saveOfflineInvoice(data);
+          showToast('Offline Mode', 'Invoice saved to offline queue. Will auto-sync when network reconnects!', 'warning');
+          fetchInvoiceSetup();
+        } else {
+          alert(`Error: ${err.message}`);
+        }
       }
     });
 
     document.getElementById('btnInvoiceClear').addEventListener('click', fetchInvoiceSetup);
   }
+
+  // --- Offline Invoices Queue & Auto-Sync Engine ---
+  const saveOfflineInvoice = (invoicePayload) => {
+    try {
+      const queue = JSON.parse(localStorage.getItem('pos_offline_invoices_queue') || '[]');
+      invoicePayload.offline_timestamp = new Date().toISOString();
+      queue.push(invoicePayload);
+      localStorage.setItem('pos_offline_invoices_queue', JSON.stringify(queue));
+    } catch (e) {
+      console.error('Error saving offline invoice:', e);
+    }
+  };
+
+  const syncOfflineInvoices = async () => {
+    try {
+      const queue = JSON.parse(localStorage.getItem('pos_offline_invoices_queue') || '[]');
+      if (queue.length === 0) return;
+
+      showToast('Network Restored', `Syncing ${queue.length} offline invoice(s)...`, 'info');
+      let syncedCount = 0;
+      const remainingQueue = [];
+
+      for (const inv of queue) {
+        try {
+          const res = await fetch(getApiUrl('/api/sales'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(inv)
+          });
+          if (res.ok) {
+            syncedCount++;
+          } else {
+            remainingQueue.push(inv);
+          }
+        } catch (err) {
+          remainingQueue.push(inv);
+        }
+      }
+
+      localStorage.setItem('pos_offline_invoices_queue', JSON.stringify(remainingQueue));
+      if (syncedCount > 0) {
+        showToast('Sync Complete', `Successfully auto-synced ${syncedCount} offline sales invoice(s)!`, 'success');
+      }
+    } catch (e) {
+      console.error('Error auto-syncing offline invoices:', e);
+    }
+  };
+
+  window.addEventListener('online', syncOfflineInvoices);
+  setTimeout(syncOfflineInvoices, 3500);
 
   // Receipt modal loader and printer
   const receiptModal = document.getElementById('receiptModal');
@@ -3546,11 +3609,43 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('rTax').textContent = `₹${parseFloat(invoice.tax).toFixed(2)}`;
       document.getElementById('rNet').textContent = `₹${parseFloat(invoice.total).toFixed(2)}`;
 
+      currentReceiptInvoice = invoice;
       if (receiptModal) receiptModal.style.display = 'flex';
     } catch (err) {
       alert(`Error loading receipt: ${err.message}`);
     }
   };
+
+  let currentReceiptInvoice = null;
+  const btnReceiptWhatsApp = document.getElementById('btnReceiptWhatsApp');
+  const btnReceiptEmail = document.getElementById('btnReceiptEmail');
+
+  if (btnReceiptWhatsApp) {
+    btnReceiptWhatsApp.addEventListener('click', () => {
+      if (!currentReceiptInvoice) return;
+      const custName = currentReceiptInvoice.customer_name || 'Customer';
+      const billNo = currentReceiptInvoice.sales_bill_no || '--';
+      const total = parseFloat(currentReceiptInvoice.total || 0).toFixed(2);
+      const text = encodeURIComponent(`Hello ${custName},\nThank you for shopping with Vanshee POS!\nYour Sales Invoice #${billNo} for ₹${total} has been generated.\nHave a great day!`);
+      
+      const phone = (currentReceiptInvoice.customer_phone || '').replace(/\D/g, '');
+      const waUrl = phone ? `https://wa.me/91${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+      window.open(waUrl, '_blank');
+    });
+  }
+
+  if (btnReceiptEmail) {
+    btnReceiptEmail.addEventListener('click', () => {
+      if (!currentReceiptInvoice) return;
+      const custName = currentReceiptInvoice.customer_name || 'Customer';
+      const billNo = currentReceiptInvoice.sales_bill_no || '--';
+      const total = parseFloat(currentReceiptInvoice.total || 0).toFixed(2);
+      const subject = encodeURIComponent(`Invoice #${billNo} - Vanshee POS`);
+      const body = encodeURIComponent(`Dear ${custName},\n\nThank you for your transaction with Vanshee POS System.\nInvoice Number: ${billNo}\nTotal Amount Paid: ₹${total}\n\nThank you for your business!`);
+      const email = currentReceiptInvoice.customer_email || '';
+      window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
+    });
+  }
 
   if (receiptModalClose) receiptModalClose.addEventListener('click', () => receiptModal.style.display = 'none');
   if (btnReceiptClose) btnReceiptClose.addEventListener('click', () => receiptModal.style.display = 'none');
