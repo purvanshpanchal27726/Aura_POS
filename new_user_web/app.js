@@ -923,6 +923,17 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    // Highlight Mobile Bottom Navbar active tab
+    const mobileNavItems = document.querySelectorAll('#mobileBottomNav .mobile-nav-item');
+    mobileNavItems.forEach(item => {
+      const target = item.getAttribute('data-target');
+      if (target === screenName) {
+        item.classList.add('active');
+      } else if (target !== 'drawer') {
+        item.classList.remove('active');
+      }
+    });
+
     // Sync Mobile Bottom Navigation Active Tab State
     updateMobileNavActiveState(screenName);
 
@@ -6725,7 +6736,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Keyboard shortcut Ctrl+K or Cmd+K
   window.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    const isK = e.key === 'k' || e.key === 'K' || e.code === 'KeyK';
+    if ((e.ctrlKey || e.metaKey) && isK) {
       e.preventDefault();
       if (cmdModal && cmdModal.style.display === 'flex') {
         closeCommandPalette();
@@ -6743,6 +6755,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.target === cmdModal) closeCommandPalette();
     });
   }
+
+  // Mobile Bottom Navigation Bar Click Handlers
+  const mobileNavItems = document.querySelectorAll('#mobileBottomNav .mobile-nav-item');
+  mobileNavItems.forEach(item => {
+    item.addEventListener('click', () => {
+      const target = item.getAttribute('data-target');
+      if (target === 'drawer') {
+        const drawer = document.getElementById('drawer');
+        if (drawer) drawer.classList.toggle('open');
+      } else if (target) {
+        switchScreen(target);
+      }
+    });
+  });
 
   // Filter Chip Tabs Click Listeners
   const filterChips = document.querySelectorAll('.cmd-filter-chip');
