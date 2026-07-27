@@ -994,17 +994,56 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // --- Master Table Live Filtering & Pagination Engine ---
+  const paginateDataset = (list, currentPage, pageSize = 10) => {
+    const total = list.length;
+    const totalPages = Math.ceil(total / pageSize) || 1;
+    const safePage = Math.min(Math.max(1, currentPage), totalPages);
+    const start = (safePage - 1) * pageSize;
+    const end = Math.min(start + pageSize, total);
+    const items = list.slice(start, end);
+    return { items, total, start: total > 0 ? start + 1 : 0, end, safePage, totalPages };
+  };
+
+  let userSearchQuery = '';
+  let userCurrentPage = 1;
+
   const renderUsers = (users) => {
-    if (users.length === 0) {
+    if (!userTableBody) return;
+
+    const query = userSearchQuery.trim().toLowerCase();
+    const filtered = users.filter(u => {
+      const name = `${u.first_name || ''} ${u.middle_name || ''} ${u.last_name || ''}`.toLowerCase();
+      const username = (u.username || '').toLowerCase();
+      const role = (u.role_name || '').toLowerCase();
+      const city = (u.city || '').toLowerCase();
+      const phone = (u.phone_1 || '').toLowerCase();
+      return !query || name.includes(query) || username.includes(query) || role.includes(query) || city.includes(query) || phone.includes(query);
+    });
+
+    const { items, total, start, end, safePage, totalPages } = paginateDataset(filtered, userCurrentPage, 10);
+    userCurrentPage = safePage;
+
+    const infoElem = document.getElementById('userPaginationInfo');
+    const pageNumElem = document.getElementById('userPageNum');
+    const prevBtn = document.getElementById('btnUserPrevPage');
+    const nextBtn = document.getElementById('btnUserNextPage');
+
+    if (infoElem) infoElem.textContent = `Showing ${start} to ${end} of ${total} entries`;
+    if (pageNumElem) pageNumElem.textContent = `Page ${safePage} of ${totalPages}`;
+    if (prevBtn) prevBtn.disabled = safePage <= 1;
+    if (nextBtn) nextBtn.disabled = safePage >= totalPages;
+
+    if (items.length === 0) {
       userTableBody.innerHTML = `
         <tr>
-          <td colspan="7" class="empty-state">No users registered yet.</td>
+          <td colspan="7" class="empty-state">${query ? `No matching users found for "${query}"` : 'No users registered yet.'}</td>
         </tr>
       `;
       return;
     }
 
-    userTableBody.innerHTML = users.map(user => {
+    userTableBody.innerHTML = items.map(user => {
       const name = [user.first_name, user.middle_name, user.last_name]
         .filter(part => part && part.trim() !== '')
         .join(' ');
@@ -1039,6 +1078,29 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
   };
+
+  const userSearchInput = document.getElementById('userSearchInput');
+  if (userSearchInput) {
+    userSearchInput.addEventListener('input', (e) => {
+      userSearchQuery = e.target.value;
+      userCurrentPage = 1;
+      renderUsers(allUsersList);
+    });
+  }
+  const btnUserPrevPage = document.getElementById('btnUserPrevPage');
+  if (btnUserPrevPage) {
+    btnUserPrevPage.addEventListener('click', () => {
+      userCurrentPage--;
+      renderUsers(allUsersList);
+    });
+  }
+  const btnUserNextPage = document.getElementById('btnUserNextPage');
+  if (btnUserNextPage) {
+    btnUserNextPage.addEventListener('click', () => {
+      userCurrentPage++;
+      renderUsers(allUsersList);
+    });
+  }
 
   userTableBody.addEventListener('click', async (e) => {
     const editBtn = e.target.closest('.btn-edit');
@@ -1303,17 +1365,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  let custSearchQuery = '';
+  let custCurrentPage = 1;
+
   const renderCustomers = (list) => {
-    if (list.length === 0) {
+    if (!customerTableBody) return;
+
+    const query = custSearchQuery.trim().toLowerCase();
+    const filtered = list.filter(c => {
+      const fullName = `${c.first_name || ''} ${c.last_name || ''}`.toLowerCase();
+      const phone = (c.phone_1 || '').toLowerCase();
+      const email = (c.email || '').toLowerCase();
+      const city = (c.city || '').toLowerCase();
+      return !query || fullName.includes(query) || phone.includes(query) || email.includes(query) || city.includes(query);
+    });
+
+    const { items, total, start, end, safePage, totalPages } = paginateDataset(filtered, custCurrentPage, 10);
+    custCurrentPage = safePage;
+
+    const infoElem = document.getElementById('custPaginationInfo');
+    const pageNumElem = document.getElementById('custPageNum');
+    const prevBtn = document.getElementById('btnCustPrevPage');
+    const nextBtn = document.getElementById('btnCustNextPage');
+
+    if (infoElem) infoElem.textContent = `Showing ${start} to ${end} of ${total} entries`;
+    if (pageNumElem) pageNumElem.textContent = `Page ${safePage} of ${totalPages}`;
+    if (prevBtn) prevBtn.disabled = safePage <= 1;
+    if (nextBtn) nextBtn.disabled = safePage >= totalPages;
+
+    if (items.length === 0) {
       customerTableBody.innerHTML = `
         <tr>
-          <td colspan="6" class="empty-state">No customers registered yet.</td>
+          <td colspan="6" class="empty-state">${query ? `No matching customers found for "${query}"` : 'No customers registered yet.'}</td>
         </tr>
       `;
       return;
     }
 
-    customerTableBody.innerHTML = list.map(c => {
+    customerTableBody.innerHTML = items.map(c => {
       const fullName = `${c.first_name} ${c.last_name}`;
       const address = c.address_2 ? `${c.address_1}, ${c.address_2}` : c.address_1;
       const location = `${c.city}, ${c.country}`;
@@ -1340,6 +1429,29 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
   };
+
+  const custSearchInput = document.getElementById('custSearchInput');
+  if (custSearchInput) {
+    custSearchInput.addEventListener('input', (e) => {
+      custSearchQuery = e.target.value;
+      custCurrentPage = 1;
+      renderCustomers(allCustomers);
+    });
+  }
+  const btnCustPrevPage = document.getElementById('btnCustPrevPage');
+  if (btnCustPrevPage) {
+    btnCustPrevPage.addEventListener('click', () => {
+      custCurrentPage--;
+      renderCustomers(allCustomers);
+    });
+  }
+  const btnCustNextPage = document.getElementById('btnCustNextPage');
+  if (btnCustNextPage) {
+    btnCustNextPage.addEventListener('click', () => {
+      custCurrentPage++;
+      renderCustomers(allCustomers);
+    });
+  }
 
   if (customerTableBody) {
     customerTableBody.addEventListener('click', async (e) => {
@@ -2269,17 +2381,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  let itemSearchQuery = '';
+  let itemCurrentPage = 1;
+
   const renderItems = (list) => {
-    if (list.length === 0) {
+    if (!itemTableBody) return;
+
+    const query = itemSearchQuery.trim().toLowerCase();
+    const filtered = list.filter(item => {
+      const name = (item.name || '').toLowerCase();
+      const code = (item.code || '').toLowerCase();
+      const catName = (item.category_name || '').toLowerCase();
+      const desc = (item.description || '').toLowerCase();
+      return !query || name.includes(query) || code.includes(query) || catName.includes(query) || desc.includes(query);
+    });
+
+    const { items, total, start, end, safePage, totalPages } = paginateDataset(filtered, itemCurrentPage, 10);
+    itemCurrentPage = safePage;
+
+    const infoElem = document.getElementById('itemPaginationInfo');
+    const pageNumElem = document.getElementById('itemPageNum');
+    const prevBtn = document.getElementById('btnItemPrevPage');
+    const nextBtn = document.getElementById('btnItemNextPage');
+
+    if (infoElem) infoElem.textContent = `Showing ${start} to ${end} of ${total} entries`;
+    if (pageNumElem) pageNumElem.textContent = `Page ${safePage} of ${totalPages}`;
+    if (prevBtn) prevBtn.disabled = safePage <= 1;
+    if (nextBtn) nextBtn.disabled = safePage >= totalPages;
+
+    if (items.length === 0) {
       itemTableBody.innerHTML = `
         <tr>
-          <td colspan="5" class="empty-state">No items registered yet.</td>
+          <td colspan="5" class="empty-state">${query ? `No matching items found for "${query}"` : 'No items registered yet.'}</td>
         </tr>
       `;
       return;
     }
 
-    itemTableBody.innerHTML = list.map(item => {
+    itemTableBody.innerHTML = items.map(item => {
       const itemCode = item.code || 'N/A';
       const imageSrc = getItemImageSrc(item, 'thumb');
       const imageTag = imageSrc ? `<img src="${imageSrc}" class="item-table-image" alt="${item.name || 'Item image'}">` : '';
@@ -2306,7 +2445,6 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    // Bind action buttons
     document.querySelectorAll('.btn-edit-item').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const id = btn.getAttribute('data-id');
@@ -2321,6 +2459,29 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   };
+
+  const itemSearchInput = document.getElementById('itemSearchInput');
+  if (itemSearchInput) {
+    itemSearchInput.addEventListener('input', (e) => {
+      itemSearchQuery = e.target.value;
+      itemCurrentPage = 1;
+      renderItems(allItems);
+    });
+  }
+  const btnItemPrevPage = document.getElementById('btnItemPrevPage');
+  if (btnItemPrevPage) {
+    btnItemPrevPage.addEventListener('click', () => {
+      itemCurrentPage--;
+      renderItems(allItems);
+    });
+  }
+  const btnItemNextPage = document.getElementById('btnItemNextPage');
+  if (btnItemNextPage) {
+    btnItemNextPage.addEventListener('click', () => {
+      itemCurrentPage++;
+      renderItems(allItems);
+    });
+  }
 
   const editItem = async (id) => {
     try {
@@ -2641,12 +2802,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  let vendorSearchQuery = '';
+  let vendorCurrentPage = 1;
+
   const renderVendors = (list) => {
-    if (list.length === 0) {
-      vendorTableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No vendors registered yet.</td></tr>`;
+    if (!vendorTableBody) return;
+
+    const query = vendorSearchQuery.trim().toLowerCase();
+    const filtered = list.filter(v => {
+      const fullName = `${v.first_name || ''} ${v.last_name || ''}`.toLowerCase();
+      const company = (v.company || '').toLowerCase();
+      const phone = (v.phone_1 || '').toLowerCase();
+      const email = (v.email || '').toLowerCase();
+      const city = (v.city || '').toLowerCase();
+      return !query || fullName.includes(query) || company.includes(query) || phone.includes(query) || email.includes(query) || city.includes(query);
+    });
+
+    const { items, total, start, end, safePage, totalPages } = paginateDataset(filtered, vendorCurrentPage, 10);
+    vendorCurrentPage = safePage;
+
+    const infoElem = document.getElementById('vendorPaginationInfo');
+    const pageNumElem = document.getElementById('vendorPageNum');
+    const prevBtn = document.getElementById('btnVendorPrevPage');
+    const nextBtn = document.getElementById('btnVendorNextPage');
+
+    if (infoElem) infoElem.textContent = `Showing ${start} to ${end} of ${total} entries`;
+    if (pageNumElem) pageNumElem.textContent = `Page ${safePage} of ${totalPages}`;
+    if (prevBtn) prevBtn.disabled = safePage <= 1;
+    if (nextBtn) nextBtn.disabled = safePage >= totalPages;
+
+    if (items.length === 0) {
+      vendorTableBody.innerHTML = `<tr><td colspan="7" class="empty-state">${query ? `No matching vendors found for "${query}"` : 'No vendors registered yet.'}</td></tr>`;
       return;
     }
-    vendorTableBody.innerHTML = list.map(v => {
+
+    vendorTableBody.innerHTML = items.map(v => {
       const fullName = `${v.first_name} ${v.last_name}`;
       const address = v.address_2 ? `${v.address_1}, ${v.address_2}` : v.address_1;
       const location = `${v.city}, ${v.country}`;
@@ -2680,6 +2870,29 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', () => deleteVendor(btn.getAttribute('data-id')));
     });
   };
+
+  const vendorSearchInput = document.getElementById('vendorSearchInput');
+  if (vendorSearchInput) {
+    vendorSearchInput.addEventListener('input', (e) => {
+      vendorSearchQuery = e.target.value;
+      vendorCurrentPage = 1;
+      renderVendors(allVendors);
+    });
+  }
+  const btnVendorPrevPage = document.getElementById('btnVendorPrevPage');
+  if (btnVendorPrevPage) {
+    btnVendorPrevPage.addEventListener('click', () => {
+      vendorCurrentPage--;
+      renderVendors(allVendors);
+    });
+  }
+  const btnVendorNextPage = document.getElementById('btnVendorNextPage');
+  if (btnVendorNextPage) {
+    btnVendorNextPage.addEventListener('click', () => {
+      vendorCurrentPage++;
+      renderVendors(allVendors);
+    });
+  }
 
   const editVendor = (id) => {
     const v = allVendors.find(item => item.vendor_id == id);
