@@ -159,6 +159,10 @@
               <span class="material-icons">security</span>
               <span>Role Master</span>
             </li>
+            <li class="drawer-item" id="menuBarcodeStudio">
+              <span class="material-icons">qr_code_2</span>
+              <span>Barcode & Label Studio</span>
+            </li>
           </ul>
         </li>
         <li class="drawer-item" id="menuSettings">
@@ -3204,7 +3208,79 @@
     </button>
   </nav>
 
+    <!-- Screen 21: Barcode & Label Printing Studio -->
+    <div id="screenBarcodeStudio" class="screen-view" style="display: none;">
+      <section class="form-section card" style="max-width: 1000px; margin: 0 auto; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <span class="material-icons" style="font-size: 2rem; color: var(--primary-color);">qr_code_2</span>
+            <div>
+              <h2 style="margin: 0; font-size: 1.3rem; color: var(--text-main);">Barcode & Label Printing Studio</h2>
+              <p style="margin: 2px 0 0 0; font-size: 0.85rem; color: var(--text-secondary);">Design, preview, and print custom barcode stickers for stock items.</p>
+            </div>
+          </div>
+          <button type="button" id="btnPrintBarcodeLabels" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; font-weight: bold; border-radius: 20px; padding: 0.55rem 1.25rem;">
+            <span class="material-icons" style="font-size: 1.1rem;">print</span> Print Label Sheet
+          </button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+          
+          <!-- Label Configuration Options -->
+          <div style="background: var(--input-bg); padding: 1.25rem; border-radius: 10px; border: 1px solid var(--border-color);">
+            <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-main); margin-bottom: 1rem; font-weight: 700;">Label Configuration</h3>
+            
+            <div class="form-field" style="margin-bottom: 1rem;">
+              <label for="barcodeItemSelect" style="font-weight: 600; font-size: 0.85rem;">Select Stock Item <span class="required-star">*</span></label>
+              <select id="barcodeItemSelect" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 0.9rem;">
+                <option value="">-- Choose Item --</option>
+              </select>
+            </div>
+
+            <div class="form-field" style="margin-bottom: 1rem;">
+              <label for="barcodeType" style="font-weight: 600; font-size: 0.85rem;">Barcode Format</label>
+              <select id="barcodeType" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 0.9rem;">
+                <option value="CODE128">CODE128 (Standard Product Barcode)</option>
+                <option value="EAN13">EAN-13 (13-digit Retail Barcode)</option>
+                <option value="CODE39">CODE39 (Alphanumeric Barcode)</option>
+              </select>
+            </div>
+
+            <div class="form-field" style="margin-bottom: 1rem;">
+              <label for="barcodePrintQty" style="font-weight: 600; font-size: 0.85rem;">Print Label Quantity</label>
+              <input type="number" id="barcodePrintQty" value="12" min="1" max="500" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 0.9rem;">
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; border-top: 1px dashed var(--border-color); padding-top: 0.75rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; color: var(--text-main); font-weight: 500;">
+                <input type="checkbox" id="chkShowPrice" checked style="width: 16px; height: 16px;"> Show Sales Price (₹)
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; color: var(--text-main); font-weight: 500;">
+                <input type="checkbox" id="chkShowStoreName" checked style="width: 16px; height: 16px;"> Show Company Store Name
+              </label>
+            </div>
+          </div>
+
+          <!-- Live Sticker Label Preview Box -->
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--input-bg); padding: 1.5rem; border-radius: 10px; border: 1px solid var(--border-color);">
+            <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-main); margin-bottom: 1.25rem; font-weight: 700;">Live Label Sticker Preview</h3>
+            
+            <div id="barcodeStickerPreview" style="background: white; color: black; padding: 1rem 1.25rem; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 230px; text-align: center; border: 1px solid #cbd5e1;">
+              <div id="prevStoreName" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #1e293b; letter-spacing: 0.5px;">Vanshee POS</div>
+              <div id="prevItemName" style="font-size: 0.95rem; font-weight: 700; margin: 4px 0; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Select an item</div>
+              <div id="prevItemPrice" style="font-size: 1rem; font-weight: 800; color: #2563eb; margin-bottom: 4px;">₹0.00</div>
+              <div style="margin-top: 6px; display: flex; justify-content: center;" id="prevBarcodeBox">
+                <svg id="barcodeSvg" style="max-width: 100%; height: 50px;"></svg>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+    </div>
+
   <div id="toastContainer" style="z-index: 99999 !important; position: fixed;"></div>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

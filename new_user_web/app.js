@@ -522,6 +522,12 @@ document.addEventListener('DOMContentLoaded', () => {
       view: document.getElementById('screenLicense'),
       title: 'License & AMC Management',
       onTransition: () => fetchLicenseDetails()
+    },
+    'barcode_studio': {
+      menu: document.getElementById('menuBarcodeStudio'),
+      view: document.getElementById('screenBarcodeStudio'),
+      title: 'Barcode & Label Studio',
+      onTransition: () => initBarcodeStudio()
     }
   };
 
@@ -8021,7 +8027,103 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error(err);
     }
+  // --- Barcode & Label Printing Studio Logic ---
+  const initBarcodeStudio = async () => {
+    try {
+      if (allItems.length === 0) {
+        await fetchItems();
+      }
+      const select = document.getElementById('barcodeItemSelect');
+      if (select) {
+        select.innerHTML = '<option value="">-- Choose Item --</option>' +
+          allItems.map(i => `<option value="${i.item_id}">${i.name} ${i.code ? `(${i.code})` : ''}</option>`).join('');
+      }
+
+      updateBarcodePreview();
+    } catch (err) {
+      console.error('Error initializing barcode studio:', err);
+    }
   };
+
+  const updateBarcodePreview = () => {
+    const itemId = document.getElementById('barcodeItemSelect')?.value;
+    const item = allItems.find(i => i.item_id == itemId) || (allItems.length > 0 ? allItems[0] : null);
+
+    const storeNameEl = document.getElementById('prevStoreName');
+    const itemNameEl = document.getElementById('prevItemName');
+    const itemPriceEl = document.getElementById('prevItemPrice');
+    const chkPrice = document.getElementById('chkShowPrice')?.checked;
+    const chkStore = document.getElementById('chkShowStoreName')?.checked;
+    const barcodeType = document.getElementById('barcodeType')?.value || 'CODE128';
+
+    const storeTitle = localStorage.getItem('pos_receipt_title') || 'Vanshee POS';
+    if (storeNameEl) {
+      storeNameEl.textContent = storeTitle;
+      storeNameEl.style.display = chkStore ? 'block' : 'none';
+    }
+    if (itemPriceEl) itemPriceEl.style.display = chkPrice ? 'block' : 'none';
+
+    if (item) {
+      if (itemNameEl) itemNameEl.textContent = item.name;
+      if (itemPriceEl) itemPriceEl.textContent = `₹${parseFloat(item.sales_price || 0).toFixed(2)}`;
+      
+      const codeValue = item.code || `ITEM-${item.item_id}`;
+      try {
+        if (window.JsBarcode) {
+          JsBarcode('#barcodeSvg', codeValue, {
+            format: barcodeType === 'EAN13' ? 'EAN13' : 'CODE128',
+            width: 1.5,
+            height: 45,
+            displayValue: true,
+            fontSize: 12
+          });
+        }
+      } catch (e) {
+        console.warn('JsBarcode render error:', e);
+      }
+    } else {
+      if (itemNameEl) itemNameEl.textContent = 'Select an item';
+      if (itemPriceEl) itemPriceEl.textContent = '₹0.00';
+    }
+  };
+
+  const printBarcodeLabelsSheet = () => {
+    const qty = parseInt(document.getElementById('barcodePrintQty')?.value || '12');
+    const previewHtml = document.getElementById('barcodeStickerPreview')?.outerHTML;
+    if (!previewHtml) return;
+
+    const printWin = window.open('', '_blank');
+    printWin.document.write(`
+      <html>
+        <head>
+          <title>Print Barcode Label Sheet</title>
+          <style>
+            body { font-family: sans-serif; padding: 20px; margin: 0; }
+            .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 15px; }
+            @media print {
+              body { padding: 0; }
+              .grid { gap: 10px; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="grid">
+            ${Array(qty).fill(previewHtml).join('')}
+          </div>
+          <script>
+            setTimeout(() => { window.print(); window.close(); }, 500);
+          </script>
+        </body>
+      </html>
+    `);
+    printWin.document.close();
+  };
+
+  document.getElementById('barcodeItemSelect')?.addEventListener('change', updateBarcodePreview);
+  document.getElementById('barcodeType')?.addEventListener('change', updateBarcodePreview);
+  document.getElementById('chkShowPrice')?.addEventListener('change', updateBarcodePreview);
+  document.getElementById('chkShowStoreName')?.addEventListener('change', updateBarcodePreview);
+  document.getElementById('btnPrintBarcodeLabels')?.addEventListener('click', printBarcodeLabelsSheet);
 
   const renderHotelRooms = () => {
     const container = document.getElementById('roomGridContainer');
