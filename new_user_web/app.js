@@ -538,16 +538,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (toastElem) {
       toastElem.style.opacity = '0';
       setTimeout(() => {
-        if (toastElem.style.opacity === '0') {
-          toastElem.style.display = 'none';
-        }
-      }, 350);
+        toastElem.style.display = 'none';
+      }, 300);
     }
   };
 
-  const btnDismissToast = document.getElementById('btnDismissStatusToast');
-  if (btnDismissToast) {
-    btnDismissToast.addEventListener('click', dismissSystemStatusToast);
+  const systemStatusToastElem = document.getElementById('systemStatusToast');
+  if (systemStatusToastElem) {
+    systemStatusToastElem.addEventListener('click', dismissSystemStatusToast);
   }
 
   const updateSystemStatus = (msg, icon = 'check_circle', isError = false) => {
@@ -578,13 +576,13 @@ document.addEventListener('DOMContentLoaded', () => {
       toastTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
 
-    // Auto-dismiss notification after 4 seconds
+    // Auto-dismiss notification after 2.5 seconds
     if (statusToastTimeout) {
       clearTimeout(statusToastTimeout);
     }
     statusToastTimeout = setTimeout(() => {
       dismissSystemStatusToast();
-    }, 4000);
+    }, 2500);
   };
 
   const configureUserFormState = (userToEdit = null) => {
