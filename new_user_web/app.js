@@ -1225,7 +1225,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Validate email format matching Flutter emailReg checks
     const emailReg = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-    if (email1Input && !emailReg.test(email1Input.value)) {
+    if (email1Input && email1Input.value.trim() !== '' && !emailReg.test(email1Input.value)) {
       email1Input.setCustomValidity('Enter a valid email address');
       isValid = false;
     }
@@ -1508,7 +1508,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const emailReg = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
-      if (custEmailInput && !emailReg.test(custEmailInput.value)) {
+      const custEmailVal = custEmailInput ? custEmailInput.value.trim() : '';
+      if (custEmailInput && custEmailVal !== '' && !emailReg.test(custEmailVal)) {
         custEmailInput.setCustomValidity('Enter a valid email address');
         isValid = false;
       }
