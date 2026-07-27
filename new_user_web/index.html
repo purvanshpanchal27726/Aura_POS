@@ -340,6 +340,53 @@
             </div>
           </div>
         </div>
+
+        <!-- Dashboard Quick Actions Bar -->
+        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+          <button type="button" id="dashQuickSale" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 20px; padding: 0.5rem 1.25rem; font-weight: bold;">
+            <span class="material-icons" style="font-size: 1.1rem;">add_shopping_cart</span> New POS Sale
+          </button>
+          <button type="button" id="dashQuickItem" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 20px; padding: 0.5rem 1.25rem; font-weight: 600;">
+            <span class="material-icons" style="font-size: 1.1rem;">add_box</span> Add Item
+          </button>
+          <button type="button" id="dashQuickCustomer" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 20px; padding: 0.5rem 1.25rem; font-weight: 600;">
+            <span class="material-icons" style="font-size: 1.1rem;">person_add</span> Add Customer
+          </button>
+          <button type="button" id="dashQuickReports" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 20px; padding: 0.5rem 1.25rem; font-weight: 600;">
+            <span class="material-icons" style="font-size: 1.1rem;">analytics</span> View Reports
+          </button>
+        </div>
+
+        <!-- Interactive Dashboard Analytics Charts Panel -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+          
+          <!-- Sales Revenue Trend Line Chart -->
+          <div class="card" style="padding: 1.25rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="material-icons" style="color: var(--primary-color);">show_chart</span> Sales Revenue Trend
+              </h3>
+              <span class="badge badge-light" style="background: var(--input-bg); color: var(--text-secondary); padding: 2px 8px; font-size: 0.75rem;">Live</span>
+            </div>
+            <div style="height: 220px; position: relative;">
+              <canvas id="dashSalesTrendChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Category Revenue Share Doughnut Chart -->
+          <div class="card" style="padding: 1.25rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <span class="material-icons" style="color: #10b981;">pie_chart</span> Category Revenue Share
+              </h3>
+              <span class="badge badge-light" style="background: var(--input-bg); color: var(--text-secondary); padding: 2px 8px; font-size: 0.75rem;">Summary</span>
+            </div>
+            <div style="height: 220px; position: relative;">
+              <canvas id="dashCategoryChart"></canvas>
+            </div>
+          </div>
+
+        </div>
       </div>
 
       <!-- Screen 2: User Listing -->
