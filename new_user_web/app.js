@@ -7845,7 +7845,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('kdsGridContainer');
     if (!container) return;
 
-    const filterVal = document.getElementById('kdsDeptFilter').value;
+    const filterElem = document.getElementById('kdsDeptFilter');
+    const filterVal = filterElem ? filterElem.value : 'ALL';
     const filteredQueue = kdsQueue.filter(item => filterVal === 'ALL' || item.kitchen_dept === filterVal);
 
     if (filteredQueue.length === 0) {
@@ -8015,7 +8016,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="card room-card" style="padding: 1.5rem; text-align: center; border-radius: 12px; border: 1.5px solid ${statusColor}; background: var(--card-bg);">
           <span class="material-icons" style="font-size: 3rem; color: ${statusColor}; margin-bottom: 0.5rem;">bed</span>
           <h3 style="margin: 0; font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Room ${r.room_no}</h3>
-          <p style="margin: 4px 0; font-size: 0.85rem; color: var(--text-muted);">${r.room_type} • ₹${parseFloat(r.price_per_night).toFixed(2)}/night</p>
+          <p style="margin: 4px 0; font-size: 0.85rem; color: var(--text-muted);">${r.room_type} • ₹${parseFloat(r.price_per_night || 0).toFixed(2)}/night</p>
           <div style="margin-top: 0.75rem; font-weight: 700; font-size: 0.85rem; text-transform: uppercase; color: ${statusColor};">${r.status}</div>
           
           <div style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: center;">
