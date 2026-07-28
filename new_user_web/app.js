@@ -4525,7 +4525,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+        const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s timeout for cloud cold starts
 
         const response = await fetch(getApiUrl('/api/users/login'), {
           method: 'POST',
