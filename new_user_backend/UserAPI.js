@@ -342,7 +342,7 @@ router.post('/login', async (req, res) => {
       FROM users u 
       LEFT JOIN roles r ON u.role_id = r.role_id 
       LEFT JOIN clients c ON u.client_id = c.client_id
-      WHERE u.username = ?
+      WHERE LOWER(u.username) = LOWER(?)
     `;
     const [rows] = await db.execute(query, [username]);
     if (rows.length === 0) {
@@ -350,7 +350,7 @@ router.post('/login', async (req, res) => {
     }
 
     const user = rows[0];
-    if (user.username !== username) {
+    if (user.username.toLowerCase() !== username.toLowerCase()) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 

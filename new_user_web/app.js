@@ -4401,17 +4401,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const amcBanner = document.getElementById('amcWarningBanner');
 
     if (storedUser) {
-      activeUser = JSON.parse(storedUser);
+      try {
+        activeUser = JSON.parse(storedUser);
+      } catch (e) {
+        console.error('Error parsing stored user session:', e);
+        localStorage.removeItem('pos_active_user');
+        localStorage.removeItem('pos_auth_token');
+        activeUser = null;
+        if (loginOverlay) loginOverlay.style.display = 'flex';
+        return;
+      }
       
       // Enforce license validation if present
-      if (activeUser.license) {
+      if (activeUser && activeUser.license) {
         const lic = activeUser.license;
         if (lic.status === 'Expired' || lic.status === 'Suspended') {
           if (lockoutOverlay) {
             lockoutOverlay.style.display = 'flex';
-            document.getElementById('lockoutClientName').textContent = activeUser.client_name || 'Client Company';
-            document.getElementById('lockoutLicenseKey').textContent = lic.license_key || 'N/A';
-            document.getElementById('lockoutExpiryDate').textContent = lic.valid_to ? new Date(lic.valid_to).toLocaleDateString() : 'N/A';
+            const nameEl = document.getElementById('lockoutClientName');
+            const keyEl = document.getElementById('lockoutLicenseKey');
+            const dateEl = document.getElementById('lockoutExpiryDate');
+            if (nameEl) nameEl.textContent = activeUser.client_name || 'Client Company';
+            if (keyEl) keyEl.textContent = lic.license_key || 'N/A';
+            if (dateEl) dateEl.textContent = lic.valid_to ? new Date(lic.valid_to).toLocaleDateString() : 'N/A';
           }
           if (amcBanner) amcBanner.style.display = 'none';
         } else {
@@ -4428,13 +4440,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (loginOverlay) loginOverlay.style.display = 'none';
-      if (loggedInUsername) loggedInUsername.textContent = activeUser.username;
+      if (loggedInUsername) loggedInUsername.textContent = (activeUser && activeUser.username) ? activeUser.username : 'User';
       
-      // Load app stats and data
-      fetchPermissionsAndUsers();
-      fetchDashboardStats();
-      fetchUsers();
-      fetchLicenseDetails();
+      // Load app stats and data safely
+      fetchPermissionsAndUsers().catch(e => console.warn('Permissions fetch warning:', e));
+      fetchDashboardStats().catch(e => console.warn('Dashboard stats warning:', e));
+      fetchUsers().catch(e => console.warn('Users fetch warning:', e));
+      fetchLicenseDetails().catch(e => console.warn('License details warning:', e));
       switchScreen('dashboard');
     } else {
       activeUser = null;
