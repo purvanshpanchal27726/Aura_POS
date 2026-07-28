@@ -3514,6 +3514,8 @@ document.addEventListener('DOMContentLoaded', () => {
         line.item_amount = line.gross + line.tax_amount;
         renderInvoiceLines();
       });
+    });
+
     document.getElementById('invoiceTaxExemptCheck')?.addEventListener('change', renderInvoiceLines);
     document.getElementById('invoiceCurrencySelect')?.addEventListener('change', renderInvoiceLines);
   };
@@ -3893,8 +3895,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         showToast('Printer Settings Saved', 'POS thermal printer configuration and receipt headers updated successfully!', 'success');
         
-        if (activeUser) {
-          activeUser.printerSettings = data;
         if (activeUser) {
           activeUser.printerSettings = data;
           localStorage.setItem('pos_active_user', JSON.stringify(activeUser));
@@ -8038,6 +8038,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error(err);
     }
+  };
+
   // --- Barcode & Label Printing Studio Logic ---
   const initBarcodeStudio = async () => {
     try {
@@ -9385,33 +9387,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.fetchLicenseDetails = fetchLicenseDetails;
-
-  // --- Mobile Adaptive Navigation Bar Controller ---
-  const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-  mobileNavItems.forEach(item => {
-    item.addEventListener('click', () => {
-      const target = item.getAttribute('data-target');
-      mobileNavItems.forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-
-      if (target === 'drawer') {
-        if (sideDrawer) sideDrawer.style.display = 'flex';
-      } else {
-        switchScreen(target);
-      }
-    });
-  });
-
-  const updateMobileNavActiveState = (screenKey) => {
-    mobileNavItems.forEach(item => {
-      const target = item.getAttribute('data-target');
-      if (target === screenKey) {
-        item.classList.add('active');
-      } else {
-        item.classList.remove('active');
-      }
-    });
-  };
 
   // Session Check initialization
   checkAuthSession();
