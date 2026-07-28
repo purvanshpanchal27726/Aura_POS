@@ -661,6 +661,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const hasModulePermission = (moduleId) => {
     if (!moduleId) return true;
     if (!activeUser) return false;
+    if (isAdminRole()) return true;
+    if (Array.isArray(activeUser.clientModules) && activeUser.clientModules.includes('ALL')) return true;
     if (!permissionsData.length) return false;
 
     const roleId = activeUser.role_id;
@@ -671,7 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const checkScreenPermission = (screenName) => hasModulePermission(moduleForScreen(screenName));
 
   const applyNavigationPermissions = () => {
-    if (!activeUser || !permissionsData.length) return;
+    if (!activeUser) return;
     const moduleMenus = {
       1: [document.getElementById('menuUserListing')],
       2: [document.getElementById('menuCustomerListing')],
@@ -939,9 +941,6 @@ document.addEventListener('DOMContentLoaded', () => {
         item.classList.remove('active');
       }
     });
-
-    // Sync Mobile Bottom Navigation Active Tab State
-    updateMobileNavActiveState(screenName);
 
     // Automatically retract the drawer overlay upon tab click
     if (sideDrawer) {
