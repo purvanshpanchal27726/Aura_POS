@@ -1,4 +1,31 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Global Application State Variables (Declared at top to prevent TDZ ReferenceErrors)
+  let activeUser = null;
+  let allUsersList = [];
+  let permissionsData = [];
+  let allRolesList = [];
+  let allCustomers = [];
+  let allUnits = [];
+  let allTaxes = [];
+  let allCategories = [];
+  let allItems = [];
+  let allVendors = [];
+  let allPOs = [];
+  let poCartItems = [];
+  let allInventory = [];
+  let allRooms = [];
+  let allGuests = [];
+  let allBookings = [];
+  let activeBookingServices = [];
+  
+  let allMenuCategories = [];
+  let allMenuItems = [];
+  let allRestOrders = [];
+  let allEmployees = [];
+  let allAttendance = [];
+  let allClients = [];
+  let statusToastTimeout = null;
+
   // ─────────────────────────────────────────────────────────────────────────
   // 🌐 PRODUCTION: Render.com backend URL
   // Update this if your Render service name changes.
@@ -532,12 +559,12 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // RBAC Global State variables
-  let activeUser = null;
-  let allUsersList = [];
-  let permissionsData = [];
-  let allRolesList = [];
+  
+  
+  
+  
 
-  let statusToastTimeout = null;
+  
 
   const dismissSystemStatusToast = () => {
     const toastElem = document.getElementById('systemStatusToast');
@@ -1486,7 +1513,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const customerModalClose = document.getElementById('customerModalClose');
   const btnCustomerCancel = document.getElementById('btnCustomerCancel');
 
-  let allCustomers = [];
+  
 
   async function fetchCustomers() {
     try {
@@ -1813,7 +1840,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const unitModalClose = document.getElementById('unitModalClose');
   const btnUnitCancel = document.getElementById('btnUnitCancel');
 
-  let allUnits = [];
+  
 
   async function fetchUnits() {
     try {
@@ -2033,7 +2060,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const taxModalClose = document.getElementById('taxModalClose');
   const btnTaxCancel = document.getElementById('btnTaxCancel');
 
-  let allTaxes = [];
+  
 
   async function fetchTaxes() {
     try {
@@ -2252,7 +2279,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const categoryModalClose = document.getElementById('categoryModalClose');
   const btnCategoryCancel = document.getElementById('btnCategoryCancel');
 
-  let allCategories = [];
+  
 
   async function fetchCategories() {
     try {
@@ -2474,7 +2501,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const itemModalClose = document.getElementById('itemModalClose');
   const btnItemCancel = document.getElementById('btnItemCancel');
 
-  let allItems = [];
+  
   let selectedItemImagePayload = null;
 
   const populateDropdowns = async () => {
@@ -2950,7 +2977,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const vendorModalClose = document.getElementById('vendorModalClose');
   const btnVendorCancel = document.getElementById('btnVendorCancel');
 
-  let allVendors = [];
+  
 
   async function fetchVendors() {
     try {
@@ -4143,7 +4170,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const clientModalClose = document.getElementById('clientModalClose');
   const btnClientCancel = document.getElementById('btnClientCancel');
 
-  let allClients = [];
+  
 
   async function fetchClients() {
     try {
@@ -4452,6 +4479,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fetchDashboardStats().catch(e => console.warn('Dashboard stats warning:', e));
       fetchUsers().catch(e => console.warn('Users fetch warning:', e));
       fetchLicenseDetails().catch(e => console.warn('License details warning:', e));
+      if (typeof initRestaurantSSE === 'function') initRestaurantSSE();
       switchScreen('dashboard');
     } else {
       activeUser = null;
@@ -7189,9 +7217,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // 🍴 RESTAURANT MODULE CLIENT LOGIC
   // ─────────────────────────────────────────────────────────────────────────
   let allTables = [];
-  let allMenuCategories = [];
-  let allMenuItems = [];
-  let allRestOrders = [];
+  
+  
+  
   let currentOrderItems = [];
 
   // --- TABLES MASTER ---
@@ -8017,21 +8045,13 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   };
 
-  const originalCheckAuthSession = checkAuthSession;
-  checkAuthSession = () => {
-    originalCheckAuthSession();
-    if (activeUser) {
-      initRestaurantSSE();
-    }
-  };
-
   // ─────────────────────────────────────────────────────────────────────────
   // 🏨 HOTEL MODULE CLIENT LOGIC [NEW]
   // ─────────────────────────────────────────────────────────────────────────
-  let allRooms = [];
-  let allGuests = [];
-  let allBookings = [];
-  let activeBookingServices = [];
+  
+  
+  
+  
 
   // --- ROOMS MANAGEMENT ---
   async function fetchHotelRooms() {
@@ -8674,9 +8694,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─────────────────────────────────────────────────────────────────────────
   // 📦 INVENTORY & PURCHASE ORDER CLIENT LOGIC [NEW]
   // ─────────────────────────────────────────────────────────────────────────
-  let allInventory = [];
-  let allPOs = [];
-  let poCartItems = [];
+  
+  
+  
 
   // --- INVENTORY MANAGEMENT ---
   async function fetchInventory() {
@@ -9132,8 +9152,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─────────────────────────────────────────────────────────────────────────
   // 👥 EMPLOYEE & STAFF ATTENDANCE CLIENT LOGIC [NEW]
   // ─────────────────────────────────────────────────────────────────────────
-  let allEmployees = [];
-  let allAttendance = [];
+  
+  
 
   // --- EMPLOYEE MANAGEMENT ---
   async function fetchEmployees() {
