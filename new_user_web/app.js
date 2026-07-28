@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allUsers = [];
 
-  const fetchUsers = async () => {
+  async function fetchUsers() {
     try {
       const response = await fetch(getApiUrl('/api/users'));
       if (!response.ok) throw new Error('Failed to fetch users');
@@ -654,8 +654,9 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const isAdminRole = () => {
-    const roleName = (activeUser?.role_name || activeUser?.role || '').toString().toLowerCase();
-    return activeUser?.role_id == 1 || roleName === 'admin';
+    if (!activeUser) return false;
+    const roleName = (activeUser.role_name || activeUser.role || '').toString().toLowerCase();
+    return activeUser.role_id == 1 || roleName.includes('admin') || roleName.includes('super');
   };
 
   const hasModulePermission = (moduleId) => {
@@ -670,7 +671,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return perm ? perm.allowed == 1 : false;
   };
 
-  const checkScreenPermission = (screenName) => hasModulePermission(moduleForScreen(screenName));
+  const checkScreenPermission = (screenName) => {
+    if (!activeUser) return false;
+    if (isAdminRole()) return true;
+    return hasModulePermission(moduleForScreen(screenName));
+  };
 
   const applyNavigationPermissions = () => {
     if (!activeUser) return;
@@ -847,7 +852,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  const fetchPermissionsAndUsers = async () => {
+  async function fetchPermissionsAndUsers() {
     try {
       const permRes = await fetch(getApiUrl('/api/permissions'));
       if (permRes.ok) {
@@ -1042,7 +1047,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const fetchDashboardStats = async () => {
+  async function fetchDashboardStats() {
     try {
       const response = await fetch(getApiUrl('/api/dashboard/stats'));
       if (!response.ok) throw new Error('Failed to fetch dashboard statistics');
@@ -1137,7 +1142,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let userSearchQuery = '';
   let userCurrentPage = 1;
 
-  const renderUsers = (users) => {
+  function renderUsers(users) {
     if (!userTableBody) return;
 
     const query = userSearchQuery.trim().toLowerCase();
@@ -1483,7 +1488,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allCustomers = [];
 
-  const fetchCustomers = async () => {
+  async function fetchCustomers() {
     try {
       const response = await fetch(getApiUrl('/api/customers'));
       if (!response.ok) throw new Error('Failed to fetch customers');
@@ -1504,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let custSearchQuery = '';
   let custCurrentPage = 1;
 
-  const renderCustomers = (list) => {
+  function renderCustomers(list) {
     if (!customerTableBody) return;
 
     const query = custSearchQuery.trim().toLowerCase();
@@ -1810,7 +1815,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allUnits = [];
 
-  const fetchUnits = async () => {
+  async function fetchUnits() {
     try {
       const response = await fetch(getApiUrl('/api/units'));
       if (!response.ok) throw new Error('Failed to fetch units');
@@ -1821,7 +1826,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderUnits = (list) => {
+  function renderUnits(list) {
     if (list.length === 0) {
       unitTableBody.innerHTML = `
         <tr>
@@ -2030,7 +2035,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allTaxes = [];
 
-  const fetchTaxes = async () => {
+  async function fetchTaxes() {
     try {
       const response = await fetch(getApiUrl('/api/taxes'));
       if (!response.ok) throw new Error('Failed to fetch taxes');
@@ -2041,7 +2046,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderTaxes = (list) => {
+  function renderTaxes(list) {
     if (list.length === 0) {
       taxTableBody.innerHTML = `
         <tr>
@@ -2249,7 +2254,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allCategories = [];
 
-  const fetchCategories = async () => {
+  async function fetchCategories() {
     try {
       const response = await fetch(getApiUrl('/api/categories'));
       if (!response.ok) throw new Error('Failed to fetch categories');
@@ -2260,7 +2265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderCategories = (list) => {
+  function renderCategories(list) {
     if (list.length === 0) {
       categoryTableBody.innerHTML = `
         <tr>
@@ -2505,7 +2510,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const fetchItems = async () => {
+  async function fetchItems() {
     try {
       await populateDropdowns();
       const response = await fetch(getApiUrl('/api/items'));
@@ -2520,7 +2525,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let itemSearchQuery = '';
   let itemCurrentPage = 1;
 
-  const renderItems = (list) => {
+  function renderItems(list) {
     if (!itemTableBody) return;
 
     const query = itemSearchQuery.trim().toLowerCase();
@@ -2947,7 +2952,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allVendors = [];
 
-  const fetchVendors = async () => {
+  async function fetchVendors() {
     try {
       const response = await fetch(getApiUrl('/api/vendors'));
       if (!response.ok) throw new Error('Failed to fetch vendors');
@@ -2961,7 +2966,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let vendorSearchQuery = '';
   let vendorCurrentPage = 1;
 
-  const renderVendors = (list) => {
+  function renderVendors(list) {
     if (!vendorTableBody) return;
 
     const query = vendorSearchQuery.trim().toLowerCase();
@@ -3244,7 +3249,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let invoiceBillCount = 1;
   let selectedSalesCategory = 'all';
 
-  const fetchInvoiceSetup = async () => {
+  async function fetchInvoiceSetup() {
     if (!invoiceDate || !invoiceCustomer || !adderItem || !invoiceBillNo) return;
     try {
       invoiceDate.value = new Date().toISOString().split('T')[0];
@@ -3353,7 +3358,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const renderSalesCategories = () => {
+  function renderSalesCategories() {
     if (!salesCategoryButtons) return;
     const categoryMap = new Map();
     availableItems.forEach(item => {
@@ -3378,7 +3383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  const renderSalesCatalog = () => {
+  function renderSalesCatalog() {
     if (!salesProductGrid) return;
     const filtered = getFilteredSalesItems();
     if (!filtered.length) {
@@ -3425,7 +3430,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const renderInvoiceLines = () => {
+  function renderInvoiceLines() {
     if (!invoiceTableBody || !summaryGross || !summaryTax || !summaryNet) return;
     if (invoiceLines.length === 0) {
       invoiceTableBody.innerHTML = `<tr><td colspan="5" class="empty-state">No items added to invoice yet.</td></tr>`;
@@ -3700,7 +3705,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const receiptTableBody = document.getElementById('receiptTableBody');
   const btnRefreshReceipts = document.getElementById('btnRefreshReceipts');
 
-  const fetchReceipts = async () => {
+  async function fetchReceipts() {
     try {
       const response = await fetch(getApiUrl('/api/sales'));
       if (!response.ok) throw new Error('Failed to load receipts.');
@@ -3711,7 +3716,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderReceipts = (list) => {
+  function renderReceipts(list) {
     if (list.length === 0) {
       receiptTableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No receipts found.</td></tr>`;
       return;
@@ -3751,7 +3756,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let matrixModules = [];
   let matrixPermissions = [];
 
-  const fetchPermissionMatrix = async () => {
+  async function fetchPermissionMatrix() {
     if (!permissionsTableBody) return;
     try {
       const response = await fetch(getApiUrl('/api/permissions'));
@@ -3766,7 +3771,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderPermissionMatrix = () => {
+  function renderPermissionMatrix() {
     if (!permissionsTableBody) return;
     permissionsTableBody.innerHTML = matrixRoles.map(role => {
       const getCheckbox = (mId) => {
@@ -3821,7 +3826,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 🖨️ PRINTER CONFIGURATION SETTINGS
   const printerSettingsForm = document.getElementById('printerSettingsForm');
 
-  const fetchPrinterSettings = async () => {
+  async function fetchPrinterSettings() {
     if (!printerSettingsForm) return;
     try {
       const response = await fetch(getApiUrl('/api/settings/printer'));
@@ -3930,7 +3935,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allRoles = [];
 
-  const fetchRoles = async () => {
+  async function fetchRoles() {
     try {
       const response = await fetch(getApiUrl('/api/roles'));
       if (!response.ok) throw new Error('Failed to fetch roles');
@@ -3941,7 +3946,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderRoles = (list) => {
+  function renderRoles(list) {
     if (list.length === 0) {
       roleTableBody.innerHTML = `
         <tr>
@@ -4140,7 +4145,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let allClients = [];
 
-  const fetchClients = async () => {
+  async function fetchClients() {
     try {
       const response = await fetch(getApiUrl('/api/clients'));
       if (!response.ok) throw new Error('Failed to fetch clients');
@@ -4161,7 +4166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     configureUserFormState();
   };
 
-  const renderClients = (list) => {
+  function renderClients(list) {
     if (!clientTableBody) return;
     if (list.length === 0) {
       clientTableBody.innerHTML = `
@@ -4568,7 +4573,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let purchaseBillCount = 1;
   let selectedPurchaseCategory = 'all';
 
-  const fetchPurchaseSetup = async () => {
+  async function fetchPurchaseSetup() {
     if (!purchaseDate || !purchaseVendor || !purchaseAdderItem || !purchaseBillNo) return;
     try {
       purchaseDate.value = new Date().toISOString().split('T')[0];
@@ -4674,7 +4679,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const renderPurchaseCategories = () => {
+  function renderPurchaseCategories() {
     if (!purchaseCategoryButtons) return;
     const categoryMap = new Map();
     availableItems.forEach(item => {
@@ -4699,7 +4704,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  const renderPurchaseCatalog = () => {
+  function renderPurchaseCatalog() {
     if (!purchaseProductGrid) return;
     const filtered = getFilteredPurchaseItems();
     if (!filtered.length) {
@@ -4746,7 +4751,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const renderPurchaseLines = () => {
+  function renderPurchaseLines() {
     if (!purchaseTableBody || !purchaseSummaryGross || !purchaseSummaryTax || !purchaseSummaryNet) return;
     if (purchaseLines.length === 0) {
       purchaseTableBody.innerHTML = `<tr><td colspan="5" class="empty-state">No items added to purchase order yet.</td></tr>`;
@@ -5411,7 +5416,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast('Export Success', 'Report successfully exported to CSV!', 'success');
   };
 
-  const renderReportFilters = (reportType) => {
+  function renderReportFilters(reportType) {
     if (!reportsFiltersContainer) return;
     const today = new Date().toISOString().split('T')[0];
     
@@ -5576,7 +5581,7 @@ document.addEventListener('DOMContentLoaded', () => {
     reportsFiltersContainer.innerHTML = html;
   };
 
-  const fetchReportsOverviewMetrics = async () => {
+  async function fetchReportsOverviewMetrics() {
     try {
       const [salesRes, purchaseRes, invRes, empRes] = await Promise.all([
         fetch(getApiUrl('/api/sales')),
@@ -6807,7 +6812,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  const renderCommandResults = () => {
+  function renderCommandResults() {
     if (!cmdResults) return;
     const query = cmdInput ? cmdInput.value.trim().toLowerCase() : '';
     let matches = [];
@@ -7052,7 +7057,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // --- LICENSE & AMC MANAGEMENT SECTION ---
-  const fetchLicenseDetails = async () => {
+  async function fetchLicenseDetails() {
     try {
       const response = await fetch(getApiUrl('/api/license'));
       if (!response.ok) throw new Error('Failed to load license details.');
@@ -7190,7 +7195,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentOrderItems = [];
 
   // --- TABLES MASTER ---
-  const fetchRestTables = async () => {
+  async function fetchRestTables() {
     try {
       const response = await fetch(getApiUrl('/api/restaurant/tables'));
       if (!response.ok) throw new Error('Failed to fetch restaurant tables');
@@ -7201,7 +7206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderRestTables = () => {
+  function renderRestTables() {
     const container = document.getElementById('tableGridContainer');
     if (!container) return;
     
@@ -7333,7 +7338,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnTabMenuCategories) btnTabMenuCategories.addEventListener('click', () => { activeMenuTab = 'categories'; loadRestMenuTab(); });
   if (btnTabMenuItems) btnTabMenuItems.addEventListener('click', () => { activeMenuTab = 'items'; loadRestMenuTab(); });
 
-  const fetchMenuCategories = async () => {
+  async function fetchMenuCategories() {
     try {
       const response = await fetch(getApiUrl('/api/restaurant/menu/categories'));
       if (!response.ok) throw new Error('Failed to fetch categories');
@@ -7344,7 +7349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderMenuCategories = () => {
+  function renderMenuCategories() {
     const tbody = document.getElementById('menuCategoryTableBody');
     if (!tbody) return;
     if (allMenuCategories.length === 0) {
@@ -7439,7 +7444,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // --- MENU ITEMS ---
-  const fetchMenuItems = async () => {
+  async function fetchMenuItems() {
     try {
       const response = await fetch(getApiUrl('/api/restaurant/menu/items'));
       if (!response.ok) throw new Error('Failed to fetch items');
@@ -7450,7 +7455,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderMenuItems = () => {
+  function renderMenuItems() {
     const tbody = document.getElementById('menuItemTableBody');
     if (!tbody) return;
     if (allMenuItems.length === 0) {
@@ -7577,7 +7582,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // --- RESTAURANT ORDERS & BILLING ---
-  const fetchRestOrders = async () => {
+  async function fetchRestOrders() {
     try {
       const response = await fetch(getApiUrl('/api/restaurant/orders'));
       if (!response.ok) throw new Error('Failed to fetch restaurant orders');
@@ -7588,7 +7593,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderRestOrders = () => {
+  function renderRestOrders() {
     const tbody = document.getElementById('restOrdersTableBody');
     if (!tbody) return;
     if (allRestOrders.length === 0) {
@@ -7873,7 +7878,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- KITCHEN DISPLAY SYSTEM (KDS) Queue ---
   let kdsQueue = [];
 
-  const fetchKdsQueue = async () => {
+  async function fetchKdsQueue() {
     try {
       const response = await fetch(getApiUrl('/api/restaurant/kitchen/queue'));
       if (!response.ok) throw new Error('Failed to fetch KDS queue');
@@ -7884,7 +7889,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderKdsQueue = () => {
+  function renderKdsQueue() {
     const container = document.getElementById('kdsGridContainer');
     if (!container) return;
 
@@ -8029,7 +8034,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let activeBookingServices = [];
 
   // --- ROOMS MANAGEMENT ---
-  const fetchHotelRooms = async () => {
+  async function fetchHotelRooms() {
     try {
       const response = await fetch(getApiUrl('/api/hotel/rooms'));
       if (!response.ok) throw new Error('Failed to fetch rooms');
@@ -8041,7 +8046,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // --- Barcode & Label Printing Studio Logic ---
-  const initBarcodeStudio = async () => {
+  async function initBarcodeStudio() {
     try {
       if (allItems.length === 0) {
         await fetchItems();
@@ -8138,7 +8143,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('chkShowStoreName')?.addEventListener('change', updateBarcodePreview);
   document.getElementById('btnPrintBarcodeLabels')?.addEventListener('click', printBarcodeLabelsSheet);
 
-  const renderHotelRooms = () => {
+  function renderHotelRooms() {
     const container = document.getElementById('roomGridContainer');
     if (!container) return;
 
@@ -8245,7 +8250,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // --- GUESTS REGISTRY ---
-  const fetchHotelGuests = async () => {
+  async function fetchHotelGuests() {
     try {
       const response = await fetch(getApiUrl('/api/hotel/guests'));
       if (!response.ok) throw new Error('Failed to fetch guests');
@@ -8256,7 +8261,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderHotelGuests = () => {
+  function renderHotelGuests() {
     const tbody = document.getElementById('hotelGuestsTableBody');
     if (!tbody) return;
 
@@ -8351,7 +8356,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // --- HOTEL STAY BOOKINGS ---
-  const fetchHotelBookings = async () => {
+  async function fetchHotelBookings() {
     try {
       const response = await fetch(getApiUrl('/api/hotel/bookings'));
       if (!response.ok) throw new Error('Failed to fetch bookings');
@@ -8362,7 +8367,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderHotelBookings = () => {
+  function renderHotelBookings() {
     const tbody = document.getElementById('hotelBookingsTableBody');
     if (!tbody) return;
 
@@ -8511,7 +8516,7 @@ document.addEventListener('DOMContentLoaded', () => {
     roomServiceModal.style.display = 'flex';
   };
 
-  const fetchRoomServices = async (bookingId) => {
+  async function fetchRoomServices(bookingId) {
     try {
       const response = await fetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`));
       activeBookingServices = await response.json();
@@ -8521,7 +8526,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderRoomServices = () => {
+  function renderRoomServices() {
     if (!roomServiceItemsBody) return;
     if (activeBookingServices.length === 0) {
       roomServiceItemsBody.innerHTML = `<tr><td colspan="4" style="text-align: center;" class="empty-state">No room services ordered for this stay yet.</td></tr>`;
@@ -8674,7 +8679,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let poCartItems = [];
 
   // --- INVENTORY MANAGEMENT ---
-  const fetchInventory = async () => {
+  async function fetchInventory() {
     try {
       const response = await fetch(getApiUrl('/api/inventory'));
       if (!response.ok) throw new Error('Failed to fetch stock inventory');
@@ -8685,7 +8690,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderInventory = () => {
+  function renderInventory() {
     const tbody = document.getElementById('inventoryTableBody');
     if (!tbody) return;
 
@@ -8841,7 +8846,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   // --- PURCHASE ORDERS (PO) MANAGEMENT ---
-  const fetchPurchaseOrders = async () => {
+  async function fetchPurchaseOrders() {
     try {
       const response = await fetch(getApiUrl('/api/purchase-orders'));
       if (!response.ok) throw new Error('Failed to fetch purchase orders');
@@ -8852,7 +8857,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderPurchaseOrders = () => {
+  function renderPurchaseOrders() {
     const tbody = document.getElementById('poTableBody');
     if (!tbody) return;
 
@@ -8954,7 +8959,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnPoCancel').addEventListener('click', () => { purchaseOrderModal.style.display = 'none'; });
   }
 
-  const renderPoCart = () => {
+  function renderPoCart() {
     if (!poItemsCartBody) return;
     if (poCartItems.length === 0) {
       poItemsCartBody.innerHTML = `<tr><td colspan="5" style="text-align: center;" class="empty-state">No line items in supply draft yet.</td></tr>`;
@@ -9131,7 +9136,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let allAttendance = [];
 
   // --- EMPLOYEE MANAGEMENT ---
-  const fetchEmployees = async () => {
+  async function fetchEmployees() {
     try {
       const response = await fetch(getApiUrl('/api/employees'));
       if (!response.ok) throw new Error('Failed to fetch employees list');
@@ -9142,7 +9147,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderEmployees = () => {
+  function renderEmployees() {
     const tbody = document.getElementById('employeesTableBody');
     if (!tbody) return;
 
@@ -9280,7 +9285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     attendanceDatePicker.addEventListener('change', () => fetchAttendance());
   }
 
-  const fetchAttendance = async () => {
+  async function fetchAttendance() {
     const date = attendanceDatePicker ? attendanceDatePicker.value : new Date().toISOString().substring(0, 10);
     try {
       const response = await fetch(getApiUrl(`/api/employees/attendance?date=${date}`));
@@ -9292,7 +9297,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const renderAttendance = () => {
+  function renderAttendance() {
     const tbody = document.getElementById('attendanceTableBody');
     if (!tbody) return;
 
