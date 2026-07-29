@@ -170,55 +170,39 @@ app.get('/api/realtime-events', (req, res) => {
 app.get('/api/dashboard/stats', async (req, res) => {
   try {
     const db = require('./db');
-    
-    let usersQuery = 'SELECT COUNT(*) AS count FROM users';
-    let usersParams = [];
-    let customersQuery = 'SELECT COUNT(*) AS count FROM customers';
-    let customersParams = [];
-    let itemsQuery = 'SELECT COUNT(*) AS count FROM items';
-    let itemsParams = [];
-    let categoriesQuery = 'SELECT COUNT(*) AS count FROM categories';
-    let categoriesParams = [];
-    let unitsQuery = 'SELECT COUNT(*) AS count FROM units';
-    let unitsParams = [];
-    let taxesQuery = 'SELECT COUNT(*) AS count FROM taxes';
-    let taxesParams = [];
+    const headerCid = req.headers['x-client-id'];
+    const userCid = (req.user && req.user.client_id !== undefined && req.user.client_id !== null) ? parseInt(req.user.client_id) : null;
+    const isSuperAdmin = !req.user || req.user.role_id === 1 || userCid === 0;
 
-    // Filter by client_id if not Super-Admin (or if client_id is explicitly provided)
-    const effectiveClientId = req.headers['x-client-id'] || req.query.client_id || (req.user ? req.user.client_id : null);
-    if (effectiveClientId) {
-      usersQuery += ' WHERE client_id = ?';
-      usersParams.push(effectiveClientId);
-      customersQuery += ' WHERE client_id = ?';
-      customersParams.push(effectiveClientId);
-      itemsQuery += ' WHERE client_id = ?';
-      itemsParams.push(effectiveClientId);
-      categoriesQuery += ' WHERE client_id = ?';
-      categoriesParams.push(effectiveClientId);
-      unitsQuery += ' WHERE client_id = ?';
-      unitsParams.push(effectiveClientId);
-      taxesQuery += ' WHERE client_id = ?';
-      taxesParams.push(effectiveClientId);
+    let cidFilter = '';
+    let params = [];
+
+    if (!isSuperAdmin) {
+      const targetCid = headerCid !== undefined ? parseInt(headerCid) : userCid;
+      if (!isNaN(targetCid)) {
+        cidFilter = ' WHERE client_id = ?';
+        params = [targetCid];
+      }
     }
 
-    const [users] = await db.execute(usersQuery, usersParams);
-    const [customers] = await db.execute(customersQuery, customersParams);
-    const [items] = await db.execute(itemsQuery, itemsParams);
-    const [categories] = await db.execute(categoriesQuery, categoriesParams);
-    const [units] = await db.execute(unitsQuery, unitsParams);
-    const [taxes] = await db.execute(taxesQuery, taxesParams);
+    const [users] = await db.execute(`SELECT COUNT(*) AS count FROM users${cidFilter}`, params);
+    const [customers] = await db.execute(`SELECT COUNT(*) AS count FROM customers${cidFilter}`, params);
+    const [items] = await db.execute(`SELECT COUNT(*) AS count FROM items${cidFilter}`, params);
+    const [categories] = await db.execute(`SELECT COUNT(*) AS count FROM categories${cidFilter}`, params);
+    const [units] = await db.execute(`SELECT COUNT(*) AS count FROM units${cidFilter}`, params);
+    const [taxes] = await db.execute(`SELECT COUNT(*) AS count FROM taxes${cidFilter}`, params);
 
-    // NOTE: PostgreSQL COUNT(*) returns a string — must parseInt()
     res.json({
-      users: parseInt(users[0].count) || 0,
-      customers: parseInt(customers[0].count) || 0,
-      items: parseInt(items[0].count) || 0,
-      categories: parseInt(categories[0].count) || 0,
-      units: parseInt(units[0].count) || 0,
-      taxes: parseInt(taxes[0].count) || 0
+      users: parseInt(users[0]?.count || 0),
+      customers: parseInt(customers[0]?.count || 0),
+      items: parseInt(items[0]?.count || 0),
+      categories: parseInt(categories[0]?.count || 0),
+      units: parseInt(units[0]?.count || 0),
+      taxes: parseInt(taxes[0]?.count || 0)
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error fetching dashboard stats:', err);
+    res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
   }
 });
 
