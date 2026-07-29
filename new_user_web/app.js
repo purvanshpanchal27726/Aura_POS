@@ -1,4 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // Centralized Authenticated Fetch Helper
+  const authFetch = (url, options = {}) => {
+    const token = localStorage.getItem('pos_auth_token');
+    const headers = { ...(options.headers || {}) };
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    const activeUserData = localStorage.getItem('pos_active_user');
+    if (activeUserData) {
+      try {
+        const u = JSON.parse(activeUserData);
+        if (u && u.client_id) headers['x-client-id'] = u.client_id;
+      } catch (e) {}
+    }
+    if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
+    return fetch(url, { ...options, headers });
+  };
   // Global Application State Variables (Declared at top to prevent TDZ ReferenceErrors)
   let activeUser = null;
   let allUsersList = [];
@@ -317,7 +336,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchUsers() {
     try {
-      const response = await fetch(getApiUrl('/api/users'));
+      const response = await authFetch(getApiUrl('/api/users'));
       if (!response.ok) throw new Error('Failed to fetch users');
       allUsers = await response.json();
       renderUsers(allUsers);
@@ -880,7 +899,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchPermissionsAndUsers() {
     try {
-      const permRes = await fetch(getApiUrl('/api/permissions'));
+      const permRes = await authFetch(getApiUrl('/api/permissions'));
       if (permRes.ok) {
         const data = await permRes.json();
         permissionsData = data.permissions;
@@ -893,7 +912,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Apply navigation permissions since permissionsData is loaded
         applyNavigationPermissions();
       }
-      const usersRes = await fetch(getApiUrl('/api/users'));
+      const usersRes = await authFetch(getApiUrl('/api/users'));
       if (usersRes.ok) {
         allUsersList = await usersRes.json();
         populateUserSelector();
@@ -988,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (ctxSales) {
         if (dashSalesChartObj) dashSalesChartObj.destroy();
 
-        const salesRes = await fetch(getApiUrl('/api/sales'));
+        const salesRes = await authFetch(getApiUrl('/api/sales'));
         const salesData = salesRes.ok ? await salesRes.json() : [];
         
         const last7Days = [];
@@ -1046,7 +1065,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (ctxCat) {
         if (dashCategoryChartObj) dashCategoryChartObj.destroy();
 
-        const catRes = await fetch(getApiUrl('/api/categories'));
+        const catRes = await authFetch(getApiUrl('/api/categories'));
         const catData = catRes.ok ? await catRes.json() : [];
         const catNames = Array.isArray(catData) ? catData.slice(0, 5).map(c => c.name || 'Category') : [];
         const catCounts = catNames.map((_, i) => (i + 1) * 20);
@@ -1075,7 +1094,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchDashboardStats() {
     try {
-      const response = await fetch(getApiUrl('/api/dashboard/stats'));
+      const response = await authFetch(getApiUrl('/api/dashboard/stats'));
       if (!response.ok) throw new Error('Failed to fetch dashboard statistics');
       const stats = await response.json();
 
@@ -1330,7 +1349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this user?')) return;
 
     try {
-      const response = await fetch(getApiUrl(`/api/users/${id}`), {
+      const response = await authFetch(getApiUrl(`/api/users/${id}`), {
         method: 'DELETE'
       });
 
@@ -1516,7 +1535,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchCustomers() {
     try {
-      const response = await fetch(getApiUrl('/api/customers'));
+      const response = await authFetch(getApiUrl('/api/customers'));
       if (!response.ok) throw new Error('Failed to fetch customers');
       allCustomers = await response.json();
       localStorage.setItem('pos_cached_customers', JSON.stringify(allCustomers));
@@ -1677,7 +1696,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this customer?')) return;
 
     try {
-      const response = await fetch(getApiUrl(`/api/customers/${id}`), {
+      const response = await authFetch(getApiUrl(`/api/customers/${id}`), {
         method: 'DELETE'
       });
 
@@ -1843,7 +1862,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchUnits() {
     try {
-      const response = await fetch(getApiUrl('/api/units'));
+      const response = await authFetch(getApiUrl('/api/units'));
       if (!response.ok) throw new Error('Failed to fetch units');
       allUnits = await response.json();
       renderUnits(allUnits);
@@ -1927,7 +1946,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this unit?')) return;
 
     try {
-      const response = await fetch(getApiUrl(`/api/units/${id}`), {
+      const response = await authFetch(getApiUrl(`/api/units/${id}`), {
         method: 'DELETE'
       });
 
@@ -2063,7 +2082,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchTaxes() {
     try {
-      const response = await fetch(getApiUrl('/api/taxes'));
+      const response = await authFetch(getApiUrl('/api/taxes'));
       if (!response.ok) throw new Error('Failed to fetch taxes');
       allTaxes = await response.json();
       renderTaxes(allTaxes);
@@ -2150,7 +2169,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this tax?')) return;
 
     try {
-      const response = await fetch(getApiUrl(`/api/taxes/${id}`), {
+      const response = await authFetch(getApiUrl(`/api/taxes/${id}`), {
         method: 'DELETE'
       });
 
@@ -2282,7 +2301,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchCategories() {
     try {
-      const response = await fetch(getApiUrl('/api/categories'));
+      const response = await authFetch(getApiUrl('/api/categories'));
       if (!response.ok) throw new Error('Failed to fetch categories');
       allCategories = await response.json();
       renderCategories(allCategories);
@@ -2366,7 +2385,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this category?')) return;
 
     try {
-      const response = await fetch(getApiUrl(`/api/categories/${id}`), {
+      const response = await authFetch(getApiUrl(`/api/categories/${id}`), {
         method: 'DELETE'
       });
 
@@ -2506,9 +2525,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const populateDropdowns = async () => {
     try {
       const [catsRes, unitsRes, taxesRes] = await Promise.all([
-        fetch(getApiUrl('/api/categories')),
-        fetch(getApiUrl('/api/units')),
-        fetch(getApiUrl('/api/taxes'))
+        authFetch(getApiUrl('/api/categories')),
+        authFetch(getApiUrl('/api/units')),
+        authFetch(getApiUrl('/api/taxes'))
       ]);
 
       const categories = catsRes.ok ? await catsRes.json() : [];
@@ -2539,7 +2558,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchItems() {
     try {
       await populateDropdowns();
-      const response = await fetch(getApiUrl('/api/items'));
+      const response = await authFetch(getApiUrl('/api/items'));
       if (!response.ok) throw new Error('Failed to fetch items');
       allItems = await response.json();
       renderItems(allItems);
@@ -2672,7 +2691,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const editItem = async (id) => {
     try {
-      const response = await fetch(getApiUrl(`/api/items/${id}`));
+      const response = await authFetch(getApiUrl(`/api/items/${id}`));
       if (!response.ok) throw new Error('Failed to fetch item details');
       const item = await response.json();
 
@@ -2758,7 +2777,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this item?')) return;
 
     try {
-      const response = await fetch(getApiUrl(`/api/items/${id}`), {
+      const response = await authFetch(getApiUrl(`/api/items/${id}`), {
         method: 'DELETE'
       });
 
@@ -2980,7 +2999,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchVendors() {
     try {
-      const response = await fetch(getApiUrl('/api/vendors'));
+      const response = await authFetch(getApiUrl('/api/vendors'));
       if (!response.ok) throw new Error('Failed to fetch vendors');
       allVendors = await response.json();
       renderVendors(allVendors);
@@ -3108,7 +3127,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const deleteVendor = async (id) => {
     if (!confirm('Are you sure you want to delete this vendor?')) return;
     try {
-      const response = await fetch(getApiUrl(`/api/vendors/${id}`), { method: 'DELETE' });
+      const response = await authFetch(getApiUrl(`/api/vendors/${id}`), { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete vendor');
       alert('Vendor deleted successfully!');
       fetchVendors();
@@ -3280,22 +3299,22 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       invoiceDate.value = new Date().toISOString().split('T')[0];
       
-      const custRes = await fetch(getApiUrl('/api/customers'));
+      const custRes = await authFetch(getApiUrl('/api/customers'));
       availableCustomers = custRes.ok ? await custRes.json() : [];
       invoiceCustomer.innerHTML = '<option value="">Choose Customer</option>' + 
         availableCustomers.map(c => `<option value="${c.customer_id}">${c.first_name} ${c.last_name}</option>`).join('');
 
-      const itemsRes = await fetch(getApiUrl('/api/items'));
+      const itemsRes = await authFetch(getApiUrl('/api/items'));
       availableItems = itemsRes.ok ? (await itemsRes.json()).filter(item => item.visible == 1 && item.active == 1) : [];
       adderItem.innerHTML = '<option value="">Select Item</option>' + 
         availableItems.map(i => `<option value="${i.item_id}">${i.name}</option>`).join('');
       renderSalesCategories();
       renderSalesCatalog();
 
-      const taxesRes = await fetch(getApiUrl('/api/taxes'));
+      const taxesRes = await authFetch(getApiUrl('/api/taxes'));
       availableTaxes = taxesRes.ok ? await taxesRes.json() : [];
 
-      const salesRes = await fetch(getApiUrl('/api/sales'));
+      const salesRes = await authFetch(getApiUrl('/api/sales'));
       const sales = salesRes.ok ? await salesRes.json() : [];
       invoiceBillCount = sales.length + 1;
       invoiceBillNo.textContent = invoiceBillCount;
@@ -3569,7 +3588,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = { customer_id, sales_date, sales_bill_no, gross, tax, total, created_by, payment_method, items: invoiceLines };
 
       try {
-        const response = await fetch(getApiUrl('/api/sales'), {
+        const response = await authFetch(getApiUrl('/api/sales'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -3615,7 +3634,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       for (const inv of queue) {
         try {
-          const res = await fetch(getApiUrl('/api/sales'), {
+          const res = await authFetch(getApiUrl('/api/sales'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(inv)
@@ -3651,7 +3670,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const openPrintReceipt = async (salesId) => {
     try {
-      const response = await fetch(getApiUrl(`/api/sales/${salesId}`));
+      const response = await authFetch(getApiUrl(`/api/sales/${salesId}`));
       if (!response.ok) throw new Error('Failed to fetch invoice details.');
       const invoice = await response.json();
 
@@ -3733,7 +3752,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchReceipts() {
     try {
-      const response = await fetch(getApiUrl('/api/sales'));
+      const response = await authFetch(getApiUrl('/api/sales'));
       if (!response.ok) throw new Error('Failed to load receipts.');
       const list = await response.json();
       renderReceipts(list);
@@ -3785,7 +3804,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchPermissionMatrix() {
     if (!permissionsTableBody) return;
     try {
-      const response = await fetch(getApiUrl('/api/permissions'));
+      const response = await authFetch(getApiUrl('/api/permissions'));
       if (!response.ok) throw new Error('Failed to load permissions config.');
       const data = await response.json();
       matrixRoles = data.roles;
@@ -3835,7 +3854,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       try {
-        const response = await fetch(getApiUrl('/api/permissions'), {
+        const response = await authFetch(getApiUrl('/api/permissions'), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updates)
@@ -3855,7 +3874,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchPrinterSettings() {
     if (!printerSettingsForm) return;
     try {
-      const response = await fetch(getApiUrl('/api/settings/printer'));
+      const response = await authFetch(getApiUrl('/api/settings/printer'));
       if (!response.ok) throw new Error('Failed to load printer settings.');
       const settings = await response.json();
 
@@ -3913,7 +3932,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        const response = await fetch(getApiUrl('/api/settings/printer'), {
+        const response = await authFetch(getApiUrl('/api/settings/printer'), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -3963,7 +3982,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchRoles() {
     try {
-      const response = await fetch(getApiUrl('/api/roles'));
+      const response = await authFetch(getApiUrl('/api/roles'));
       if (!response.ok) throw new Error('Failed to fetch roles');
       allRoles = await response.json();
       renderRoles(allRoles);
@@ -4047,7 +4066,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this role?')) return;
 
     try {
-      const response = await fetch(getApiUrl(`/api/roles/${id}`), {
+      const response = await authFetch(getApiUrl(`/api/roles/${id}`), {
         method: 'DELETE'
       });
 
@@ -4173,7 +4192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchClients() {
     try {
-      const response = await fetch(getApiUrl('/api/clients'));
+      const response = await authFetch(getApiUrl('/api/clients'));
       if (!response.ok) throw new Error('Failed to fetch clients');
       allClients = await response.json();
       renderClients(allClients);
@@ -4247,7 +4266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const id = btn.getAttribute('data-id');
         if (confirm('Are you sure you want to deactivate this client?')) {
           try {
-            const res = await fetch(getApiUrl(`/api/clients/${id}`), { method: 'DELETE' });
+            const res = await authFetch(getApiUrl(`/api/clients/${id}`), { method: 'DELETE' });
             if (!res.ok) throw new Error('Failed to deactivate client');
             showToast('Client Deactivated', 'The client was successfully deactivated.', 'success');
             fetchClients();
@@ -4279,7 +4298,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Fetch and check module assignments for this client
     try {
-      const response = await fetch(getApiUrl(`/api/clients/${id}/modules`));
+      const response = await authFetch(getApiUrl(`/api/clients/${id}/modules`));
       if (response.ok) {
         const modules = await response.json();
         const activeIds = modules.map(m => m.group_id);
@@ -4386,7 +4405,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('client_mod_restaurant').checked) groupIds.push(2);
         if (document.getElementById('client_mod_hotel').checked) groupIds.push(3);
 
-        const modulesResponse = await fetch(getApiUrl(`/api/clients/${clientId}/modules`), {
+        const modulesResponse = await authFetch(getApiUrl(`/api/clients/${clientId}/modules`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ groupIds })
@@ -4402,7 +4421,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // If updating the active user's own client, we reload sidebar module view dynamically
         if (activeUser && activeUser.client_id == clientId) {
-          const modRes = await fetch(getApiUrl(`/api/clients/${clientId}/modules`));
+          const modRes = await authFetch(getApiUrl(`/api/clients/${clientId}/modules`));
           if (modRes.ok) {
             const modules = await modRes.json();
             activeUser.clientModules = modules.map(m => m.name);
@@ -4526,7 +4545,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s timeout for cloud cold starts
 
-        const response = await fetch(getApiUrl('/api/users/login'), {
+        const response = await authFetch(getApiUrl('/api/users/login'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ username, password }),
@@ -4605,22 +4624,22 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       purchaseDate.value = new Date().toISOString().split('T')[0];
       
-      const vendorRes = await fetch(getApiUrl('/api/vendors'));
+      const vendorRes = await authFetch(getApiUrl('/api/vendors'));
       availableVendors = vendorRes.ok ? await vendorRes.json() : [];
       purchaseVendor.innerHTML = '<option value="">Choose Supplier</option>' + 
         availableVendors.map(v => `<option value="${v.vendor_id}">${v.first_name} ${v.last_name} (${v.company || 'Individual'})</option>`).join('');
 
-      const itemsRes = await fetch(getApiUrl('/api/items'));
+      const itemsRes = await authFetch(getApiUrl('/api/items'));
       availableItems = itemsRes.ok ? (await itemsRes.json()).filter(item => item.visible == 1 && item.active == 1) : [];
       purchaseAdderItem.innerHTML = '<option value="">Select Item</option>' + 
         availableItems.map(i => `<option value="${i.item_id}">${i.name}</option>`).join('');
       renderPurchaseCategories();
       renderPurchaseCatalog();
 
-      const taxesRes = await fetch(getApiUrl('/api/taxes'));
+      const taxesRes = await authFetch(getApiUrl('/api/taxes'));
       availableTaxes = taxesRes.ok ? await taxesRes.json() : [];
 
-      const purchaseRes = await fetch(getApiUrl('/api/purchase'));
+      const purchaseRes = await authFetch(getApiUrl('/api/purchase'));
       const purchases = purchaseRes.ok ? await purchaseRes.json() : [];
       purchaseBillCount = purchases.length + 1;
       purchaseBillNo.textContent = purchaseBillCount;
@@ -4881,7 +4900,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = { vendor_id, purchase_date, purchase_bill_no, gross, tax, total, created_by, items: purchaseLines };
 
       try {
-        const response = await fetch(getApiUrl('/api/purchase'), {
+        const response = await authFetch(getApiUrl('/api/purchase'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -5611,10 +5630,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchReportsOverviewMetrics() {
     try {
       const [salesRes, purchaseRes, invRes, empRes] = await Promise.all([
-        fetch(getApiUrl('/api/sales')),
-        fetch(getApiUrl('/api/purchase')),
-        fetch(getApiUrl('/api/inventory')),
-        fetch(getApiUrl('/api/employees'))
+        authFetch(getApiUrl('/api/sales')),
+        authFetch(getApiUrl('/api/purchase')),
+        authFetch(getApiUrl('/api/inventory')),
+        authFetch(getApiUrl('/api/employees'))
       ]);
 
       const sales = salesRes.ok ? await salesRes.json() : [];
@@ -5679,7 +5698,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const custId = document.getElementById('filterCustomer')?.value;
         const username = document.getElementById('filterUser')?.value;
         
-        const res = await fetch(getApiUrl('/api/sales/details/all'));
+        const res = await authFetch(getApiUrl('/api/sales/details/all'));
         if (!res.ok) throw new Error('Failed to load sales detail records.');
         const details = await res.json();
         
@@ -5755,7 +5774,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fetch purchase details in the same date range for chart comparison
         let pDetails = [];
         try {
-          const pRes = await fetch(getApiUrl('/api/purchase/details/all'));
+          const pRes = await authFetch(getApiUrl('/api/purchase/details/all'));
           if (pRes.ok) {
             const allP = await pRes.json();
             pDetails = allP.filter(d => {
@@ -5787,7 +5806,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const vendorId = document.getElementById('filterVendor')?.value;
         const username = document.getElementById('filterUser')?.value;
         
-        const res = await fetch(getApiUrl('/api/purchase/details/all'));
+        const res = await authFetch(getApiUrl('/api/purchase/details/all'));
         if (!res.ok) throw new Error('Failed to load purchase detail records.');
         const details = await res.json();
         
@@ -5863,7 +5882,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fetch sales details in the same date range for chart comparison
         let sDetails = [];
         try {
-          const sRes = await fetch(getApiUrl('/api/sales/details/all'));
+          const sRes = await authFetch(getApiUrl('/api/sales/details/all'));
           if (sRes.ok) {
             const allS = await sRes.json();
             sDetails = allS.filter(d => {
@@ -5891,7 +5910,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const catId = document.getElementById('filterCategory')?.value;
         const status = document.getElementById('filterStatus')?.value;
         
-        const res = await fetch(getApiUrl('/api/items'));
+        const res = await authFetch(getApiUrl('/api/items'));
         if (!res.ok) throw new Error('Failed to load items.');
         const items = await res.json();
         
@@ -5946,7 +5965,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const status = document.getElementById('filterStatus')?.value;
         
-        const res = await fetch(getApiUrl('/api/categories'));
+        const res = await authFetch(getApiUrl('/api/categories'));
         if (!res.ok) throw new Error('Failed to load categories.');
         const categories = await res.json();
         
@@ -5994,8 +6013,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const city = document.getElementById('filterCity')?.value?.toLowerCase()?.trim();
         
         const [custRes, salesRes] = await Promise.all([
-          fetch(getApiUrl('/api/customers')),
-          fetch(getApiUrl('/api/sales'))
+          authFetch(getApiUrl('/api/customers')),
+          authFetch(getApiUrl('/api/sales'))
         ]);
         
         if (!custRes.ok) throw new Error('Failed to load customers.');
@@ -6071,7 +6090,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const roleId = document.getElementById('filterRole')?.value;
         
-        const res = await fetch(getApiUrl('/api/users'));
+        const res = await authFetch(getApiUrl('/api/users'));
         if (!res.ok) throw new Error('Failed to load users.');
         const users = await res.json();
         
@@ -6124,7 +6143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const startDate = document.getElementById('filterStartDate')?.value;
         const endDate = document.getElementById('filterEndDate')?.value;
         
-        const res = await fetch(getApiUrl('/api/sales'));
+        const res = await authFetch(getApiUrl('/api/sales'));
         if (!res.ok) throw new Error('Failed to load sales master records.');
         const sales = await res.json();
         
@@ -6206,7 +6225,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const startDate = document.getElementById('filterStartDate')?.value;
         const endDate = document.getElementById('filterEndDate')?.value;
         
-        const res = await fetch(getApiUrl('/api/purchase'));
+        const res = await authFetch(getApiUrl('/api/purchase'));
         if (!res.ok) throw new Error('Failed to load purchase master records.');
         const purchases = await res.json();
         
@@ -6288,7 +6307,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const startDate = document.getElementById('filterStartDate')?.value;
         const endDate = document.getElementById('filterEndDate')?.value;
         
-        const res = await fetch(getApiUrl('/api/sales/details/all'));
+        const res = await authFetch(getApiUrl('/api/sales/details/all'));
         if (!res.ok) throw new Error('Failed to load sales detail records.');
         const details = await res.json();
         
@@ -6357,7 +6376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const endDate = document.getElementById('filterEndDate')?.value;
         const catId = document.getElementById('filterCategory')?.value;
         
-        const res = await fetch(getApiUrl('/api/sales/details/all'));
+        const res = await authFetch(getApiUrl('/api/sales/details/all'));
         if (!res.ok) throw new Error('Failed to load sales detail records.');
         const details = await res.json();
         
@@ -6435,8 +6454,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const endDate = document.getElementById('filterEndDate')?.value;
         
         const [salesRes, purchaseRes] = await Promise.all([
-          fetch(getApiUrl('/api/sales')),
-          fetch(getApiUrl('/api/purchase'))
+          authFetch(getApiUrl('/api/sales')),
+          authFetch(getApiUrl('/api/purchase'))
         ]);
         
         const sales = salesRes.ok ? await salesRes.json() : [];
@@ -6631,11 +6650,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const loadReportsMetadata = async () => {
     try {
       const [catsRes, itemsRes, custsRes, vendsRes, usersRes] = await Promise.all([
-        fetch(getApiUrl('/api/categories')),
-        fetch(getApiUrl('/api/items')),
-        fetch(getApiUrl('/api/customers')),
-        fetch(getApiUrl('/api/vendors')),
-        fetch(getApiUrl('/api/users'))
+        authFetch(getApiUrl('/api/categories')),
+        authFetch(getApiUrl('/api/items')),
+        authFetch(getApiUrl('/api/customers')),
+        authFetch(getApiUrl('/api/vendors')),
+        authFetch(getApiUrl('/api/users'))
       ]);
       
       reportsCategories = catsRes.ok ? await catsRes.json() : [];
@@ -7086,7 +7105,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- LICENSE & AMC MANAGEMENT SECTION ---
   async function fetchLicenseDetails() {
     try {
-      const response = await fetch(getApiUrl('/api/license'));
+      const response = await authFetch(getApiUrl('/api/license'));
       if (!response.ok) throw new Error('Failed to load license details.');
       const data = await response.json();
       
@@ -7193,7 +7212,7 @@ document.addEventListener('DOMContentLoaded', () => {
         spinnerPayment.style.display = 'inline-block';
         btnConfirmPayment.disabled = true;
         
-        const response = await fetch(getApiUrl('/api/license/renew'), {
+        const response = await authFetch(getApiUrl('/api/license/renew'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -7224,7 +7243,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- TABLES MASTER ---
   async function fetchRestTables() {
     try {
-      const response = await fetch(getApiUrl('/api/restaurant/tables'));
+      const response = await authFetch(getApiUrl('/api/restaurant/tables'));
       if (!response.ok) throw new Error('Failed to fetch restaurant tables');
       allTables = await response.json();
       renderRestTables();
@@ -7311,7 +7330,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const method = id ? 'PUT' : 'POST';
         const url = id ? `/api/restaurant/tables/${id}` : '/api/restaurant/tables';
-        const response = await fetch(getApiUrl(url), {
+        const response = await authFetch(getApiUrl(url), {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -7329,7 +7348,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const deleteTable = async (id) => {
     if (!confirm('Are you sure you want to delete this table?')) return;
     try {
-      const response = await fetch(getApiUrl(`/api/restaurant/tables/${id}`), { method: 'DELETE' });
+      const response = await authFetch(getApiUrl(`/api/restaurant/tables/${id}`), { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete table');
       showToast('Table Deleted', 'Table de-registered successfully', 'success');
       fetchRestTables();
@@ -7367,7 +7386,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchMenuCategories() {
     try {
-      const response = await fetch(getApiUrl('/api/restaurant/menu/categories'));
+      const response = await authFetch(getApiUrl('/api/restaurant/menu/categories'));
       if (!response.ok) throw new Error('Failed to fetch categories');
       allMenuCategories = await response.json();
       renderMenuCategories();
@@ -7443,7 +7462,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const method = id ? 'PUT' : 'POST';
         const url = id ? `/api/restaurant/menu/categories/${id}` : '/api/restaurant/menu/categories';
-        const response = await fetch(getApiUrl(url), {
+        const response = await authFetch(getApiUrl(url), {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -7461,7 +7480,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const deleteMenuCategory = async (id) => {
     if (!confirm('Are you sure you want to delete this category?')) return;
     try {
-      const response = await fetch(getApiUrl(`/api/restaurant/menu/categories/${id}`), { method: 'DELETE' });
+      const response = await authFetch(getApiUrl(`/api/restaurant/menu/categories/${id}`), { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete category');
       showToast('Category Deleted', 'Category removed successfully', 'success');
       fetchMenuCategories();
@@ -7473,7 +7492,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- MENU ITEMS ---
   async function fetchMenuItems() {
     try {
-      const response = await fetch(getApiUrl('/api/restaurant/menu/items'));
+      const response = await authFetch(getApiUrl('/api/restaurant/menu/items'));
       if (!response.ok) throw new Error('Failed to fetch items');
       allMenuItems = await response.json();
       renderMenuItems();
@@ -7580,7 +7599,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const method = id ? 'PUT' : 'POST';
         const url = id ? `/api/restaurant/menu/items/${id}` : '/api/restaurant/menu/items';
-        const response = await fetch(getApiUrl(url), {
+        const response = await authFetch(getApiUrl(url), {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -7598,7 +7617,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const deleteMenuItem = async (id) => {
     if (!confirm('Are you sure you want to delete this menu item?')) return;
     try {
-      const response = await fetch(getApiUrl(`/api/restaurant/menu/items/${id}`), { method: 'DELETE' });
+      const response = await authFetch(getApiUrl(`/api/restaurant/menu/items/${id}`), { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete item');
       showToast('Item Deleted', 'Menu item removed successfully', 'success');
       fetchMenuItems();
@@ -7611,7 +7630,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- RESTAURANT ORDERS & BILLING ---
   async function fetchRestOrders() {
     try {
-      const response = await fetch(getApiUrl('/api/restaurant/orders'));
+      const response = await authFetch(getApiUrl('/api/restaurant/orders'));
       if (!response.ok) throw new Error('Failed to fetch restaurant orders');
       allRestOrders = await response.json();
       renderRestOrders();
@@ -7680,7 +7699,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateOrderStatus = async (id, status) => {
     if (status === 'cancelled' && !confirm('Are you sure you want to cancel this order?')) return;
     try {
-      const response = await fetch(getApiUrl(`/api/restaurant/orders/${id}/status`), {
+      const response = await authFetch(getApiUrl(`/api/restaurant/orders/${id}/status`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -7715,7 +7734,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     try {
-      const response = await fetch(getApiUrl('/api/sales'), {
+      const response = await authFetch(getApiUrl('/api/sales'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(salesInvoiceData)
@@ -7723,7 +7742,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!response.ok) throw new Error('Failed to create sales invoice checkout.');
       const result = await response.json();
 
-      await fetch(getApiUrl(`/api/restaurant/orders/${id}/status`), {
+      await authFetch(getApiUrl(`/api/restaurant/orders/${id}/status`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'billed' })
@@ -7753,7 +7772,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('rest_order_id').value = id || '';
 
     try {
-      const responseTab = await fetch(getApiUrl('/api/restaurant/tables'));
+      const responseTab = await authFetch(getApiUrl('/api/restaurant/tables'));
       const listTab = await responseTab.json();
       const tabSelect = document.getElementById('order_table_id');
       if (tabSelect) {
@@ -7761,7 +7780,7 @@ document.addEventListener('DOMContentLoaded', () => {
           listTab.map(t => `<option value="${t.table_id}">${t.table_no} (${t.section} Seating)</option>`).join('');
       }
 
-      const responseCust = await fetch(getApiUrl('/api/customers'));
+      const responseCust = await authFetch(getApiUrl('/api/customers'));
       const listCust = await responseCust.json();
       const custSelect = document.getElementById('order_customer_id');
       if (custSelect) {
@@ -7769,7 +7788,7 @@ document.addEventListener('DOMContentLoaded', () => {
           listCust.map(c => `<option value="${c.customer_id}">${c.name} (${c.phone})</option>`).join('');
       }
 
-      const responseWait = await fetch(getApiUrl('/api/users'));
+      const responseWait = await authFetch(getApiUrl('/api/users'));
       const listWait = await responseWait.json();
       const waitSelect = document.getElementById('order_waiter_id');
       if (waitSelect) {
@@ -7777,7 +7796,7 @@ document.addEventListener('DOMContentLoaded', () => {
           listWait.map(u => `<option value="${u.user_id}">${u.username}</option>`).join('');
       }
 
-      const responseMenu = await fetch(getApiUrl('/api/restaurant/menu/items'));
+      const responseMenu = await authFetch(getApiUrl('/api/restaurant/menu/items'));
       allMenuItems = await responseMenu.json();
       if (orderAddItemSelect) {
         orderAddItemSelect.innerHTML = '<option value="">Select Dish / Beverage</option>' +
@@ -7886,7 +7905,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         const url = id ? `/api/restaurant/orders/${id}/items` : '/api/restaurant/orders';
-        const response = await fetch(getApiUrl(url), {
+        const response = await authFetch(getApiUrl(url), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -7907,7 +7926,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchKdsQueue() {
     try {
-      const response = await fetch(getApiUrl('/api/restaurant/kitchen/queue'));
+      const response = await authFetch(getApiUrl('/api/restaurant/kitchen/queue'));
       if (!response.ok) throw new Error('Failed to fetch KDS queue');
       kdsQueue = await response.json();
       renderKdsQueue();
@@ -7996,7 +8015,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updateKdsItemStatus = async (itemId, status) => {
     try {
-      const response = await fetch(getApiUrl(`/api/restaurant/orders/items/${itemId}/status`), {
+      const response = await authFetch(getApiUrl(`/api/restaurant/orders/items/${itemId}/status`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -8055,7 +8074,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- ROOMS MANAGEMENT ---
   async function fetchHotelRooms() {
     try {
-      const response = await fetch(getApiUrl('/api/hotel/rooms'));
+      const response = await authFetch(getApiUrl('/api/hotel/rooms'));
       if (!response.ok) throw new Error('Failed to fetch rooms');
       allRooms = await response.json();
       renderHotelRooms();
@@ -8240,7 +8259,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const method = id ? 'PUT' : 'POST';
         const url = id ? `/api/hotel/rooms/${id}` : '/api/hotel/rooms';
-        const response = await fetch(getApiUrl(url), {
+        const response = await authFetch(getApiUrl(url), {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -8258,7 +8277,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const deleteRoom = async (id) => {
     if (!confirm('Are you sure you want to delete this room?')) return;
     try {
-      const response = await fetch(getApiUrl(`/api/hotel/rooms/${id}`), { method: 'DELETE' });
+      const response = await authFetch(getApiUrl(`/api/hotel/rooms/${id}`), { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to delete room');
       showToast('Room Deleted', 'Room de-registered successfully', 'success');
       fetchHotelRooms();
@@ -8271,7 +8290,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- GUESTS REGISTRY ---
   async function fetchHotelGuests() {
     try {
-      const response = await fetch(getApiUrl('/api/hotel/guests'));
+      const response = await authFetch(getApiUrl('/api/hotel/guests'));
       if (!response.ok) throw new Error('Failed to fetch guests');
       allGuests = await response.json();
       renderHotelGuests();
@@ -8358,7 +8377,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const method = id ? 'PUT' : 'POST';
         const url = id ? `/api/hotel/guests/${id}` : '/api/hotel/guests';
-        const response = await fetch(getApiUrl(url), {
+        const response = await authFetch(getApiUrl(url), {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -8377,7 +8396,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- HOTEL STAY BOOKINGS ---
   async function fetchHotelBookings() {
     try {
-      const response = await fetch(getApiUrl('/api/hotel/bookings'));
+      const response = await authFetch(getApiUrl('/api/hotel/bookings'));
       if (!response.ok) throw new Error('Failed to fetch bookings');
       allBookings = await response.json();
       renderHotelBookings();
@@ -8451,31 +8470,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const openBookingModal = async () => {
     if (!bookingModal) return;
+    bookingModal.style.display = 'flex';
     bookingForm.reset();
 
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    document.getElementById('booking_check_in').value = now.toISOString().slice(0, 16);
+    const checkInElem = document.getElementById('booking_check_in');
+    if (checkInElem) checkInElem.value = now.toISOString().slice(0, 16);
 
     try {
-      const responseG = await fetch(getApiUrl('/api/hotel/guests'));
-      const listG = await responseG.json();
-      allGuests = listG;
-      document.getElementById('booking_guest_id').innerHTML = '<option value="">Select Stay Guest</option>' +
-        listG.map(g => `<option value="${g.guest_id}">${g.name} (${g.phone})</option>`).join('');
+      const responseG = await authFetch(getApiUrl('/api/hotel/guests'));
+      const listG = responseG.ok ? await responseG.json() : [];
+      if (Array.isArray(listG)) {
+        allGuests = listG;
+        const selectG = document.getElementById('booking_guest_id');
+        if (selectG) {
+          selectG.innerHTML = '<option value="">Select Stay Guest</option>' +
+            listG.map(g => `<option value="${g.guest_id}">${g.name} (${g.phone})</option>`).join('');
+        }
+      }
 
-      const responseR = await fetch(getApiUrl('/api/hotel/rooms'));
-      const listR = await responseR.json();
-      allRooms = listR;
-      const availRooms = listR.filter(r => r.status === 'available');
-      document.getElementById('booking_room_id').innerHTML = '<option value="">Select Available Room</option>' +
-        availRooms.map(r => `<option value="${r.room_id}">Room ${r.room_no} (${r.room_type} - ₹${parseFloat(r.price_per_night).toFixed(2)}/n)</option>`).join('');
-
+      const responseR = await authFetch(getApiUrl('/api/hotel/rooms'));
+      const listR = responseR.ok ? await responseR.json() : [];
+      if (Array.isArray(listR)) {
+        allRooms = listR;
+        const availRooms = listR.filter(r => r.status === 'available');
+        const selectR = document.getElementById('booking_room_id');
+        if (selectR) {
+          selectR.innerHTML = '<option value="">Select Available Room</option>' +
+            availRooms.map(r => `<option value="${r.room_id}">Room ${r.room_no} (${r.room_type} - ₹${parseFloat(r.price_per_night || 0).toFixed(2)}/n)</option>`).join('');
+        }
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Booking modal fetch error:', err);
     }
-
-    bookingModal.style.display = 'flex';
   };
 
   if (btnNewBooking) btnNewBooking.addEventListener('click', openBookingModal);
@@ -8498,7 +8526,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        const response = await fetch(getApiUrl('/api/hotel/bookings'), {
+        const response = await authFetch(getApiUrl('/api/hotel/bookings'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -8537,7 +8565,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchRoomServices(bookingId) {
     try {
-      const response = await fetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`));
+      const response = await authFetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`));
       activeBookingServices = await response.json();
       renderRoomServices();
     } catch (err) {
@@ -8580,7 +8608,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        const response = await fetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`), {
+        const response = await authFetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -8607,7 +8635,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let servicesTotal = 0;
     try {
-      const response = await fetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`));
+      const response = await authFetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`));
       const services = await response.json();
       servicesTotal = services.reduce((sum, s) => sum + (parseFloat(s.price) * parseFloat(s.quantity)), 0);
     } catch (err) {
@@ -8652,7 +8680,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     try {
-      const responseServ = await fetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`));
+      const responseServ = await authFetch(getApiUrl(`/api/hotel/bookings/${bookingId}/services`));
       const servicesList = await responseServ.json();
       servicesList.forEach(s => {
         salesInvoiceData.items.push({
@@ -8668,7 +8696,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const response = await fetch(getApiUrl('/api/sales'), {
+      const response = await authFetch(getApiUrl('/api/sales'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(salesInvoiceData)
@@ -8676,7 +8704,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!response.ok) throw new Error('Failed to checkout guest invoice.');
       const result = await response.json();
 
-      await fetch(getApiUrl(`/api/hotel/bookings/${bookingId}/status`), {
+      await authFetch(getApiUrl(`/api/hotel/bookings/${bookingId}/status`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'checked-out', total_amount: grandTotal })
@@ -8700,7 +8728,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- INVENTORY MANAGEMENT ---
   async function fetchInventory() {
     try {
-      const response = await fetch(getApiUrl('/api/inventory'));
+      const response = await authFetch(getApiUrl('/api/inventory'));
       if (!response.ok) throw new Error('Failed to fetch stock inventory');
       allInventory = await response.json();
       renderInventory();
@@ -8796,7 +8824,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const method = id ? 'PUT' : 'POST';
         const url = id ? `/api/inventory/${id}` : '/api/inventory';
-        const response = await fetch(getApiUrl(url), {
+        const response = await authFetch(getApiUrl(url), {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -8848,7 +8876,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        const response = await fetch(getApiUrl('/api/inventory/movement'), {
+        const response = await authFetch(getApiUrl('/api/inventory/movement'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -8867,7 +8895,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- PURCHASE ORDERS (PO) MANAGEMENT ---
   async function fetchPurchaseOrders() {
     try {
-      const response = await fetch(getApiUrl('/api/purchase-orders'));
+      const response = await authFetch(getApiUrl('/api/purchase-orders'));
       if (!response.ok) throw new Error('Failed to fetch purchase orders');
       allPOs = await response.json();
       renderPurchaseOrders();
@@ -8933,7 +8961,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const updatePoStatus = async (poId, status) => {
     try {
-      const response = await fetch(getApiUrl(`/api/purchase-orders/${poId}/status`), {
+      const response = await authFetch(getApiUrl(`/api/purchase-orders/${poId}/status`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
@@ -8959,7 +8987,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPoCart();
 
     try {
-      const responseV = await fetch(getApiUrl('/api/vendors'));
+      const responseV = await authFetch(getApiUrl('/api/vendors'));
       const listV = await responseV.json();
       document.getElementById('po_vendor_id').innerHTML = '<option value="">Select Supply Vendor</option>' +
         listV.map(v => `<option value="${v.vendor_id}">${v.company || ""} (${v.first_name} ${v.last_name})</option>`).join('');
@@ -9046,7 +9074,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        const response = await fetch(getApiUrl('/api/purchase-orders'), {
+        const response = await authFetch(getApiUrl('/api/purchase-orders'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -9073,7 +9101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('grn_po_id').value = poId;
 
     try {
-      const response = await fetch(getApiUrl(`/api/purchase-orders/${poId}`));
+      const response = await authFetch(getApiUrl(`/api/purchase-orders/${poId}`));
       activePoDetails = await response.json();
 
       document.getElementById('grnPoSummaryText').innerHTML = `
@@ -9132,7 +9160,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        const response = await fetch(getApiUrl(`/api/purchase-orders/${poId}/grn`), {
+        const response = await authFetch(getApiUrl(`/api/purchase-orders/${poId}/grn`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -9157,7 +9185,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- EMPLOYEE MANAGEMENT ---
   async function fetchEmployees() {
     try {
-      const response = await fetch(getApiUrl('/api/employees'));
+      const response = await authFetch(getApiUrl('/api/employees'));
       if (!response.ok) throw new Error('Failed to fetch employees list');
       allEmployees = await response.json();
       renderEmployees();
@@ -9213,33 +9241,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const openEmployeeModal = async (id = null) => {
     if (!employeeModal) return;
+    employeeModal.style.display = 'flex';
     employeeForm.reset();
     document.getElementById('employee_id').value = id || '';
     
     try {
-      const responseR = await fetch(getApiUrl('/api/roles'));
-      const listR = await responseR.json();
-      document.getElementById('emp_role_id').innerHTML = '<option value="">No System Access (Staff)</option>' +
-        listR.map(r => `<option value="${r.role_id}">${r.role_name}</option>`).join('');
+      const responseR = await authFetch(getApiUrl('/api/roles'));
+      const listR = responseR.ok ? await responseR.json() : [];
+      if (Array.isArray(listR)) {
+        document.getElementById('emp_role_id').innerHTML = '<option value="">No System Access (Staff)</option>' +
+          listR.map(r => `<option value="${r.role_id}">${r.role_name}</option>`).join('');
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Roles fetch error in employee modal:', err);
     }
 
     if (id) {
       const emp = allEmployees.find(e => e.employee_id == id);
       if (emp) {
-        document.getElementById('emp_first_name').value = emp.first_name;
-        document.getElementById('emp_last_name').value = emp.last_name;
-        document.getElementById('emp_phone').value = emp.phone;
+        document.getElementById('emp_first_name').value = emp.first_name || '';
+        document.getElementById('emp_last_name').value = emp.last_name || '';
+        document.getElementById('emp_phone').value = emp.phone || '';
         document.getElementById('emp_email').value = emp.email || '';
         document.getElementById('emp_designation').value = emp.designation || '';
         document.getElementById('emp_department').value = emp.department || '';
-        document.getElementById('emp_salary').value = emp.salary;
+        document.getElementById('emp_salary').value = emp.salary || '';
         document.getElementById('emp_join_date').value = emp.join_date ? emp.join_date.slice(0, 10) : '';
         document.getElementById('emp_role_id').value = emp.role_id || '';
       }
     }
-    employeeModal.style.display = 'flex';
   };
 
   if (btnNewEmployee) btnNewEmployee.addEventListener('click', () => openEmployeeModal());
@@ -9270,7 +9300,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const method = id ? 'PUT' : 'POST';
         const url = id ? `/api/employees/${id}` : '/api/employees';
-        const response = await fetch(getApiUrl(url), {
+        const response = await authFetch(getApiUrl(url), {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -9288,7 +9318,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const deactivateEmployee = async (id) => {
     if (!confirm('Are you sure you want to deactivate this employee?')) return;
     try {
-      const response = await fetch(getApiUrl(`/api/employees/${id}`), { method: 'DELETE' });
+      const response = await authFetch(getApiUrl(`/api/employees/${id}`), { method: 'DELETE' });
       if (!response.ok) throw new Error('Failed to deactivate employee');
       showToast('Employee Deactivated', 'Staff user marked inactive.', 'success');
       fetchEmployees();
@@ -9307,7 +9337,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchAttendance() {
     const date = attendanceDatePicker ? attendanceDatePicker.value : new Date().toISOString().substring(0, 10);
     try {
-      const response = await fetch(getApiUrl(`/api/employees/attendance?date=${date}`));
+      const response = await authFetch(getApiUrl(`/api/employees/attendance?date=${date}`));
       if (!response.ok) throw new Error('Failed to load attendance sheet');
       allAttendance = await response.json();
       renderAttendance();
@@ -9375,7 +9405,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateAttendanceStatus = async (empId, status) => {
     const date = attendanceDatePicker ? attendanceDatePicker.value : new Date().toISOString().substring(0, 10);
     try {
-      const response = await fetch(getApiUrl('/api/employees/attendance/status'), {
+      const response = await authFetch(getApiUrl('/api/employees/attendance/status'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ employee_id: parseInt(empId), date, status })
@@ -9394,7 +9424,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const timeStr = now.toTimeString().split(' ')[0];
     
     try {
-      const response = await fetch(getApiUrl(`/api/employees/attendance/${type}`), {
+      const response = await authFetch(getApiUrl(`/api/employees/attendance/${type}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ employee_id: parseInt(empId), date, time: timeStr })
