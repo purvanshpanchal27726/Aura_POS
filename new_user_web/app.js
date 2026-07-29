@@ -33,7 +33,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // When opened as a file:// (standalone), it points to Render directly.
   // ─────────────────────────────────────────────────────────────────────────
   const RENDER_BACKEND_URL = 'https://possys-w2ip.onrender.com';
-
   // Utility to dynamically compute API URL
   const getApiUrl = (path = '') => {
     const isLocalFile = window.location.protocol === 'file:';

@@ -14,7 +14,10 @@ module.exports = (req, res, next) => {
     url.startsWith('/api/User/login') ||
     url.startsWith('/api/license') ||
     url.startsWith('/api/License') ||
-    url.includes('/public/');
+    url.includes('/public/') ||
+    // Flutter app needs these on startup to build login screen (GET only, no sensitive mutations)
+    (req.method === 'GET' && (url.startsWith('/api/users') || url.startsWith('/api/User'))) ||
+    (req.method === 'GET' && (url.startsWith('/api/permissions') || url.startsWith('/api/Permission')));
 
   if (isPublic) {
     return next();
