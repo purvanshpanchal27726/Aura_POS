@@ -21,8 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Global Application State Variables (Declared at top to prevent TDZ ReferenceErrors)
   let activeUser = null;
   let allUsersList = [];
+  // allUsers hoisted to top
   let permissionsData = [];
   let allRolesList = [];
+  // allRoles hoisted to top
   let allCustomers = [];
   let allUnits = [];
   let allTaxes = [];
@@ -36,6 +38,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let allGuests = [];
   let allBookings = [];
   let activeBookingServices = [];
+  // allTables hoisted to top
+  let dashSalesChartObj = null;
+  let dashCategoryChartObj = null;
   
   let allMenuCategories = [];
   let allMenuItems = [];
@@ -332,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  let allUsers = [];
+  // allUsers hoisted to top
 
   async function fetchUsers() {
     try {
@@ -998,8 +1003,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  let dashSalesChartObj = null;
-  let dashCategoryChartObj = null;
+  // Chart objects hoisted to top of DOMContentLoaded
 
   const renderDashboardCharts = async () => {
     try {
@@ -3978,7 +3982,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const roleModalClose = document.getElementById('roleModalClose');
   const btnRoleCancel = document.getElementById('btnRoleCancel');
 
-  let allRoles = [];
+  // allRoles hoisted to top
 
   async function fetchRoles() {
     try {
@@ -7234,7 +7238,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ─────────────────────────────────────────────────────────────────────────
   // 🍴 RESTAURANT MODULE CLIENT LOGIC
   // ─────────────────────────────────────────────────────────────────────────
-  let allTables = [];
+  // allTables hoisted to top
   
   
   
@@ -7296,17 +7300,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const openTableModal = (id = null) => {
     if (!tableModal) return;
-    tableForm.reset();
-    document.getElementById('table_id').value = id || '';
-    if (id) {
+    tableModal.style.display = 'flex';
+    if (tableForm) tableForm.reset();
+    const idInput = document.getElementById('table_id');
+    if (idInput) idInput.value = id || '';
+    if (id && Array.isArray(allTables)) {
       const table = allTables.find(t => t.table_id == id);
       if (table) {
-        document.getElementById('table_no').value = table.table_no;
-        document.getElementById('table_section').value = table.section;
-        document.getElementById('table_capacity').value = table.capacity;
+        if (document.getElementById('table_no')) document.getElementById('table_no').value = table.table_no || '';
+        if (document.getElementById('table_section')) document.getElementById('table_section').value = table.section || 'Main Hall';
+        if (document.getElementById('table_capacity')) document.getElementById('table_capacity').value = table.capacity || 4;
       }
     }
-    tableModal.style.display = 'flex';
   };
 
   if (btnNewTable) btnNewTable.addEventListener('click', () => openTableModal());
@@ -8846,13 +8851,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const openStockMovementModal = () => {
     if (!stockMovementModal) return;
-    stockMovementForm.reset();
-    
-    document.getElementById('move_inv_id').innerHTML = allInventory.map(i => 
-      `<option value="${i.inventory_id}">${i.item_name} (Current: ${parseFloat(i.current_stock).toFixed(2)} ${i.unit})</option>`
-    ).join('');
-    
     stockMovementModal.style.display = 'flex';
+    if (stockMovementForm) stockMovementForm.reset();
+    
+    const moveSelect = document.getElementById('move_inv_id');
+    if (moveSelect && Array.isArray(allInventory)) {
+      moveSelect.innerHTML = allInventory.map(i => {
+        const curr = parseFloat(i.current_stock || i.base_quantity || 0).toFixed(2);
+        return `<option value="${i.inventory_id}">${i.item_name || 'Item'} (Current: ${curr} ${i.unit || 'pcs'})</option>`;
+      }).join('');
+    }
   };
 
   if (btnStockAdjust) btnStockAdjust.addEventListener('click', openStockMovementModal);
@@ -8982,20 +8990,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const openPoModal = async () => {
     if (!purchaseOrderModal) return;
-    poForm.reset();
+    purchaseOrderModal.style.display = 'flex';
+    if (poForm) poForm.reset();
     poCartItems = [];
     renderPoCart();
 
     try {
       const responseV = await authFetch(getApiUrl('/api/vendors'));
-      const listV = await responseV.json();
-      document.getElementById('po_vendor_id').innerHTML = '<option value="">Select Supply Vendor</option>' +
-        listV.map(v => `<option value="${v.vendor_id}">${v.company || ""} (${v.first_name} ${v.last_name})</option>`).join('');
+      const listV = responseV.ok ? await responseV.json() : [];
+      if (Array.isArray(listV)) {
+        const selectV = document.getElementById('po_vendor_id');
+        if (selectV) {
+          selectV.innerHTML = '<option value="">Select Supply Vendor</option>' +
+            listV.map(v => `<option value="${v.vendor_id}">${v.company || v.company_name || 'Vendor'} (${v.first_name || ''} ${v.last_name || ''})</option>`).join('');
+        }
+      }
     } catch (err) {
-      console.error(err);
+      console.error('PO modal vendor fetch error:', err);
     }
-
-    purchaseOrderModal.style.display = 'flex';
   };
 
   if (btnNewPO) btnNewPO.addEventListener('click', openPoModal);
