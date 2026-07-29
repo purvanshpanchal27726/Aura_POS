@@ -1053,21 +1053,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const renderDashboardCharts = async () => {
     try {
-      const ctxSales = document.getElementById('dashSalesTrendChart')?.getContext('2d');
-      if (ctxSales) {
-        try {
-          if (typeof Chart !== 'undefined') {
-            const existing = Chart.getChart('dashSalesTrendChart');
-            if (existing) existing.destroy();
-          }
-          if (dashSalesChartObj) {
-            try { dashSalesChartObj.destroy(); } catch (e) {}
-            dashSalesChartObj = null;
-          }
-        } catch (e) {
-          console.warn('Sales chart cleanup warning:', e);
-        }
-
+      const salesCanvas = document.getElementById('dashSalesTrendChart');
+      if (salesCanvas && typeof Chart !== 'undefined') {
         const salesRes = await authFetch(getApiUrl('/api/sales'));
         const salesData = salesRes.ok ? await salesRes.json() : [];
         
@@ -1096,71 +1083,80 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         const chartValues = last7Days.map(d => salesByDay[d]);
 
-        dashSalesChartObj = new Chart(ctxSales, {
-          type: 'line',
-          data: {
-            labels: chartLabels,
-            datasets: [{
-              label: 'Daily Revenue (₹)',
-              data: chartValues,
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.15)',
-              fill: true,
-              tension: 0.35,
-              pointBackgroundColor: '#2563eb',
-              pointRadius: 4
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              y: { ticks: { callback: v => '₹' + v.toLocaleString('en-IN') } }
-            }
+        try {
+          const existing = Chart.getChart(salesCanvas) || Chart.getChart('dashSalesTrendChart');
+          if (existing) existing.destroy();
+          if (dashSalesChartObj) {
+            try { dashSalesChartObj.destroy(); } catch (e) {}
+            dashSalesChartObj = null;
           }
-        });
+          const ctxSales = salesCanvas.getContext('2d');
+          dashSalesChartObj = new Chart(ctxSales, {
+            type: 'line',
+            data: {
+              labels: chartLabels,
+              datasets: [{
+                label: 'Daily Revenue (₹)',
+                data: chartValues,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                fill: true,
+                tension: 0.35,
+                pointBackgroundColor: '#2563eb',
+                pointRadius: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { ticks: { callback: v => '₹' + v.toLocaleString('en-IN') } }
+              }
+            }
+          });
+        } catch (chartErr) {
+          console.warn('Sales chart instantiate warning:', chartErr);
+        }
       }
 
-      const ctxCat = document.getElementById('dashCategoryChart')?.getContext('2d');
-      if (ctxCat) {
-        try {
-          if (typeof Chart !== 'undefined') {
-            const existing = Chart.getChart('dashCategoryChart');
-            if (existing) existing.destroy();
-          }
-          if (dashCategoryChartObj) {
-            try { dashCategoryChartObj.destroy(); } catch (e) {}
-            dashCategoryChartObj = null;
-          }
-        } catch (e) {
-          console.warn('Category chart cleanup warning:', e);
-        }
-
+      const catCanvas = document.getElementById('dashCategoryChart');
+      if (catCanvas && typeof Chart !== 'undefined') {
         const catRes = await authFetch(getApiUrl('/api/categories'));
         const catData = catRes.ok ? await catRes.json() : [];
         const catNames = Array.isArray(catData) ? catData.slice(0, 5).map(c => c.name || 'Category') : [];
         const catCounts = catNames.map((_, i) => (i + 1) * 20);
 
-        dashCategoryChartObj = new Chart(ctxCat, {
-          type: 'doughnut',
-          data: {
-            labels: catNames.length > 0 ? catNames : ['General', 'Electronics', 'Grocery'],
-            datasets: [{
-              data: catCounts.length > 0 ? catCounts : [40, 30, 30],
-              backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'],
-              borderWidth: 2
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { position: 'right' } }
+        try {
+          const existingCat = Chart.getChart(catCanvas) || Chart.getChart('dashCategoryChart');
+          if (existingCat) existingCat.destroy();
+          if (dashCategoryChartObj) {
+            try { dashCategoryChartObj.destroy(); } catch (e) {}
+            dashCategoryChartObj = null;
           }
-        });
+          const ctxCat = catCanvas.getContext('2d');
+          dashCategoryChartObj = new Chart(ctxCat, {
+            type: 'doughnut',
+            data: {
+              labels: catNames.length > 0 ? catNames : ['General', 'Electronics', 'Grocery'],
+              datasets: [{
+                data: catCounts.length > 0 ? catCounts : [40, 30, 30],
+                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'],
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { position: 'right' } }
+            }
+          });
+        } catch (chartErr) {
+          console.warn('Category chart instantiate warning:', chartErr);
+        }
       }
     } catch (err) {
-      console.error('Error rendering dashboard charts:', err);
+      console.warn('Error rendering dashboard charts:', err);
     }
   };
 
