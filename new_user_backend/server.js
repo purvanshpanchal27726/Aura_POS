@@ -27,6 +27,7 @@ db.initDb();
 
 const app = express();
 app.enable('trust proxy');
+app.get('/favicon.ico', (req, res) => res.status(204).end());
 const PORT = process.env.PORT || 3000;
 
 // Body parsing middleware
