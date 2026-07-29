@@ -9495,37 +9495,43 @@ document.addEventListener('DOMContentLoaded', () => {
   const employeeForm = document.getElementById('employeeForm');
 
   async function openEmployeeModal(id = null) {
-    if (!employeeModal) return;
-    employeeModal.style.display = 'flex';
-    employeeForm.reset();
-    document.getElementById('employee_id').value = id || '';
+    const modal = document.getElementById('employeeModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    const form = document.getElementById('employeeForm');
+    if (form) form.reset();
+    const empIdInp = document.getElementById('employee_id');
+    if (empIdInp) empIdInp.value = id || '';
     
     try {
       const responseR = await authFetch(getApiUrl('/api/roles'));
       const listR = responseR.ok ? await responseR.json() : [];
       if (Array.isArray(listR)) {
-        document.getElementById('emp_role_id').innerHTML = '<option value="">No System Access (Staff)</option>' +
-          listR.map(r => `<option value="${r.role_id}">${r.role_name}</option>`).join('');
+        const empRoleSelect = document.getElementById('emp_role_id');
+        if (empRoleSelect) {
+          empRoleSelect.innerHTML = '<option value="">No System Access (Staff)</option>' +
+            listR.map(r => `<option value="${r.role_id}">${r.role_name}</option>`).join('');
+        }
       }
     } catch (err) {
       console.error('Roles fetch error in employee modal:', err);
     }
 
-    if (id) {
+    if (id && Array.isArray(allEmployees)) {
       const emp = allEmployees.find(e => e.employee_id == id);
       if (emp) {
-        document.getElementById('emp_first_name').value = emp.first_name || '';
-        document.getElementById('emp_last_name').value = emp.last_name || '';
-        document.getElementById('emp_phone').value = emp.phone || '';
-        document.getElementById('emp_email').value = emp.email || '';
-        document.getElementById('emp_designation').value = emp.designation || '';
-        document.getElementById('emp_department').value = emp.department || '';
-        document.getElementById('emp_salary').value = emp.salary || '';
-        document.getElementById('emp_join_date').value = emp.join_date ? emp.join_date.slice(0, 10) : '';
-        document.getElementById('emp_role_id').value = emp.role_id || '';
+        if (document.getElementById('emp_first_name')) document.getElementById('emp_first_name').value = emp.first_name || '';
+        if (document.getElementById('emp_last_name')) document.getElementById('emp_last_name').value = emp.last_name || '';
+        if (document.getElementById('emp_phone')) document.getElementById('emp_phone').value = emp.phone || '';
+        if (document.getElementById('emp_email')) document.getElementById('emp_email').value = emp.email || '';
+        if (document.getElementById('emp_designation')) document.getElementById('emp_designation').value = emp.designation || '';
+        if (document.getElementById('emp_department')) document.getElementById('emp_department').value = emp.department || '';
+        if (document.getElementById('emp_salary')) document.getElementById('emp_salary').value = emp.salary || '';
+        if (document.getElementById('emp_join_date')) document.getElementById('emp_join_date').value = emp.join_date ? emp.join_date.slice(0, 10) : '';
+        if (document.getElementById('emp_role_id')) document.getElementById('emp_role_id').value = emp.role_id || '';
       }
     }
-  };
+  }
 
   if (btnNewEmployee) btnNewEmployee.addEventListener('click', () => openEmployeeModal());
   if (document.getElementById('employeeModalClose')) {
