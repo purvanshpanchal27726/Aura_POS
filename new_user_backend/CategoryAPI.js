@@ -5,14 +5,20 @@ const router = express.Router();
 
 // Helper to get client_id from headers or query params
 function getClientId(req) {
-  const cid = req.headers['x-client-id'] || req.query.client_id;
-  if (!cid || cid === 'null' || cid === 'undefined') return null;
-  return parseInt(cid);
+  let cid = req.headers['x-client-id'] || req.query.client_id;
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') {
+    if (req.user && req.user.client_id !== undefined && req.user.client_id !== null) {
+      cid = req.user.client_id;
+    }
+  }
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') return null;
+  const parsed = parseInt(cid);
+  return isNaN(parsed) ? null : parsed;
 }
 
 // Helper to check if active user is a Super-Admin
 function checkSuperAdmin(req) {
-  return !req.user || req.user.client_id === null || req.user.client_id === undefined;
+  return !req.user || req.user.role_id === 1 || req.user.client_id === 0 || req.user.client_id === null || req.user.client_id === undefined;
 }
 
 /**
@@ -25,7 +31,7 @@ router.post('/', async (req, res) => {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
     
-    if (!clientId && !isSuperAdmin) {
+    if (clientId === null && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
@@ -45,7 +51,7 @@ router.post('/', async (req, res) => {
     const nameCheck = name.trim().toLowerCase();
     let dupQuery = 'SELECT * FROM categories WHERE LOWER(name) = ? AND ';
     let dupParams = [nameCheck];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       dupQuery += 'client_id = ?';
       dupParams.push(clientId);
     } else {
@@ -87,13 +93,13 @@ router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) {
+    if (clientId === null && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
     let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY category_id ASC)::integer AS display_id FROM categories WHERE ';
     let params = [];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
@@ -126,13 +132,13 @@ router.get('/:id', async (req, res) => {
     const categoryId = req.params.id;
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) {
+    if (clientId === null && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
     let query = 'SELECT * FROM categories WHERE category_id = ? AND ';
     let params = [categoryId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -159,7 +165,7 @@ router.put('/:id', async (req, res) => {
     const categoryId = req.params.id;
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) {
+    if (clientId === null && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
@@ -170,7 +176,7 @@ router.put('/:id', async (req, res) => {
 
     let queryExist = 'SELECT * FROM categories WHERE category_id = ? AND ';
     let paramsExist = [categoryId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       queryExist += 'client_id = ?';
       paramsExist.push(clientId);
     } else {
@@ -191,7 +197,7 @@ router.put('/:id', async (req, res) => {
       const nameCheck = name.trim().toLowerCase();
       let dupQuery = 'SELECT * FROM categories WHERE LOWER(name) = ? AND category_id != ? AND ';
       let dupParams = [nameCheck, categoryId];
-      if (clientId) {
+      if (clientId !== null && clientId !== undefined) {
         dupQuery += 'client_id = ?';
         dupParams.push(clientId);
       } else {
@@ -205,7 +211,7 @@ router.put('/:id', async (req, res) => {
 
     let updateQuery = 'UPDATE categories SET name = ?, active = ? WHERE category_id = ? AND ';
     let updateParams = [finalName, finalActive, categoryId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -229,13 +235,13 @@ router.delete('/:id', async (req, res) => {
     const categoryId = parseInt(req.params.id);
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) {
+    if (clientId === null && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
     let queryExist = 'SELECT * FROM categories WHERE category_id = ? AND ';
     let paramsExist = [categoryId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       queryExist += 'client_id = ?';
       paramsExist.push(clientId);
     } else {
@@ -249,7 +255,7 @@ router.delete('/:id', async (req, res) => {
 
     let deleteQuery = 'DELETE FROM categories WHERE category_id = ? AND ';
     let deleteParams = [categoryId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       deleteQuery += 'client_id = ?';
       deleteParams.push(clientId);
     } else {

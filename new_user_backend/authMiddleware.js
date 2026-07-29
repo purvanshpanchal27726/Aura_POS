@@ -40,9 +40,12 @@ module.exports = (req, res, next) => {
     const decoded = jwt.verify(token, secret);
     req.user = decoded; // Contains user_id, client_id, role_id
     
-    // Strict client isolation verification
+    // Strict multi-tenant client isolation verification
     const headerClientId = req.headers['x-client-id'];
-    if (headerClientId && decoded.client_id && headerClientId.toString() !== decoded.client_id.toString()) {
+    const userCid = (decoded.client_id === null || decoded.client_id === undefined) ? 0 : parseInt(decoded.client_id);
+    const isSuperAdmin = (decoded.role_id === 1 || userCid === 0);
+
+    if (!isSuperAdmin && headerClientId && headerClientId.toString() !== userCid.toString()) {
       return res.status(403).json({ error: 'Forbidden: Client ID mismatch with token' });
     }
     

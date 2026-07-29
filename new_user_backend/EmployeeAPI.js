@@ -5,21 +5,27 @@ const bcrypt = require('bcryptjs');
 
 // Helper to get client_id from headers or query params
 const getClientId = (req) => {
-  const cid = req.headers['x-client-id'] || req.query.client_id;
-  if (!cid || cid === 'null' || cid === 'undefined') return null;
-  return parseInt(cid);
+  let cid = req.headers['x-client-id'] || req.query.client_id;
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') {
+    if (req.user && req.user.client_id !== undefined && req.user.client_id !== null) {
+      cid = req.user.client_id;
+    }
+  }
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') return null;
+  const parsed = parseInt(cid);
+  return isNaN(parsed) ? null : parsed;
 };
 
 // Helper to check if active user is a Super-Admin
 const checkSuperAdmin = (req) => {
-  return !req.user || req.user.role_id === 1 || req.user.client_id === null || req.user.client_id === undefined;
+  return !req.user || req.user.role_id === 1 || req.user.client_id === 0 || req.user.client_id === null || req.user.client_id === undefined;
 };
 
 // 👥 1. GET ALL EMPLOYEES
 router.get('/', async (req, res) => {
   const clientId = getClientId(req);
   const isSuperAdmin = checkSuperAdmin(req);
-  if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+  if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
   try {
     let query = `
@@ -30,7 +36,7 @@ router.get('/', async (req, res) => {
       WHERE e.active = 1 AND 
     `;
     let params = [];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'e.client_id = ?';
       params.push(clientId);
     } else {
@@ -50,7 +56,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   const clientId = getClientId(req);
   const isSuperAdmin = checkSuperAdmin(req);
-  if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+  if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
   const {
     first_name,
@@ -76,7 +82,7 @@ router.post('/', async (req, res) => {
     // Check for duplicate phone number
     let queryExisting = 'SELECT user_id FROM users WHERE phone_1 = ? AND ';
     let paramsExisting = [phone];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       queryExisting += 'client_id = ?';
       paramsExisting.push(clientId);
     } else {
@@ -92,7 +98,7 @@ router.post('/', async (req, res) => {
     // Check for duplicate name
     let nameCheckQuery = 'SELECT user_id FROM users WHERE LOWER(first_name) = ? AND LOWER(last_name) = ? AND ';
     let nameCheckParams = [first_name.trim().toLowerCase(), last_name.trim().toLowerCase()];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       nameCheckQuery += 'client_id = ?';
       nameCheckParams.push(clientId);
     } else {
@@ -138,7 +144,7 @@ router.post('/', async (req, res) => {
     // Check if already registered as employee
     let queryExistingEmp = 'SELECT employee_id FROM employees WHERE user_id = ? AND ';
     let paramsExistingEmp = [userId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       queryExistingEmp += 'client_id = ?';
       paramsExistingEmp.push(clientId);
     } else {
@@ -157,7 +163,7 @@ router.post('/', async (req, res) => {
         WHERE employee_id = ? AND 
       `;
       let updateParams = [designation || null, department || null, salary || 0.0, join_date || null, empId];
-      if (clientId) {
+      if (clientId !== null && clientId !== undefined) {
         updateQuery += 'client_id = ?';
         updateParams.push(clientId);
       } else {
@@ -176,13 +182,15 @@ router.post('/', async (req, res) => {
     }
 
     await conn.commit();
-    res.status(201).json({ employee_id: empId, message: 'Employee registered successfully!' });
+    return res.status(201).json({ employee_id: empId, message: 'Employee registered successfully!' });
   } catch (err) {
-    await conn.rollback().catch(() => {});
+    if (conn && conn.rollback) await conn.rollback().catch(() => {});
     console.error(err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   } finally {
-    conn.release();
+    if (conn && conn.release) {
+      try { conn.release(); } catch (e) {}
+    }
   }
 });
 
@@ -190,7 +198,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const clientId = getClientId(req);
   const isSuperAdmin = checkSuperAdmin(req);
-  if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+  if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
   const empId = parseInt(req.params.id);
 
   const {
@@ -211,7 +219,7 @@ router.put('/:id', async (req, res) => {
 
     let queryEmp = 'SELECT user_id FROM employees WHERE employee_id = ? AND ';
     let paramsEmp = [empId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       queryEmp += 'client_id = ?';
       paramsEmp.push(clientId);
     } else {
@@ -232,7 +240,7 @@ router.put('/:id', async (req, res) => {
       WHERE user_id = ? AND 
     `;
     let userUpdateParams = [first_name, last_name, email || null, phone, role_id || null, userId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       userUpdateQuery += 'client_id = ?';
       userUpdateParams.push(clientId);
     } else {
@@ -247,7 +255,7 @@ router.put('/:id', async (req, res) => {
       WHERE employee_id = ? AND 
     `;
     let empUpdateParams = [designation || null, department || null, salary || 0.0, join_date || null, empId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       empUpdateQuery += 'client_id = ?';
       empUpdateParams.push(clientId);
     } else {
@@ -270,13 +278,13 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   const clientId = getClientId(req);
   const isSuperAdmin = checkSuperAdmin(req);
-  if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+  if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
   const empId = parseInt(req.params.id);
 
   try {
     let query = 'UPDATE employees SET active = 0 WHERE employee_id = ? AND ';
     let params = [empId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -294,7 +302,7 @@ router.delete('/:id', async (req, res) => {
 router.get('/attendance', async (req, res) => {
   const clientId = getClientId(req);
   const isSuperAdmin = checkSuperAdmin(req);
-  if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+  if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
   
   const date = req.query.date || new Date().toISOString().substring(0, 10);
 
@@ -311,7 +319,7 @@ router.get('/attendance', async (req, res) => {
       ORDER BY u.first_name, u.last_name
     `;
     let params = [date];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       params.push(clientId, clientId);
     }
 
@@ -327,7 +335,7 @@ router.get('/attendance', async (req, res) => {
 router.post('/attendance/status', async (req, res) => {
   const clientId = getClientId(req);
   const isSuperAdmin = checkSuperAdmin(req);
-  if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+  if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
   const { employee_id, date, status } = req.body;
   if (!employee_id || !date || !status) {
@@ -337,7 +345,7 @@ router.post('/attendance/status', async (req, res) => {
   try {
     let selectQuery = 'SELECT id FROM attendance WHERE employee_id = ? AND date = ? AND ';
     let selectParams = [employee_id, date];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       selectQuery += 'client_id = ?';
       selectParams.push(clientId);
     } else {
@@ -369,7 +377,7 @@ router.post('/attendance/status', async (req, res) => {
 router.post('/attendance/check-in', async (req, res) => {
   const clientId = getClientId(req);
   const isSuperAdmin = checkSuperAdmin(req);
-  if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+  if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
   const { employee_id, date, time } = req.body;
   const targetDate = date || new Date().toISOString().substring(0, 10);
@@ -378,7 +386,7 @@ router.post('/attendance/check-in', async (req, res) => {
   try {
     let selectQuery = 'SELECT id FROM attendance WHERE employee_id = ? AND date = ? AND ';
     let selectParams = [employee_id, targetDate];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       selectQuery += 'client_id = ?';
       selectParams.push(clientId);
     } else {
@@ -410,7 +418,7 @@ router.post('/attendance/check-in', async (req, res) => {
 router.post('/attendance/check-out', async (req, res) => {
   const clientId = getClientId(req);
   const isSuperAdmin = checkSuperAdmin(req);
-  if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+  if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
   const { employee_id, date, time } = req.body;
   const targetDate = date || new Date().toISOString().substring(0, 10);
@@ -419,7 +427,7 @@ router.post('/attendance/check-out', async (req, res) => {
   try {
     let selectQuery = 'SELECT id FROM attendance WHERE employee_id = ? AND date = ? AND ';
     let selectParams = [employee_id, targetDate];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       selectQuery += 'client_id = ?';
       selectParams.push(clientId);
     } else {

@@ -13,7 +13,7 @@ function getClientId(req) {
 }
 
 function checkSuperAdmin(req) {
-  return !req.user || req.user.client_id === null || req.user.client_id === undefined;
+  return !req.user || req.user.role_id === 1 || req.user.client_id === 0 || req.user.client_id === null || req.user.client_id === undefined;
 }
 
 // Middleware to restrict write operations to Super-Admin (1) and Admin (2)
@@ -46,7 +46,7 @@ router.post('/', checkWriteAccess, async (req, res) => {
     const nameCheck = name.trim().toLowerCase();
     let dupQuery = 'SELECT * FROM roles WHERE LOWER(name) = ? AND ';
     let dupParams = [nameCheck];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       dupQuery += '(client_id = ? OR client_id IS NULL)';
       dupParams.push(clientId);
     } else {
@@ -90,7 +90,7 @@ router.get('/', async (req, res) => {
     const clientId = getClientId(req);
     let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY role_id ASC)::integer AS display_id FROM roles WHERE ';
     let params = [];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += '(client_id = $1 OR client_id IS NULL)';
       params.push(clientId);
     } else {
@@ -120,7 +120,7 @@ router.get('/:id', async (req, res) => {
     const clientId = getClientId(req);
     let query = 'SELECT * FROM roles WHERE role_id = ? AND ';
     let params = [roleId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += '(client_id = ? OR client_id IS NULL)';
       params.push(clientId);
     } else {
@@ -160,7 +160,7 @@ router.put('/:id', checkWriteAccess, async (req, res) => {
 
     let queryExist = 'SELECT * FROM roles WHERE role_id = ? AND ';
     let paramsExist = [roleId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       queryExist += 'client_id = ?';
       paramsExist.push(clientId);
     } else {
@@ -181,7 +181,7 @@ router.put('/:id', checkWriteAccess, async (req, res) => {
       const nameCheck = name.trim().toLowerCase();
       let dupQuery = 'SELECT * FROM roles WHERE LOWER(name) = ? AND role_id != ? AND ';
       let dupParams = [nameCheck, roleId];
-      if (clientId) {
+      if (clientId !== null && clientId !== undefined) {
         dupQuery += '(client_id = ? OR client_id IS NULL)';
         dupParams.push(clientId);
       } else {
@@ -225,7 +225,7 @@ router.delete('/:id', checkWriteAccess, async (req, res) => {
 
     let queryExist = 'SELECT * FROM roles WHERE role_id = ? AND ';
     let paramsExist = [roleId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       queryExist += 'client_id = ?';
       paramsExist.push(clientId);
     } else {

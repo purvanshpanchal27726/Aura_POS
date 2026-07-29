@@ -5,9 +5,15 @@ const router = express.Router();
 
 // Helper to get client_id from headers or query params
 function getClientId(req) {
-  const cid = req.headers['x-client-id'] || req.query.client_id;
-  if (!cid || cid === 'null' || cid === 'undefined') return null;
-  return parseInt(cid);
+  let cid = req.headers['x-client-id'] || req.query.client_id;
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') {
+    if (req.user && req.user.client_id !== undefined && req.user.client_id !== null) {
+      cid = req.user.client_id;
+    }
+  }
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') return null;
+  const parsed = parseInt(cid);
+  return isNaN(parsed) ? null : parsed;
 }
 
 // Helper to check if active user is a Super-Admin
@@ -26,7 +32,7 @@ router.post('/', async (req, res) => {
 
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) {
+    if (clientId === null && !isSuperAdmin) {
       await connection.rollback();
       return res.status(400).json({ error: 'Client ID required' });
     }
@@ -109,7 +115,7 @@ router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     let query = `
       SELECT pm.*, 
@@ -121,7 +127,7 @@ router.get('/', async (req, res) => {
       WHERE 
     `;
     let params = [];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'pm.client_id = ?';
       params.push(clientId);
     } else {
@@ -144,7 +150,7 @@ router.get('/details/all', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     let query = `
       SELECT pd.*, pm.purchase_date, pm.purchase_bill_no, pm.vendor_id, pm.created_by,
@@ -158,7 +164,7 @@ router.get('/details/all', async (req, res) => {
       WHERE 
     `;
     let params = [];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'pm.client_id = ?';
       params.push(clientId);
     } else {
@@ -181,7 +187,7 @@ router.get('/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const purchaseId = req.params.id;
 
@@ -197,7 +203,7 @@ router.get('/:id', async (req, res) => {
       WHERE pm.purchase_id = ? AND 
     `;
     let masterParams = [purchaseId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       masterQuery += 'pm.client_id = ?';
       masterParams.push(clientId);
     } else {
@@ -236,13 +242,13 @@ router.delete('/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const purchaseId = parseInt(req.params.id);
 
     let query = 'SELECT * FROM purchase_master WHERE purchase_id = ? AND ';
     let params = [purchaseId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -256,7 +262,7 @@ router.delete('/:id', async (req, res) => {
 
     let deleteQuery = 'DELETE FROM purchase_master WHERE purchase_id = ? AND ';
     let deleteParams = [purchaseId];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       deleteQuery += 'client_id = ?';
       deleteParams.push(clientId);
     } else {

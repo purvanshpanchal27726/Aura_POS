@@ -5,9 +5,15 @@ const router = express.Router();
 
 // Helper to get client_id from headers or query params
 function getClientId(req) {
-  const cid = req.headers['x-client-id'] || req.query.client_id;
-  if (!cid || cid === 'null' || cid === 'undefined') return null;
-  return parseInt(cid);
+  let cid = req.headers['x-client-id'] || req.query.client_id;
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') {
+    if (req.user && req.user.client_id !== undefined && req.user.client_id !== null) {
+      cid = req.user.client_id;
+    }
+  }
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') return null;
+  const parsed = parseInt(cid);
+  return isNaN(parsed) ? null : parsed;
 }
 
 // Helper to check if active user is a Super-Admin (role_id 1)
@@ -25,7 +31,7 @@ router.get('/', async (req, res) => {
     
     let query = 'SELECT * FROM license_info WHERE ';
     let params = [];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -59,7 +65,7 @@ router.get('/', async (req, res) => {
       
       let refetchQuery = 'SELECT * FROM license_info WHERE ';
       let refetchParams = [];
-      if (clientId) {
+      if (clientId !== null && clientId !== undefined) {
         refetchQuery += 'client_id = ?';
         refetchParams.push(clientId);
       } else {
@@ -91,7 +97,7 @@ router.post('/renew', async (req, res) => {
     const clientId = getClientId(req);
     let query = 'SELECT * FROM license_info WHERE ';
     let params = [];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = ?';
       params.push(clientId);
     } else {

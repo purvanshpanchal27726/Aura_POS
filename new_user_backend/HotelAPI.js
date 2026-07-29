@@ -6,9 +6,15 @@ const router = express.Router();
 
 // Helper to get client_id from headers or query params
 function getClientId(req) {
-  const cid = req.headers['x-client-id'] || req.query.client_id;
-  if (!cid || cid === 'null' || cid === 'undefined') return null;
-  return parseInt(cid);
+  let cid = req.headers['x-client-id'] || req.query.client_id;
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') {
+    if (req.user && req.user.client_id !== undefined && req.user.client_id !== null) {
+      cid = req.user.client_id;
+    }
+  }
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') return null;
+  const parsed = parseInt(cid);
+  return isNaN(parsed) ? null : parsed;
 }
 
 // Helper to check if active user is a Super-Admin
@@ -25,11 +31,11 @@ router.get('/rooms', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     let query = 'SELECT room_id, client_id, room_no, type AS room_type, price_per_night, status, floor, amenities, active, ROW_NUMBER() OVER(ORDER BY room_id ASC)::integer AS display_id FROM hotel_rooms WHERE active = 1 AND ';
     let params = [];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
@@ -49,7 +55,7 @@ router.post('/rooms', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { room_no, room_type, price_per_night } = req.body;
     if (!room_no || !room_type || price_per_night === undefined) {
@@ -59,7 +65,7 @@ router.post('/rooms', async (req, res) => {
     // Check for duplicate room_no
     let dupQuery = 'SELECT room_id FROM hotel_rooms WHERE room_no = ? AND ';
     let dupParams = [room_no];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       dupQuery += 'client_id = ?';
       dupParams.push(clientId);
     } else {
@@ -84,14 +90,14 @@ router.put('/rooms/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     const { room_no, room_type, price_per_night, status } = req.body;
 
     let query = 'SELECT * FROM hotel_rooms WHERE room_id = ? AND ';
     let params = [id];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -105,7 +111,7 @@ router.put('/rooms/:id', async (req, res) => {
     if (room_no !== undefined) {
       let dupQuery = 'SELECT room_id FROM hotel_rooms WHERE room_no = ? AND room_id != ? AND ';
       let dupParams = [room_no, id];
-      if (clientId) {
+      if (clientId !== null && clientId !== undefined) {
         dupQuery += 'client_id = ?';
         dupParams.push(clientId);
       } else {
@@ -127,7 +133,7 @@ router.put('/rooms/:id', async (req, res) => {
       status !== undefined ? status : rows[0].status,
       id
     ];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -146,13 +152,13 @@ router.delete('/rooms/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     
     let query = 'UPDATE hotel_rooms SET active = 0 WHERE room_id = ? AND ';
     let params = [id];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -175,7 +181,7 @@ router.get('/guests', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     let query = `
       SELECT guest_id, client_id, CONCAT(first_name, ' ', last_name) AS name, 
@@ -185,7 +191,7 @@ router.get('/guests', async (req, res) => {
       FROM hotel_guests WHERE 
     `;
     let params = [];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
@@ -205,7 +211,7 @@ router.post('/guests', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { name, phone, email, id_proof_type, id_proof_no } = req.body;
     if (!name || !phone) return res.status(400).json({ error: 'Name and phone are required' });
@@ -213,7 +219,7 @@ router.post('/guests', async (req, res) => {
     // Check for duplicate phone number
     let dupQuery = 'SELECT guest_id FROM hotel_guests WHERE phone = ? AND ';
     let dupParams = [phone];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       dupQuery += 'client_id = ?';
       dupParams.push(clientId);
     } else {
@@ -243,14 +249,14 @@ router.put('/guests/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     const { name, phone, email, id_proof_type, id_proof_no } = req.body;
 
     let query = 'SELECT * FROM hotel_guests WHERE guest_id = ? AND ';
     let params = [id];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -264,7 +270,7 @@ router.put('/guests/:id', async (req, res) => {
     if (phone !== undefined) {
       let dupQuery = 'SELECT guest_id FROM hotel_guests WHERE phone = ? AND guest_id != ? AND ';
       let dupParams = [phone, id];
-      if (clientId) {
+      if (clientId !== null && clientId !== undefined) {
         dupQuery += 'client_id = ?';
         dupParams.push(clientId);
       } else {
@@ -296,7 +302,7 @@ router.put('/guests/:id', async (req, res) => {
       id_proof_no !== undefined ? id_proof_no : rows[0].id_number,
       id
     ];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -319,7 +325,7 @@ router.get('/bookings', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     let query = `
       SELECT hb.booking_id, hb.client_id, hb.room_id, hb.guest_id, 
@@ -333,7 +339,7 @@ router.get('/bookings', async (req, res) => {
       WHERE 
     `;
     let params = [];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'hb.client_id = ?';
       params.push(clientId);
     } else {
@@ -353,7 +359,7 @@ router.post('/bookings', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { room_id, guest_id, check_in_date, check_out_date, status, total_amount, notes } = req.body;
     if (!room_id || !guest_id) return res.status(400).json({ error: 'Room and Guest IDs are required' });
@@ -391,14 +397,14 @@ router.put('/bookings/:id/status', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     const { status, total_amount } = req.body; // checked-out, cancelled
 
     let query = 'SELECT * FROM hotel_bookings WHERE booking_id = ? AND ';
     let params = [id];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -410,7 +416,7 @@ router.put('/bookings/:id/status', async (req, res) => {
 
     let updateQuery = 'UPDATE hotel_bookings SET status = ?, total_amount = ? WHERE booking_id = ? AND ';
     let updateParams = [status, total_amount !== undefined ? total_amount : booking[0].total_amount, id];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -441,7 +447,7 @@ router.get('/bookings/:id/services', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     const [rows] = await db.execute(
@@ -462,7 +468,7 @@ router.post('/bookings/:id/services', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     const { item_name, quantity, price } = req.body;
@@ -470,7 +476,7 @@ router.post('/bookings/:id/services', async (req, res) => {
 
     let query = 'SELECT * FROM hotel_bookings WHERE booking_id = ? AND ';
     let params = [id];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = ?';
       params.push(clientId);
     } else {

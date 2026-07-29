@@ -16,7 +16,7 @@ function getClientId(req) {
 }
 
 function checkSuperAdmin(req) {
-  return !req.user || req.user.client_id === null || req.user.client_id === undefined;
+  return !req.user || req.user.role_id === 1 || req.user.client_id === 0 || req.user.client_id === null || req.user.client_id === undefined;
 }
 
 // Middleware to restrict write operations to Super-Admin (1) and Admin (2)
@@ -170,7 +170,7 @@ router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) {
+    if (clientId === null && !isSuperAdmin) {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
@@ -183,7 +183,7 @@ router.get('/', async (req, res) => {
     `;
     let params = [];
 
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'u.client_id = $1';
       params.push(clientId);
     } else {

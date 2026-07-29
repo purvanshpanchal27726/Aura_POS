@@ -5,9 +5,15 @@ const router = express.Router();
 
 // Helper to get client_id from headers or query params
 function getClientId(req) {
-  const cid = req.headers['x-client-id'] || req.query.client_id;
-  if (!cid || cid === 'null' || cid === 'undefined') return null;
-  return parseInt(cid);
+  let cid = req.headers['x-client-id'] || req.query.client_id;
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') {
+    if (req.user && req.user.client_id !== undefined && req.user.client_id !== null) {
+      cid = req.user.client_id;
+    }
+  }
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') return null;
+  const parsed = parseInt(cid);
+  return isNaN(parsed) ? null : parsed;
 }
 
 /**
@@ -17,7 +23,7 @@ function getClientId(req) {
 router.get('/printer', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) {
+    if (clientId === null || clientId === undefined) {
       return res.status(400).json({ error: 'Client ID is required in request headers (x-client-id).' });
     }
 
@@ -50,7 +56,7 @@ router.get('/printer', async (req, res) => {
 router.put('/printer', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    if (!clientId) {
+    if (clientId === null || clientId === undefined) {
       return res.status(400).json({ error: 'Client ID is required in request headers (x-client-id).' });
     }
 

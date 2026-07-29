@@ -5,9 +5,15 @@ const router = express.Router();
 
 // Helper to get client_id from headers or query params
 function getClientId(req) {
-  const cid = req.headers['x-client-id'] || req.query.client_id;
-  if (!cid || cid === 'null' || cid === 'undefined') return null;
-  return parseInt(cid);
+  let cid = req.headers['x-client-id'] || req.query.client_id;
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') {
+    if (req.user && req.user.client_id !== undefined && req.user.client_id !== null) {
+      cid = req.user.client_id;
+    }
+  }
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined') return null;
+  const parsed = parseInt(cid);
+  return isNaN(parsed) ? null : parsed;
 }
 
 // Helper to check if active user is a Super-Admin
@@ -20,11 +26,11 @@ router.get('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY inventory_id ASC)::integer AS display_id FROM inventory WHERE ';
     let params = [];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
@@ -48,7 +54,7 @@ router.post('/', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { item_name, sku, barcode, unit, min_stock, batch_no, expiry_date } = req.body;
     if (!item_name) return res.status(400).json({ error: 'Item name is required' });
@@ -57,7 +63,7 @@ router.post('/', async (req, res) => {
     const nameCheck = item_name.trim().toLowerCase();
     let dupQuery = 'SELECT inventory_id FROM inventory WHERE LOWER(item_name) = ? AND ';
     let dupParams = [nameCheck];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       dupQuery += 'client_id = ?';
       dupParams.push(clientId);
     } else {
@@ -92,14 +98,14 @@ router.put('/:id', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     const { id } = req.params;
     const { item_name, sku, barcode, unit, min_stock, batch_no, expiry_date } = req.body;
 
     let query = 'SELECT * FROM inventory WHERE inventory_id = ? AND ';
     let params = [id];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -114,7 +120,7 @@ router.put('/:id', async (req, res) => {
       const nameCheck = item_name.trim().toLowerCase();
       let dupQuery = 'SELECT inventory_id FROM inventory WHERE LOWER(item_name) = ? AND inventory_id != ? AND ';
       let dupParams = [nameCheck, id];
-      if (clientId) {
+      if (clientId !== null && clientId !== undefined) {
         dupQuery += 'client_id = ?';
         dupParams.push(clientId);
       } else {
@@ -139,7 +145,7 @@ router.put('/:id', async (req, res) => {
       expiry_date !== undefined ? expiry_date : rows[0].expiry_date,
       id
     ];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -161,7 +167,7 @@ router.post('/movement', async (req, res) => {
 
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) {
+    if (clientId === null && !isSuperAdmin) {
       await connection.rollback();
       return res.status(400).json({ error: 'Client ID required' });
     }
@@ -175,7 +181,7 @@ router.post('/movement', async (req, res) => {
     // 1. Check if inventory item exists
     let query = 'SELECT * FROM inventory WHERE inventory_id = ? AND ';
     let params = [inventory_id];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -213,7 +219,7 @@ router.post('/movement', async (req, res) => {
     // 3. Update current_stock on inventory item
     let updateStockQuery = 'UPDATE inventory SET current_stock = ? WHERE inventory_id = ? AND ';
     let updateStockParams = [newStock, inventory_id];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       updateStockQuery += 'client_id = ?';
       updateStockParams.push(clientId);
     } else {
@@ -236,7 +242,7 @@ router.get('/movements', async (req, res) => {
   try {
     const clientId = getClientId(req);
     const isSuperAdmin = checkSuperAdmin(req);
-    if (!clientId && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
+    if (clientId === null && !isSuperAdmin) return res.status(400).json({ error: 'Client ID required' });
 
     let query = `
       SELECT sm.*, inv.item_name, inv.unit
@@ -245,7 +251,7 @@ router.get('/movements', async (req, res) => {
       WHERE 
     `;
     let params = [];
-    if (clientId) {
+    if (clientId !== null && clientId !== undefined) {
       query += 'sm.client_id = ?';
       params.push(clientId);
     } else {
