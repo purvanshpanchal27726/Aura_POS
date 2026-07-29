@@ -50,6 +50,47 @@ document.addEventListener('DOMContentLoaded', () => {
   let allClients = [];
   let statusToastTimeout = null;
 
+  // 🚀 GLOBAL CLICK DELEGATION: Guarantees "+ Register Employee", "+ Add Table", "+ Add Item", and Edit/Delete buttons ALWAYS respond even if script errors occur
+  document.addEventListener('click', (e) => {
+    const target = e.target.closest('button, .btn, .btn-emp-edit, .btn-emp-del, .btn-table-edit, .btn-table-delete');
+    if (!target) return;
+
+    if (target.id === 'btnNewEmployee') {
+      e.preventDefault();
+      openEmployeeModal();
+    } else if (target.id === 'btnNewTable') {
+      e.preventDefault();
+      openTableModal();
+    } else if (target.id === 'btnNewPO') {
+      e.preventDefault();
+      openPoModal();
+    } else if (target.id === 'btnNewInvItem') {
+      e.preventDefault();
+      openInvItemModal();
+    } else if (target.id === 'btnStockAdjust') {
+      e.preventDefault();
+      openStockMovementModal();
+    } else if (target.id === 'btnNewRoom') {
+      e.preventDefault();
+      openRoomModal();
+    } else if (target.id === 'btnNewGuest') {
+      e.preventDefault();
+      openGuestModal();
+    } else if (target.id === 'btnNewBooking') {
+      e.preventDefault();
+      openBookingModal();
+    } else if (target.classList.contains('btn-emp-edit')) {
+      e.preventDefault();
+      const id = target.getAttribute('data-id');
+      if (id) openEmployeeModal(id);
+    } else if (target.classList.contains('btn-emp-del')) {
+      e.preventDefault();
+      const id = target.getAttribute('data-id');
+      if (id) deactivateEmployee(id);
+    }
+  });
+
+
   // ─────────────────────────────────────────────────────────────────────────
   // 🌐 PRODUCTION: Render.com backend URL
   // Update this if your Render service name changes.
@@ -1014,7 +1055,18 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const ctxSales = document.getElementById('dashSalesTrendChart')?.getContext('2d');
       if (ctxSales) {
-        if (dashSalesChartObj) dashSalesChartObj.destroy();
+        try {
+          if (typeof Chart !== 'undefined') {
+            const existing = Chart.getChart('dashSalesTrendChart');
+            if (existing) existing.destroy();
+          }
+          if (dashSalesChartObj) {
+            try { dashSalesChartObj.destroy(); } catch (e) {}
+            dashSalesChartObj = null;
+          }
+        } catch (e) {
+          console.warn('Sales chart cleanup warning:', e);
+        }
 
         const salesRes = await authFetch(getApiUrl('/api/sales'));
         const salesData = salesRes.ok ? await salesRes.json() : [];
@@ -1072,7 +1124,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const ctxCat = document.getElementById('dashCategoryChart')?.getContext('2d');
       if (ctxCat) {
-        if (dashCategoryChartObj) dashCategoryChartObj.destroy();
+        try {
+          if (typeof Chart !== 'undefined') {
+            const existing = Chart.getChart('dashCategoryChart');
+            if (existing) existing.destroy();
+          }
+          if (dashCategoryChartObj) {
+            try { dashCategoryChartObj.destroy(); } catch (e) {}
+            dashCategoryChartObj = null;
+          }
+        } catch (e) {
+          console.warn('Category chart cleanup warning:', e);
+        }
 
         const catRes = await authFetch(getApiUrl('/api/categories'));
         const catData = catRes.ok ? await catRes.json() : [];
