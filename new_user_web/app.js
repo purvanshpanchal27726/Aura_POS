@@ -7446,7 +7446,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewTable = document.getElementById('btnNewTable');
   const tableForm = document.getElementById('tableForm');
 
-  const openTableModal = (id = null) => {
+  function openTableModal(id = null) {
     if (!tableModal) return;
     tableModal.style.display = 'flex';
     if (tableForm) tableForm.reset();
@@ -7501,7 +7501,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const deleteTable = async (id) => {
+  async function deleteTable(id) {
     if (!confirm('Are you sure you want to delete this table?')) return;
     try {
       const response = await authFetch(getApiUrl(`/api/restaurant/tables/${id}`), { method: 'DELETE' });
@@ -7590,7 +7590,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewMenuCategory = document.getElementById('btnNewMenuCategory');
   const menuCategoryForm = document.getElementById('menuCategoryForm');
 
-  const openCategoryModal = (id = null) => {
+  function openCategoryModal(id = null) {
     if (!menuCategoryModal) return;
     menuCategoryForm.reset();
     document.getElementById('menu_category_id').value = id || '';
@@ -7709,7 +7709,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewMenuItem = document.getElementById('btnNewMenuItem');
   const menuItemForm = document.getElementById('menuItemForm');
 
-  const openMenuItemModal = (id = null) => {
+  function openMenuItemModal(id = null) {
     if (!menuItemModal) return;
     menuItemForm.reset();
     
@@ -8423,7 +8423,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewRoom = document.getElementById('btnNewRoom');
   const roomForm = document.getElementById('roomForm');
 
-  const openRoomModal = (id = null) => {
+  function openRoomModal(id = null) {
     if (!roomModal) return;
     roomForm.reset();
     document.getElementById('room_id').value = id || '';
@@ -8546,7 +8546,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewGuest = document.getElementById('btnNewGuest');
   const guestForm = document.getElementById('guestForm');
 
-  const openGuestModal = (id = null) => {
+  function openGuestModal(id = null) {
     if (!guestModal) return;
     guestForm.reset();
     document.getElementById('guest_id').value = id || '';
@@ -9007,7 +9007,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewInvItem = document.getElementById('btnNewInvItem');
   const invItemForm = document.getElementById('invItemForm');
 
-  const openInvItemModal = (id = null) => {
+  function openInvItemModal(id = null) {
     if (!invItemModal) return;
     invItemForm.reset();
     document.getElementById('inventory_id').value = id || '';
@@ -9074,7 +9074,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnStockAdjust = document.getElementById('btnStockAdjust');
   const stockMovementForm = document.getElementById('stockMovementForm');
 
-  const openStockMovementModal = () => {
+  function openStockMovementModal() {
     if (!stockMovementModal) return;
     stockMovementModal.style.display = 'flex';
     if (stockMovementForm) stockMovementForm.reset();
@@ -9222,7 +9222,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const poForm = document.getElementById('poForm');
   const poItemsCartBody = document.getElementById('poItemsCartBody');
 
-  const openPoModal = async () => {
+  async function openPoModal() {
     if (!purchaseOrderModal) return;
     purchaseOrderModal.style.display = 'flex';
     if (poForm) poForm.reset();
@@ -9494,7 +9494,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewEmployee = document.getElementById('btnNewEmployee');
   const employeeForm = document.getElementById('employeeForm');
 
-  const openEmployeeModal = async (id = null) => {
+  async function openEmployeeModal(id = null) {
     if (!employeeModal) return;
     employeeModal.style.display = 'flex';
     employeeForm.reset();
@@ -9573,7 +9573,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const deactivateEmployee = async (id) => {
+  async function deactivateEmployee(id) {
     if (!confirm('Are you sure you want to deactivate this employee?')) return;
     try {
       const response = await authFetch(getApiUrl(`/api/employees/${id}`), { method: 'DELETE' });
