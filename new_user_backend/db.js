@@ -82,7 +82,25 @@ const tablePrimaryKeyMap = {
   sales_master: 'sales_id',
   sales_details: 'sales_detail_id',
   purchase_master: 'purchase_id',
-  purchase_details: 'purchase_detail_id'
+  purchase_details: 'purchase_detail_id',
+  employees: 'employee_id',
+  inventory: 'inventory_id',
+  inventory_movements: 'movement_id',
+  purchase_orders: 'po_id',
+  purchase_order_items: 'po_item_id',
+  grn_master: 'grn_id',
+  grn_details: 'grn_detail_id',
+  hotel_rooms: 'room_id',
+  hotel_guests: 'guest_id',
+  hotel_bookings: 'booking_id',
+  hotel_services: 'service_id',
+  restaurant_tables: 'table_id',
+  restaurant_menu_categories: 'category_id',
+  restaurant_menu_items: 'item_id',
+  restaurant_orders: 'order_id',
+  restaurant_order_items: 'order_item_id',
+  licenses: 'license_id',
+  license_payments: 'payment_id'
 };
 
 // Robust state-machine parser for query parameter replacement (? -> $1, $2...)
@@ -170,8 +188,19 @@ async function dbQuery(clientOrPool, sql, values = []) {
   // If it was insert, wrap results to match mysql2 response
   if (isInsert) {
     let insertId = null;
-    if (res.rows && res.rows.length > 0 && pkField) {
-      insertId = res.rows[0][pkField];
+    if (res.rows && res.rows.length > 0) {
+      if (pkField && res.rows[0][pkField] !== undefined) {
+        insertId = res.rows[0][pkField];
+      } else {
+        const firstRow = res.rows[0];
+        const keys = Object.keys(firstRow);
+        const idKey = keys.find(k => k.endsWith('_id') || k === 'id');
+        if (idKey && firstRow[idKey] !== undefined) {
+          insertId = firstRow[idKey];
+        } else if (keys.length > 0) {
+          insertId = firstRow[keys[0]];
+        }
+      }
     }
     const mockResult = {
       insertId: insertId,

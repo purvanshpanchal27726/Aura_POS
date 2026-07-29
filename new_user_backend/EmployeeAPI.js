@@ -239,7 +239,8 @@ router.put('/:id', async (req, res) => {
       SET first_name = ?, last_name = ?, email_1 = ?, phone_1 = ?, role_id = ?
       WHERE user_id = ? AND 
     `;
-    let userUpdateParams = [first_name, last_name, email || null, phone, role_id || null, userId];
+    const safeEmail = email || `${first_name.toLowerCase()}_${phone.slice(-4)}@example.com`;
+    let userUpdateParams = [first_name, last_name, safeEmail, phone, role_id || null, userId];
     if (clientId !== null && clientId !== undefined) {
       userUpdateQuery += 'client_id = ?';
       userUpdateParams.push(clientId);
