@@ -180,7 +180,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Server-Sent Events Subscriber (Real-Time Live Sync)
   const initRealtimeSSE = () => {
     try {
-      const sseUrl = getApiUrl('/api/realtime-events');
+      const token = localStorage.getItem('pos_auth_token') || '';
+      if (!token) return;
+      const sseUrl = getApiUrl(`/api/realtime-events?token=${encodeURIComponent(token)}`);
       const source = new EventSource(sseUrl);
       
       source.onmessage = (event) => {
@@ -8168,8 +8170,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- SSE REAL-TIME SYNCHRONIZATION ---
   const initRestaurantSSE = () => {
     if (!activeUser) return;
+    const token = localStorage.getItem('pos_auth_token') || '';
+    if (!token) return;
     console.log('Initializing Real-Time SSE Listener Stream...');
-    const sse = new EventSource(getApiUrl('/api/realtime-events'));
+    const sse = new EventSource(getApiUrl(`/api/realtime-events?token=${encodeURIComponent(token)}`));
 
     sse.onmessage = (event) => {
       try {

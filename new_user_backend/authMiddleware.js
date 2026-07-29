@@ -23,17 +23,20 @@ module.exports = (req, res, next) => {
     return next();
   }
 
+  let token = null;
   const authHeader = req.headers['authorization'];
-  if (!authHeader) {
-    return res.status(401).json({ error: 'Authorization header is missing' });
+  if (authHeader) {
+    const parts = authHeader.split(' ');
+    if (parts.length === 2 && parts[0].toLowerCase() === 'bearer') {
+      token = parts[1];
+    }
+  } else if (req.query && req.query.token) {
+    token = req.query.token;
   }
 
-  const parts = authHeader.split(' ');
-  if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
-    return res.status(401).json({ error: 'Authorization header format must be Bearer <token>' });
+  if (!token) {
+    return res.status(401).json({ error: 'Authorization token is missing' });
   }
-
-  const token = parts[1];
   const secret = process.env.JWT_SECRET || 'mySuperSecretJWTKeyForPOSSystem2026';
 
   try {
