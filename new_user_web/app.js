@@ -342,7 +342,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchUsers() {
     try {
       const response = await authFetch(getApiUrl('/api/users'));
-      if (!response.ok) throw new Error('Failed to fetch users');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch users');
+        }
       allUsers = await response.json();
       renderUsers(allUsers);
     } catch (err) {
@@ -1099,7 +1102,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchDashboardStats() {
     try {
       const response = await authFetch(getApiUrl('/api/dashboard/stats'));
-      if (!response.ok) throw new Error('Failed to fetch dashboard statistics');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch dashboard statistics');
+        }
       const stats = await response.json();
 
       const uVal = document.getElementById('valUsers');
@@ -1357,7 +1363,10 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'DELETE'
       });
 
-      if (!response.ok) throw new Error('Failed to delete user');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to delete user');
+        }
 
       alert('User deleted successfully!');
       if (userIdInput.value === id) {
@@ -1540,7 +1549,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchCustomers() {
     try {
       const response = await authFetch(getApiUrl('/api/customers'));
-      if (!response.ok) throw new Error('Failed to fetch customers');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch customers');
+        }
       allCustomers = await response.json();
       localStorage.setItem('pos_cached_customers', JSON.stringify(allCustomers));
       renderCustomers(allCustomers);
@@ -1704,7 +1716,10 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'DELETE'
       });
 
-      if (!response.ok) throw new Error('Failed to delete customer');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to delete customer');
+        }
 
       alert('Customer deleted successfully!');
       if (custIdInput.value === id) {
@@ -1867,7 +1882,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchUnits() {
     try {
       const response = await authFetch(getApiUrl('/api/units'));
-      if (!response.ok) throw new Error('Failed to fetch units');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch units');
+        }
       allUnits = await response.json();
       renderUnits(allUnits);
     } catch (err) {
@@ -1954,7 +1972,10 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'DELETE'
       });
 
-      if (!response.ok) throw new Error('Failed to delete unit');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to delete unit');
+        }
 
       alert('Unit deleted successfully!');
       if (unitIdInput.value === id) {
@@ -2087,7 +2108,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchTaxes() {
     try {
       const response = await authFetch(getApiUrl('/api/taxes'));
-      if (!response.ok) throw new Error('Failed to fetch taxes');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch taxes');
+        }
       allTaxes = await response.json();
       renderTaxes(allTaxes);
     } catch (err) {
@@ -2177,7 +2201,10 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'DELETE'
       });
 
-      if (!response.ok) throw new Error('Failed to delete tax');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to delete tax');
+        }
 
       alert('Tax deleted successfully!');
       if (taxIdInput.value === id) {
@@ -2306,7 +2333,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchCategories() {
     try {
       const response = await authFetch(getApiUrl('/api/categories'));
-      if (!response.ok) throw new Error('Failed to fetch categories');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch categories');
+        }
       allCategories = await response.json();
       renderCategories(allCategories);
     } catch (err) {
@@ -2393,7 +2423,10 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'DELETE'
       });
 
-      if (!response.ok) throw new Error('Failed to delete category');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to delete category');
+        }
 
       alert('Category deleted successfully!');
       if (categoryIdInput.value === id) {
@@ -2563,7 +2596,10 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       await populateDropdowns();
       const response = await authFetch(getApiUrl('/api/items'));
-      if (!response.ok) throw new Error('Failed to fetch items');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch items');
+        }
       allItems = await response.json();
       renderItems(allItems);
     } catch (err) {
@@ -2696,7 +2732,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const editItem = async (id) => {
     try {
       const response = await authFetch(getApiUrl(`/api/items/${id}`));
-      if (!response.ok) throw new Error('Failed to fetch item details');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch item details');
+        }
       const item = await response.json();
 
       const srNoGroup = document.getElementById('itemSrNoGroup');
@@ -2785,7 +2824,10 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'DELETE'
       });
 
-      if (!response.ok) throw new Error('Failed to delete item');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to delete item');
+        }
 
       alert('Item deleted successfully!');
       if (itemIdInput.value === id) {
@@ -3004,7 +3046,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchVendors() {
     try {
       const response = await authFetch(getApiUrl('/api/vendors'));
-      if (!response.ok) throw new Error('Failed to fetch vendors');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch vendors');
+        }
       allVendors = await response.json();
       renderVendors(allVendors);
     } catch (err) {
@@ -3132,7 +3177,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this vendor?')) return;
     try {
       const response = await authFetch(getApiUrl(`/api/vendors/${id}`), { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete vendor');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to delete vendor');
+        }
       alert('Vendor deleted successfully!');
       fetchVendors();
     } catch (err) {
@@ -3597,7 +3645,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to save sales invoice.');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to save sales invoice.');
+        }
         const result = await response.json();
         openPrintReceipt(result.sales_id);
         fetchInvoiceSetup();
@@ -3675,7 +3726,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const openPrintReceipt = async (salesId) => {
     try {
       const response = await authFetch(getApiUrl(`/api/sales/${salesId}`));
-      if (!response.ok) throw new Error('Failed to fetch invoice details.');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch invoice details.');
+        }
       const invoice = await response.json();
 
       const printReceiptContent = document.getElementById('printReceiptContent');
@@ -3757,7 +3811,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchReceipts() {
     try {
       const response = await authFetch(getApiUrl('/api/sales'));
-      if (!response.ok) throw new Error('Failed to load receipts.');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to load receipts.');
+        }
       const list = await response.json();
       renderReceipts(list);
     } catch (err) {
@@ -3809,7 +3866,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!permissionsTableBody) return;
     try {
       const response = await authFetch(getApiUrl('/api/permissions'));
-      if (!response.ok) throw new Error('Failed to load permissions config.');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to load permissions config.');
+        }
       const data = await response.json();
       matrixRoles = data.roles;
       matrixModules = data.modules;
@@ -3863,7 +3923,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updates)
         });
-        if (!response.ok) throw new Error('Failed to update permissions matrix.');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to update permissions matrix.');
+        }
         alert('Role permissions updated successfully!');
         await fetchPermissionsAndUsers();
       } catch (err) {
@@ -3879,7 +3942,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!printerSettingsForm) return;
     try {
       const response = await authFetch(getApiUrl('/api/settings/printer'));
-      if (!response.ok) throw new Error('Failed to load printer settings.');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to load printer settings.');
+        }
       const settings = await response.json();
 
       document.getElementById('setting_printer_name').value = settings.printer_name || '';
@@ -3987,7 +4053,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchRoles() {
     try {
       const response = await authFetch(getApiUrl('/api/roles'));
-      if (!response.ok) throw new Error('Failed to fetch roles');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch roles');
+        }
       allRoles = await response.json();
       renderRoles(allRoles);
     } catch (err) {
@@ -4074,7 +4143,10 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'DELETE'
       });
 
-      if (!response.ok) throw new Error('Failed to delete role');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to delete role');
+        }
 
       alert('Role deleted successfully!');
       if (roleIdInput.value === id) {
@@ -4197,7 +4269,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchClients() {
     try {
       const response = await authFetch(getApiUrl('/api/clients'));
-      if (!response.ok) throw new Error('Failed to fetch clients');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch clients');
+        }
       allClients = await response.json();
       renderClients(allClients);
       populateClientDropdown();
@@ -4909,7 +4984,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to save purchase inward.');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to save purchase inward.');
+        }
         alert('Purchase inward recorded successfully!');
         fetchPurchaseSetup();
       } catch (err) {
@@ -7110,7 +7188,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchLicenseDetails() {
     try {
       const response = await authFetch(getApiUrl('/api/license'));
-      if (!response.ok) throw new Error('Failed to load license details.');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to load license details.');
+        }
       const data = await response.json();
       
       // Update UI elements
@@ -7221,7 +7302,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' }
         });
         
-        if (!response.ok) throw new Error('Failed to complete online renewal.');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to complete online renewal.');
+        }
         
         alert('Renewal payment processed successfully! Your software license validity and AMC support contract have been extended by 1 year.');
         closeLicensePaymentModal();
@@ -7248,7 +7332,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchRestTables() {
     try {
       const response = await authFetch(getApiUrl('/api/restaurant/tables'));
-      if (!response.ok) throw new Error('Failed to fetch restaurant tables');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch restaurant tables');
+        }
       allTables = await response.json();
       renderRestTables();
     } catch (err) {
@@ -7340,7 +7427,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to save table');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to save table');
+        }
         tableModal.style.display = 'none';
         showToast('Table Saved', 'Restaurant dining table configuration updated successfully!', 'success');
         fetchRestTables();
@@ -7354,7 +7444,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this table?')) return;
     try {
       const response = await authFetch(getApiUrl(`/api/restaurant/tables/${id}`), { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete table');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to delete table');
+        }
       showToast('Table Deleted', 'Table de-registered successfully', 'success');
       fetchRestTables();
     } catch (err) {
@@ -7392,7 +7485,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchMenuCategories() {
     try {
       const response = await authFetch(getApiUrl('/api/restaurant/menu/categories'));
-      if (!response.ok) throw new Error('Failed to fetch categories');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch categories');
+        }
       allMenuCategories = await response.json();
       renderMenuCategories();
     } catch (err) {
@@ -7472,7 +7568,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to save category');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to save category');
+        }
         menuCategoryModal.style.display = 'none';
         showToast('Category Saved', 'Menu category created successfully!', 'success');
         fetchMenuCategories();
@@ -7486,7 +7585,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this category?')) return;
     try {
       const response = await authFetch(getApiUrl(`/api/restaurant/menu/categories/${id}`), { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete category');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to delete category');
+        }
       showToast('Category Deleted', 'Category removed successfully', 'success');
       fetchMenuCategories();
     } catch (err) {
@@ -7498,7 +7600,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchMenuItems() {
     try {
       const response = await authFetch(getApiUrl('/api/restaurant/menu/items'));
-      if (!response.ok) throw new Error('Failed to fetch items');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch items');
+        }
       allMenuItems = await response.json();
       renderMenuItems();
     } catch (err) {
@@ -7609,7 +7714,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to save menu item');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to save menu item');
+        }
         menuItemModal.style.display = 'none';
         showToast('Item Saved', 'Menu dish item updated successfully!', 'success');
         fetchMenuItems();
@@ -7623,7 +7731,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this menu item?')) return;
     try {
       const response = await authFetch(getApiUrl(`/api/restaurant/menu/items/${id}`), { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete item');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to delete item');
+        }
       showToast('Item Deleted', 'Menu item removed successfully', 'success');
       fetchMenuItems();
     } catch (err) {
@@ -7636,7 +7747,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchRestOrders() {
     try {
       const response = await authFetch(getApiUrl('/api/restaurant/orders'));
-      if (!response.ok) throw new Error('Failed to fetch restaurant orders');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch restaurant orders');
+        }
       allRestOrders = await response.json();
       renderRestOrders();
     } catch (err) {
@@ -7709,7 +7823,10 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
-      if (!response.ok) throw new Error('Failed to update status');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to update status');
+        }
       showToast('Order Updated', `Order status updated to ${status}`, 'success');
       fetchRestOrders();
     } catch (err) {
@@ -7744,7 +7861,10 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(salesInvoiceData)
       });
-      if (!response.ok) throw new Error('Failed to create sales invoice checkout.');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to create sales invoice checkout.');
+        }
       const result = await response.json();
 
       await authFetch(getApiUrl(`/api/restaurant/orders/${id}/status`), {
@@ -7915,7 +8035,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to submit order');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to submit order');
+        }
         restOrderModal.style.display = 'none';
         showToast('KOT Submitted', 'KOT ticket routed to kitchen display system successfully!', 'success');
         fetchRestOrders();
@@ -7932,7 +8055,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchKdsQueue() {
     try {
       const response = await authFetch(getApiUrl('/api/restaurant/kitchen/queue'));
-      if (!response.ok) throw new Error('Failed to fetch KDS queue');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch KDS queue');
+        }
       kdsQueue = await response.json();
       renderKdsQueue();
     } catch (err) {
@@ -8025,7 +8151,10 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
-      if (!response.ok) throw new Error('Failed to update KDS item state');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to update KDS item state');
+        }
       fetchKdsQueue();
     } catch (err) {
       alert(err.message);
@@ -8080,7 +8209,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchHotelRooms() {
     try {
       const response = await authFetch(getApiUrl('/api/hotel/rooms'));
-      if (!response.ok) throw new Error('Failed to fetch rooms');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch rooms');
+        }
       allRooms = await response.json();
       renderHotelRooms();
     } catch (err) {
@@ -8269,7 +8401,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to save room');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to save room');
+        }
         roomModal.style.display = 'none';
         showToast('Room Saved', 'Hotel room registered successfully!', 'success');
         fetchHotelRooms();
@@ -8283,7 +8418,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to delete this room?')) return;
     try {
       const response = await authFetch(getApiUrl(`/api/hotel/rooms/${id}`), { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to delete room');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to delete room');
+        }
       showToast('Room Deleted', 'Room de-registered successfully', 'success');
       fetchHotelRooms();
     } catch (err) {
@@ -8296,7 +8434,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchHotelGuests() {
     try {
       const response = await authFetch(getApiUrl('/api/hotel/guests'));
-      if (!response.ok) throw new Error('Failed to fetch guests');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch guests');
+        }
       allGuests = await response.json();
       renderHotelGuests();
     } catch (err) {
@@ -8387,7 +8528,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to save guest details');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to save guest details');
+        }
         guestModal.style.display = 'none';
         showToast('Guest Saved', 'Hotel guest details updated successfully!', 'success');
         fetchHotelGuests();
@@ -8402,7 +8546,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchHotelBookings() {
     try {
       const response = await authFetch(getApiUrl('/api/hotel/bookings'));
-      if (!response.ok) throw new Error('Failed to fetch bookings');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch bookings');
+        }
       allBookings = await response.json();
       renderHotelBookings();
     } catch (err) {
@@ -8536,7 +8683,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to create check-in folio');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to create check-in folio');
+        }
         bookingModal.style.display = 'none';
         showToast('Guest Checked In', 'Stay folio created and room marked occupied.', 'success');
         fetchHotelBookings();
@@ -8618,7 +8768,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to order service');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to order service');
+        }
         showToast('Service Added', 'Room service charge appended to guest folio.', 'success');
         roomServiceForm.reset();
         fetchRoomServices(bookingId);
@@ -8706,7 +8859,10 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(salesInvoiceData)
       });
-      if (!response.ok) throw new Error('Failed to checkout guest invoice.');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to checkout guest invoice.');
+        }
       const result = await response.json();
 
       await authFetch(getApiUrl(`/api/hotel/bookings/${bookingId}/status`), {
@@ -8734,7 +8890,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchInventory() {
     try {
       const response = await authFetch(getApiUrl('/api/inventory'));
-      if (!response.ok) throw new Error('Failed to fetch stock inventory');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch stock inventory');
+        }
       allInventory = await response.json();
       renderInventory();
     } catch (err) {
@@ -8834,7 +8993,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to save inventory item');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to save inventory item');
+        }
         invItemModal.style.display = 'none';
         showToast('Inventory Updated', 'Stock ledger item saved successfully!', 'success');
         fetchInventory();
@@ -8889,7 +9051,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to post stock transaction');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to post stock transaction');
+        }
         stockMovementModal.style.display = 'none';
         showToast('Stock Posted', 'Ledger balances updated successfully!', 'success');
         fetchInventory();
@@ -8904,7 +9069,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchPurchaseOrders() {
     try {
       const response = await authFetch(getApiUrl('/api/purchase-orders'));
-      if (!response.ok) throw new Error('Failed to fetch purchase orders');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch purchase orders');
+        }
       allPOs = await response.json();
       renderPurchaseOrders();
     } catch (err) {
@@ -8974,7 +9142,10 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       });
-      if (!response.ok) throw new Error('Failed to update PO status');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to update PO status');
+        }
       showToast('PO Updated', `Purchase order marked as ${status}!`, 'success');
       fetchPurchaseOrders();
     } catch (err) {
@@ -9091,7 +9262,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to create purchase order');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to create purchase order');
+        }
         purchaseOrderModal.style.display = 'none';
         showToast('PO Draft Created', 'Vendor purchase order saved to ledger.', 'success');
         fetchPurchaseOrders();
@@ -9177,7 +9351,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to submit GRN inventory receipt');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to submit GRN inventory receipt');
+        }
         grnModal.style.display = 'none';
         showToast('GRN Completed', 'Goods Received and stock ledger updated successfully!', 'success');
         fetchPurchaseOrders();
@@ -9198,7 +9375,10 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchEmployees() {
     try {
       const response = await authFetch(getApiUrl('/api/employees'));
-      if (!response.ok) throw new Error('Failed to fetch employees list');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to fetch employees list');
+        }
       allEmployees = await response.json();
       renderEmployees();
     } catch (err) {
@@ -9317,7 +9497,10 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
         });
-        if (!response.ok) throw new Error('Failed to save employee profile');
+        if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to save employee profile');
+        }
         employeeModal.style.display = 'none';
         showToast('Profile Saved', 'Employee staff directory updated successfully!', 'success');
         fetchEmployees();
@@ -9331,7 +9514,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!confirm('Are you sure you want to deactivate this employee?')) return;
     try {
       const response = await authFetch(getApiUrl(`/api/employees/${id}`), { method: 'DELETE' });
-      if (!response.ok) throw new Error('Failed to deactivate employee');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to deactivate employee');
+        }
       showToast('Employee Deactivated', 'Staff user marked inactive.', 'success');
       fetchEmployees();
     } catch (err) {
@@ -9350,7 +9536,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const date = attendanceDatePicker ? attendanceDatePicker.value : new Date().toISOString().substring(0, 10);
     try {
       const response = await authFetch(getApiUrl(`/api/employees/attendance?date=${date}`));
-      if (!response.ok) throw new Error('Failed to load attendance sheet');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to load attendance sheet');
+        }
       allAttendance = await response.json();
       renderAttendance();
     } catch (err) {
@@ -9422,7 +9611,10 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ employee_id: parseInt(empId), date, status })
       });
-      if (!response.ok) throw new Error('Failed to update status');
+      if (!response.ok) {
+          const errRes = await response.json().catch(() => ({}));
+          throw new Error(errRes.error || errRes.message || 'Failed to update status');
+        }
       showToast('Attendance Logged', 'Staff status updated successfully!', 'success');
       fetchAttendance();
     } catch (err) {
