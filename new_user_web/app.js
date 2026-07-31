@@ -2740,7 +2740,7 @@ document.addEventListener('DOMContentLoaded', () => {
     itemTableBody.innerHTML = items.map(item => {
       const itemCode = item.code || 'N/A';
       const imageSrc = getItemImageSrc(item, 'thumb');
-      const imageTag = imageSrc ? `<img src="${imageSrc}" class="item-table-image" alt="${item.name || 'Item image'}">` : '';
+      const imageTag = imageSrc ? `<img src="${imageSrc}" onerror="this.style.display=\'none\';" class="item-table-image" alt="${item.name || 'Item image'}">` : '';
       const categoryName = item.category_name || 'N/A';
       const description = item.description || 'No description';
 
@@ -3584,7 +3584,7 @@ document.addEventListener('DOMContentLoaded', () => {
     salesProductGrid.innerHTML = filtered.map(item => {
       const imageSrc = getItemImageSrc(item, 'web');
       const image = imageSrc
-        ? `<img src="${imageSrc}" alt="${item.name || 'Item image'}">`
+        ? `<img src="${imageSrc}" onerror="this.style.display=\'none\';" alt="${item.name || 'Item image'}">`
         : '<span class="material-icons">inventory_2</span>';
       return `
         <button type="button" class="pos-product-card" data-id="${item.item_id}">
@@ -4407,7 +4407,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${c.client_id}</td>
           <td>
             <strong>${c.name}</strong>
-            ${c.logo_url ? `<br><img src="${c.logo_url}" style="height:24px; max-width:80px; margin-top:4px; object-fit:contain;">` : ''}
+            ${c.logo_url ? `<br><img src="${c.logo_url}" onerror="this.style.display=\'none\';" style="height:24px; max-width:80px; margin-top:4px; object-fit:contain;">` : ''}
           </td>
           <td>${contactInfo}</td>
           <td>${c.gst_no || 'N/A'}</td>
@@ -4933,7 +4933,7 @@ document.addEventListener('DOMContentLoaded', () => {
     purchaseProductGrid.innerHTML = filtered.map(item => {
       const imageSrc = getItemImageSrc(item, 'web');
       const image = imageSrc
-        ? `<img src="${imageSrc}" alt="${item.name || 'Item image'}">`
+        ? `<img src="${imageSrc}" onerror="this.style.display=\'none\';" alt="${item.name || 'Item image'}">`
         : '<span class="material-icons">inventory_2</span>';
       return `
         <button type="button" class="pos-product-card" data-id="${item.item_id}">
