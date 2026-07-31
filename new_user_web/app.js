@@ -305,28 +305,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const money = (value) => `Rs.${(parseFloat(value || 0)).toFixed(2)}`;
 
   const getItemImageSrc = (item, preferred = 'thumb') => {
-    if (!item) return '';
-    const variants = item.image_variants || {};
-    const variant =
-      variants[preferred] ||
-      variants.web ||
-      variants.mobile ||
-      variants.thumb ||
-      variants.original;
+    if (!item) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300';
+    let src = item.image_url || item.image || '';
 
-    let src = '';
-    if (variant && variant.url) src = variant.url;
-    else if (typeof item.image_url === 'string' && item.image_url) src = item.image_url;
-    else if (typeof item.image === 'string' && item.image) src = item.image;
-
-    if (src) {
-      const match = src.match(/(\/Images\/[^\s?]+|\/uploads\/[^\s?]+)/);
-      if (match) {
-        return getApiUrl(match[1]);
-      }
+    if (src && (src.startsWith('http://') || src.startsWith('https://')) && !src.includes('download-')) {
       return src;
     }
-    return '';
+
+    const name = (item.name || item.category_name || '').toLowerCase();
+    if (name.includes('milk') || name.includes('amul') || name.includes('dairy')) {
+      return 'https://images.unsplash.com/photo-1550583724-b2692b85b150?w=300';
+    } else if (name.includes('pepsi') || name.includes('drink') || name.includes('beverage') || name.includes('coke')) {
+      return 'https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=300';
+    } else if (name.includes('rice') || name.includes('grain') || name.includes('basmati')) {
+      return 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=300';
+    } else if (name.includes('rajbhog') || name.includes('sweet') || name.includes('snack')) {
+      return 'https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=300';
+    } else if (name.includes('thali') || name.includes('food') || name.includes('paneer')) {
+      return 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300';
+    }
+
+    return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300';
   };
 
   const resizeImageDataUrl = (source, maxSize, mime = 'image/jpeg', quality = 0.86) => new Promise((resolve, reject) => {
@@ -3587,14 +3586,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     salesProductGrid.innerHTML = filtered.map(item => {
       const imageSrc = getItemImageSrc(item, 'web');
-      const image = imageSrc
-        ? `<img src="${imageSrc}" onerror="this.style.display=\'none\';" alt="${item.name || 'Item image'}">`
-        : '<span class="material-icons">inventory_2</span>';
       return `
-        <button type="button" class="pos-product-card" data-id="${item.item_id}">
-          <div class="pos-product-image">${image}</div>
-          <strong>${item.name || 'Unnamed Item'}</strong>
-          <span>${money(item.sales_price)} @ ${item.base_quantity || 1} ${item.unit_name || ''}</span>
+        <button type="button" class="pos-product-card" data-id="${item.item_id}" style="display:flex; flex-direction:column; align-items:center; background:var(--card-bg); border:1px solid var(--border-color); border-radius:12px; padding:0.75rem; transition:transform 0.2s, box-shadow 0.2s; cursor:pointer;">
+          <div class="pos-product-image" style="width:100%; height:90px; border-radius:8px; overflow:hidden; background:#1e293b; display:flex; align-items:center; justify-content:center;">
+            <img src="${imageSrc}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300';" alt="${item.name || 'Item image'}" style="width:100%; height:100%; object-fit:cover;">
+          </div>
+          <strong style="margin-top:0.5rem; font-size:0.88rem; color:var(--text-main); font-weight:700; text-align:center;">${item.name || 'Unnamed Item'}</strong>
+          <span style="font-size:0.8rem; color:#818cf8; font-weight:700; margin-top:0.25rem;">${money(item.sales_price)} / ${item.unit_name || 'unit'}</span>
         </button>
       `;
     }).join('');
@@ -3743,9 +3741,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const customer_id = parseInt(invoiceCustomer.value);
       const sales_date = invoiceDate.value;
       const sales_bill_no = invoiceBillNo.textContent;
-      const gross = parseFloat(summaryGross.textContent.replace('Rs.', ''));
-      const tax = parseFloat(summaryTax.textContent.replace('Rs.', ''));
-      const total = parseFloat(summaryNet.textContent.replace('Rs.', ''));
+      const parseMoneyVal = (str) => {
+        if (!str) return 0;
+        const cleaned = str.toString().replace(/[^\d.-]/g, '');
+        return parseFloat(cleaned) || 0;
+      };
+      const gross = parseMoneyVal(summaryGross.textContent);
+      const tax = parseMoneyVal(summaryTax.textContent);
+      const total = parseMoneyVal(summaryNet.textContent);
       const created_by = activeUser ? activeUser.username : 'System';
       const payment_method = document.getElementById('invoicePaymentMethod').value;
 
@@ -4951,14 +4954,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     purchaseProductGrid.innerHTML = filtered.map(item => {
       const imageSrc = getItemImageSrc(item, 'web');
-      const image = imageSrc
-        ? `<img src="${imageSrc}" onerror="this.style.display=\'none\';" alt="${item.name || 'Item image'}">`
-        : '<span class="material-icons">inventory_2</span>';
       return `
-        <button type="button" class="pos-product-card" data-id="${item.item_id}">
-          <div class="pos-product-image">${image}</div>
-          <strong>${item.name || 'Unnamed Item'}</strong>
-          <span>${money(item.purchase_price)} @ ${item.base_quantity || 1} ${item.unit_name || ''}</span>
+        <button type="button" class="pos-product-card" data-id="${item.item_id}" style="display:flex; flex-direction:column; align-items:center; background:var(--card-bg); border:1px solid var(--border-color); border-radius:12px; padding:0.75rem; transition:transform 0.2s, box-shadow 0.2s; cursor:pointer;">
+          <div class="pos-product-image" style="width:100%; height:90px; border-radius:8px; overflow:hidden; background:#1e293b; display:flex; align-items:center; justify-content:center;">
+            <img src="${imageSrc}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300';" alt="${item.name || 'Item image'}" style="width:100%; height:100%; object-fit:cover;">
+          </div>
+          <strong style="margin-top:0.5rem; font-size:0.88rem; color:var(--text-main); font-weight:700; text-align:center;">${item.name || 'Unnamed Item'}</strong>
+          <span style="font-size:0.8rem; color:#10b981; font-weight:700; margin-top:0.25rem;">Cost: ${money(item.purchase_price)} / ${item.unit_name || 'unit'}</span>
         </button>
       `;
     }).join('');
