@@ -3453,10 +3453,10 @@ document.addEventListener('DOMContentLoaded', () => {
         availableCustomers.map(c => `<option value="${c.customer_id}">${c.first_name} ${c.last_name}</option>`).join('');
 
       const itemsRes = await authFetch(getApiUrl('/api/items'));
-      availableItems = itemsRes.ok ? (await itemsRes.json()).filter(item => item.visible == 1 && item.active == 1) : [];
+      availableItems = itemsRes.ok ? (await itemsRes.json()).filter(item => item.visible !== 0 && item.visible !== "0" && item.visible !== false && item.active !== 0 && item.active !== "0" && item.active !== false) : [];
       adderItem.innerHTML = '<option value="">Select Item</option>' + 
         availableItems.map(i => `<option value="${i.item_id}">${i.name}</option>`).join('');
-      renderSalesCategories();
+      renderSalesCategories(); renderSalesCatalog();
       renderSalesCatalog();
 
       const taxesRes = await authFetch(getApiUrl('/api/taxes'));
@@ -4824,7 +4824,7 @@ document.addEventListener('DOMContentLoaded', () => {
         availableVendors.map(v => `<option value="${v.vendor_id}">${v.first_name} ${v.last_name} (${v.company || 'Individual'})</option>`).join('');
 
       const itemsRes = await authFetch(getApiUrl('/api/items'));
-      availableItems = itemsRes.ok ? (await itemsRes.json()).filter(item => item.visible == 1 && item.active == 1) : [];
+      availableItems = itemsRes.ok ? (await itemsRes.json()).filter(item => item.visible !== 0 && item.visible !== "0" && item.visible !== false && item.active !== 0 && item.active !== "0" && item.active !== false) : [];
       purchaseAdderItem.innerHTML = '<option value="">Select Item</option>' + 
         availableItems.map(i => `<option value="${i.item_id}">${i.name}</option>`).join('');
       renderPurchaseCategories();

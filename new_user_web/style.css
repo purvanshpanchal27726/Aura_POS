@@ -2022,3 +2022,5 @@ body.print-report-active th, body.print-report-active td {
 .pos-hidden-adder {
   display: none !important;
 }
+
+.mobile-bottom-nav { display: none !important; }
