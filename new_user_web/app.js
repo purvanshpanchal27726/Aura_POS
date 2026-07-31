@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   // Centralized Authenticated Fetch Helper
-  const authFetch = (url, options = {}) => {
+  const authFetch = async (url, options = {}) => {
     const token = localStorage.getItem('pos_auth_token');
     const headers = { ...(options.headers || {}) };
     if (token) {
@@ -10,13 +10,28 @@ document.addEventListener('DOMContentLoaded', () => {
     if (activeUserData) {
       try {
         const u = JSON.parse(activeUserData);
-        if (u && u.client_id) headers['x-client-id'] = u.client_id;
+        if (u && u.client_id !== undefined && u.client_id !== null) {
+          headers['x-client-id'] = u.client_id;
+        }
       } catch (e) {}
     }
     if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
       headers['Content-Type'] = 'application/json';
     }
-    return fetch(url, { ...options, headers });
+    
+    const res = await fetch(url, { ...options, headers });
+    
+    // Auto-handle expired or invalid JWT token (401 Unauthorized)
+    if (res.status === 401 && !url.includes('/api/users/login')) {
+      console.warn('Session expired or invalid token. Redirecting to login...');
+      localStorage.removeItem('pos_auth_token');
+      localStorage.removeItem('pos_active_user');
+      const loginOverlay = document.getElementById('loginOverlay');
+      if (loginOverlay) loginOverlay.style.display = 'flex';
+      const mainContainer = document.getElementById('mainContainer');
+      if (mainContainer) mainContainer.style.display = 'none';
+    }
+    return res;
   };
   // Global Application State Variables (Declared at top to prevent TDZ ReferenceErrors)
   let activeUser = null;
