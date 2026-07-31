@@ -2005,3 +2005,20 @@ body.print-report-active th, body.print-report-active td {
     font-size: 0.8rem !important;
   }
 }
+
+
+/* High-End Receipt Modal Glassmorphism Styling */
+.receipt-card-modal {
+  max-width: 440px !important;
+  width: 92% !important;
+  background: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 20px !important;
+  padding: 1.5rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+.pos-hidden-adder {
+  display: none !important;
+}
