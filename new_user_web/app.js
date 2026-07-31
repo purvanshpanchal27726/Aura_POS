@@ -3512,8 +3512,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const tax = availableTaxes.find(t => t.tax_id == item.tax_id);
-    let taxPercent = tax ? parseFloat(tax.percentage || 0) / 100 : 0;
+    let taxRate = 0;
+    if (item.tax_rate !== undefined && item.tax_rate !== null && item.tax_rate !== '') {
+      taxRate = parseFloat(item.tax_rate);
+    } else if (item.tax_percentage !== undefined && item.tax_percentage !== null && item.tax_percentage !== '') {
+      taxRate = parseFloat(item.tax_percentage);
+    } else if (item.tax_id) {
+      const taxObj = availableTaxes.find(t => t.tax_id == item.tax_id || t.id == item.tax_id);
+      if (taxObj) taxRate = parseFloat(taxObj.percentage || taxObj.rate || 0);
+    }
+    let taxPercent = taxRate / 100;
 
     const gross = rate * qty;
     const taxAmt = gross * taxPercent;
@@ -3659,7 +3667,10 @@ document.addEventListener('DOMContentLoaded', () => {
       tNet += line.item_amount;
       return `
         <tr>
-          <td>${line.name}</td>
+          <td>
+            <div style="font-weight: 700;">${line.name}</div>
+            ${line.taxPercent > 0 ? `<span style="font-size: 0.72rem; color: #10b981; font-weight: 600;">+ ${(line.taxPercent * 100).toFixed(0)}% Tax (${money(line.tax_amount)})</span>` : '<span style="font-size: 0.72rem; color: #64748b;">(Tax Exempt / 0%)</span>'}
+          </td>
           <td style="text-align: right;">${money(line.rate)}</td>
           <td style="text-align: right;">
             <div style="display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end;">
@@ -4882,8 +4893,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const tax = availableTaxes.find(t => t.tax_id == item.tax_id);
-    let taxPercent = tax ? parseFloat(tax.percentage || 0) / 100 : 0;
+    let taxRate = 0;
+    if (item.tax_rate !== undefined && item.tax_rate !== null && item.tax_rate !== '') {
+      taxRate = parseFloat(item.tax_rate);
+    } else if (item.tax_percentage !== undefined && item.tax_percentage !== null && item.tax_percentage !== '') {
+      taxRate = parseFloat(item.tax_percentage);
+    } else if (item.tax_id) {
+      const taxObj = availableTaxes.find(t => t.tax_id == item.tax_id || t.id == item.tax_id);
+      if (taxObj) taxRate = parseFloat(taxObj.percentage || taxObj.rate || 0);
+    }
+    let taxPercent = taxRate / 100;
 
     const gross = rate * qty;
     const taxAmt = gross * taxPercent;
@@ -5014,7 +5033,10 @@ document.addEventListener('DOMContentLoaded', () => {
       tNet += line.item_amount;
       return `
         <tr>
-          <td>${line.name}</td>
+          <td>
+            <div style="font-weight: 700;">${line.name}</div>
+            ${line.taxPercent > 0 ? `<span style="font-size: 0.72rem; color: #10b981; font-weight: 600;">+ ${(line.taxPercent * 100).toFixed(0)}% Tax (${money(line.tax_amount)})</span>` : '<span style="font-size: 0.72rem; color: #64748b;">(Tax Exempt / 0%)</span>'}
+          </td>
           <td style="text-align: right;">${money(line.rate)}</td>
           <td style="text-align: right;">
             <div style="display: inline-flex; align-items: center; gap: 4px; justify-content: flex-end;">
