@@ -5,6 +5,7 @@ services:
     rootDir: new_user_backend
     buildCommand: npm install
     startCommand: npm start
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
