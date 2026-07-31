@@ -3443,7 +3443,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedSalesCategory = 'all';
 
   async function fetchInvoiceSetup() {
-    if (!invoiceDate || !invoiceCustomer || !adderItem || !invoiceBillNo) return;
+    if (!invoiceDate || !invoiceCustomer || !invoiceBillNo) return;
     try {
       invoiceDate.value = new Date().toISOString().split('T')[0];
       
@@ -3454,8 +3454,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const itemsRes = await authFetch(getApiUrl('/api/items'));
       availableItems = itemsRes.ok ? (await itemsRes.json()).filter(item => item.visible !== 0 && item.visible !== "0" && item.visible !== false && item.active !== 0 && item.active !== "0" && item.active !== false) : [];
-      adderItem.innerHTML = '<option value="">Select Item</option>' + 
-        availableItems.map(i => `<option value="${i.item_id}">${i.name}</option>`).join('');
+      if (adderItem) {
+        adderItem.innerHTML = '<option value="">Select Item</option>' + 
+          availableItems.map(i => `<option value="${i.item_id}">${i.name}</option>`).join('');
+      }
       renderSalesCategories(); renderSalesCatalog();
       renderSalesCatalog();
 
@@ -4814,7 +4816,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let selectedPurchaseCategory = 'all';
 
   async function fetchPurchaseSetup() {
-    if (!purchaseDate || !purchaseVendor || !purchaseAdderItem || !purchaseBillNo) return;
+    if (!purchaseDate || !purchaseVendor || !purchaseBillNo) return;
     try {
       purchaseDate.value = new Date().toISOString().split('T')[0];
       
@@ -4825,8 +4827,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const itemsRes = await authFetch(getApiUrl('/api/items'));
       availableItems = itemsRes.ok ? (await itemsRes.json()).filter(item => item.visible !== 0 && item.visible !== "0" && item.visible !== false && item.active !== 0 && item.active !== "0" && item.active !== false) : [];
-      purchaseAdderItem.innerHTML = '<option value="">Select Item</option>' + 
-        availableItems.map(i => `<option value="${i.item_id}">${i.name}</option>`).join('');
+      if (purchaseAdderItem) {
+        purchaseAdderItem.innerHTML = '<option value="">Select Item</option>' + 
+          availableItems.map(i => `<option value="${i.item_id}">${i.name}</option>`).join('');
+      }
       renderPurchaseCategories();
       renderPurchaseCatalog();
 
