@@ -2025,8 +2025,8 @@ body.print-report-active th, body.print-report-active td {
 
 .mobile-bottom-nav { display: none !important; }
 
-/* Infinite Scroll Down for all ERP Module Tables */
-.pagination, .table-pagination, .table-footer-pagination, .pagination-controls, [class*="pagination"] {
+/* Complete Removal of Pagination Bar & Footers - Full Scroll-Down View */
+.pagination, .table-pagination, .table-footer-pagination, .pagination-controls, [class*="pagination"], [id*="Pagination"], [id*="pagination"], [id*="PageNum"], [id*="pageInfo"], [id*="PaginationInfo"] {
   display: none !important;
 }
 
