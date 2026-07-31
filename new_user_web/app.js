@@ -65,20 +65,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let allClients = [];
   let statusToastTimeout = null;
 
-  // 🌐 SAFE GLOBAL WINDOW WRAPPERS FOR INSTANT INLINE ONCLICK EXECUTION
-  window.openEmployeeModal = function(...a) { if (typeof openEmployeeModal === 'function') return openEmployeeModal(...a); };
-  window.openTableModal = function(...a) { if (typeof openTableModal === 'function') return openTableModal(...a); };
-  window.openPoModal = function(...a) { if (typeof openPoModal === 'function') return openPoModal(...a); };
-  window.openInvItemModal = function(...a) { if (typeof openInvItemModal === 'function') return openInvItemModal(...a); };
-  window.openStockMovementModal = function(...a) { if (typeof openStockMovementModal === 'function') return openStockMovementModal(...a); };
-  window.openRoomModal = function(...a) { if (typeof openRoomModal === 'function') return openRoomModal(...a); };
-  window.openGuestModal = function(...a) { if (typeof openGuestModal === 'function') return openGuestModal(...a); };
-  window.openBookingModal = function(...a) { if (typeof openBookingModal === 'function') return openBookingModal(...a); };
-  window.openCategoryModal = function(...a) { if (typeof openCategoryModal === 'function') return openCategoryModal(...a); };
-  window.openMenuItemModal = function(...a) { if (typeof openMenuItemModal === 'function') return openMenuItemModal(...a); };
-  window.openRestOrderModal = function(...a) { if (typeof openRestOrderModal === 'function') return openRestOrderModal(...a); };
-  window.deactivateEmployee = function(...a) { if (typeof deactivateEmployee === 'function') return deactivateEmployee(...a); };
-  window.deleteTable = function(...a) { if (typeof deleteTable === 'function') return deleteTable(...a); };
+  // 🌐 EXPOSE HOISTED MODAL FUNCTIONS DIRECTLY ON WINDOW OBJECT FOR INLINE ONCLICK HANDLERS
+  window.openEmployeeModal = openEmployeeModal;
+  window.openTableModal = openTableModal;
+  window.openPoModal = openPoModal;
+  window.openInvItemModal = openInvItemModal;
+  window.openStockMovementModal = openStockMovementModal;
+  window.openRoomModal = openRoomModal;
+  window.openGuestModal = openGuestModal;
+  window.openBookingModal = openBookingModal;
+  window.openCategoryModal = openCategoryModal;
+  window.openMenuItemModal = openMenuItemModal;
+  window.openRestOrderModal = openRestOrderModal;
+  window.deactivateEmployee = deactivateEmployee;
+  window.deleteTable = deleteTable;
 
 
   // 🚀 GLOBAL CLICK DELEGATION: Guarantees "+ Register Employee", "+ Add Table", "+ Add Item", and Edit/Delete buttons ALWAYS respond even if script errors occur
