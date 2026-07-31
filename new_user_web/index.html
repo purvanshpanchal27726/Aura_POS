@@ -112,147 +112,201 @@
   <!-- Side Navigation Drawer -->
   <div id="sideDrawer" class="drawer-overlay" style="display: none;">
     <div class="drawer">
-      <div class="drawer-header">
-        <h2>Admin Menu</h2>
-      </div>
-      <ul class="drawer-menu">
-        <li class="drawer-item active" id="menuDashboard">
-          <span class="material-icons">dashboard</span>
-          <span>Home</span>
-        </li>
-        <li class="drawer-group expanded" id="groupMasters">
-          <div class="drawer-group-header">
-            <span class="material-icons">layers</span>
-            <span>Master</span>
-            <span class="material-icons group-arrow">expand_more</span>
+      <div class="drawer-header" style="background: linear-gradient(135deg, #1e1b4b, #312e81); padding: 1.5rem 1.25rem; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255, 255, 255, 0.1); height: auto;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span class="material-icons" style="font-size: 2rem; color: #818cf8;">storefront</span>
+          <div>
+            <h2 style="font-size: 1.15rem; font-weight: 800; color: #ffffff; margin: 0;">POS & ERP Studio</h2>
+            <span style="font-size: 0.72rem; color: #a5b4fc; font-weight: 500;">Vanshee Infotech</span>
           </div>
-          <ul class="drawer-submenu">
-            <li class="drawer-item" id="menuCategory">
-              <span class="material-icons">category</span>
-              <span>Category Master</span>
+        </div>
+        <span class="material-icons" id="btnCloseDrawer" style="cursor: pointer; color: #94a3b8; font-size: 1.4rem;">close</span>
+      </div>
+
+      <ul class="drawer-menu" style="padding: 0.75rem 0.5rem; gap: 0.5rem; overflow-y: auto;">
+        
+        <!-- 1. Overview & POS Counter Sales -->
+        <li class="drawer-group expanded" id="groupPosCore">
+          <div class="drawer-group-header" style="padding: 0.65rem 0.85rem; border-radius: 8px; font-weight: 700; font-size: 0.88rem; color: var(--text-main);">
+            <span class="material-icons" style="color: #6366f1; font-size: 1.2rem;">point_of_sale</span>
+            <span>POS & Sales Counter</span>
+            <span class="material-icons group-arrow" style="font-size: 1.1rem;">expand_more</span>
+          </div>
+          <ul class="drawer-submenu" style="padding-left: 0.5rem;">
+            <li class="drawer-item active" id="menuDashboard" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">dashboard</span>
+              <span>Dashboard Home</span>
             </li>
-            <li class="drawer-item" id="menuItem">
-              <span class="material-icons">inventory_2</span>
-              <span>Item Master</span>
+            <li class="drawer-item" id="menuSales" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">shopping_cart</span>
+              <span>Sell (POS Terminal)</span>
             </li>
-            <li class="drawer-item" id="menuCustomerListing">
-              <span class="material-icons">contact_mail</span>
-              <span>Customer Master</span>
+            <li class="drawer-item" id="menuPurchase" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">receipt_long</span>
+              <span>Inward Purchase</span>
             </li>
-            <li class="drawer-item" id="menuVendorListing">
-              <span class="material-icons">local_shipping</span>
-              <span>Vendor Master</span>
+            <li class="drawer-item" id="menuReceipt" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">receipt</span>
+              <span>Sales Receipts</span>
             </li>
-            <li class="drawer-item" id="menuUnit">
-              <span class="material-icons">straighten</span>
-              <span>Base Unit Master</span>
-            </li>
-            <li class="drawer-item" id="menuUserListing">
-              <span class="material-icons">people</span>
-              <span>User Master</span>
-            </li>
-            <li class="drawer-item" id="menuTax">
-              <span class="material-icons">percent</span>
-              <span>Tax Master</span>
-            </li>
-            <li class="drawer-item" id="menuRoleListing">
-              <span class="material-icons">security</span>
-              <span>Role Master</span>
-            </li>
-            <li class="drawer-item" id="menuBarcodeStudio">
-              <span class="material-icons">qr_code_2</span>
-              <span>Barcode & Label Studio</span>
+            <li class="drawer-item" id="menuReports" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">analytics</span>
+              <span>Reports & Analytics</span>
             </li>
           </ul>
         </li>
-        <li class="drawer-item" id="menuSettings">
-          <span class="material-icons">settings</span>
-          <span>Setting</span>
-        </li>
-        <li class="drawer-item" id="menuClients" style="display: none;">
-          <span class="material-icons">business</span>
-          <span>Clients</span>
-        </li>
-        <li class="drawer-item" id="menuSales">
-          <span class="material-icons">shopping_cart</span>
-          <span>Sell</span>
-        </li>
-        <li class="drawer-item" id="menuPurchase">
-          <span class="material-icons">receipt_long</span>
-          <span>Purchase</span>
-        </li>
-        <li class="drawer-item" id="menuReceipt">
-          <span class="material-icons">receipt</span>
-          <span>Receipt</span>
-        </li>
-        <li class="drawer-item" id="menuReports">
-          <span class="material-icons">assessment</span>
-          <span>Reports</span>
-        </li>
-        
-        <!-- Inventory & PO Module Menu Items -->
-        <li class="drawer-item" id="menuInventory" style="display: none;">
-          <span class="material-icons">inventory_2</span>
-          <span>Stock Inventory</span>
-        </li>
-        <li class="drawer-item" id="menuPurchaseOrders" style="display: none;">
-          <span class="material-icons">local_shipping</span>
-          <span>Purchase Orders</span>
-        </li>
-        
-        <!-- Employees & Staff Module Menu Items -->
-        <li class="drawer-item" id="menuEmployees" style="display: none;">
-          <span class="material-icons">people_alt</span>
-          <span>Employee Directory</span>
-        </li>
-        <li class="drawer-item" id="menuAttendance" style="display: none;">
-          <span class="material-icons">edit_calendar</span>
-          <span>Staff Attendance</span>
-        </li>
-        
-        <!-- Restaurant Module Menu Items -->
-        <li class="drawer-item" id="menuRestTables" style="display: none;">
-          <span class="material-icons">table_restaurant</span>
-          <span>Dine-in Tables</span>
-        </li>
-        <li class="drawer-item" id="menuRestMenu" style="display: none;">
-          <span class="material-icons">restaurant_menu</span>
-          <span>Restaurant Menu</span>
-        </li>
-        <li class="drawer-item" id="menuRestOrders" style="display: none;">
-          <span class="material-icons">ramen_dining</span>
-          <span>Rest. Orders & KOT</span>
-        </li>
-        <li class="drawer-item" id="menuRestKds" style="display: none;">
-          <span class="material-icons">kitchen</span>
-          <span>Kitchen Queue (KDS)</span>
-        </li>
-        <!-- Hotel Module Menu Items -->
-        <li class="drawer-item" id="menuHotelRooms" style="display: none;">
-          <span class="material-icons">bed</span>
-          <span>Hotel Rooms</span>
-        </li>
-        <li class="drawer-item" id="menuHotelGuests" style="display: none;">
-          <span class="material-icons">assignment_ind</span>
-          <span>Hotel Guests</span>
-        </li>
-        <li class="drawer-item" id="menuHotelBookings" style="display: none;">
-          <span class="material-icons">bedroom_parent</span>
-          <span>Room Bookings</span>
+
+        <!-- 2. Inventory & Procurement -->
+        <li class="drawer-group expanded" id="groupInventoryModule">
+          <div class="drawer-group-header" style="padding: 0.65rem 0.85rem; border-radius: 8px; font-weight: 700; font-size: 0.88rem; color: var(--text-main);">
+            <span class="material-icons" style="color: #10b981; font-size: 1.2rem;">inventory</span>
+            <span>Inventory & Orders</span>
+            <span class="material-icons group-arrow" style="font-size: 1.1rem;">expand_more</span>
+          </div>
+          <ul class="drawer-submenu" style="padding-left: 0.5rem;">
+            <li class="drawer-item" id="menuInventory" style="display: none; border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">inventory_2</span>
+              <span>Stock Inventory</span>
+            </li>
+            <li class="drawer-item" id="menuPurchaseOrders" style="display: none; border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">local_shipping</span>
+              <span>Purchase Orders</span>
+            </li>
+          </ul>
         </li>
 
-        <li class="drawer-item" id="menuSupport">
-          <span class="material-icons">contact_support</span>
-          <span>Support & Contact</span>
+        <!-- 3. Restaurant & Dining ERP -->
+        <li class="drawer-group expanded" id="groupRestaurantModule">
+          <div class="drawer-group-header" style="padding: 0.65rem 0.85rem; border-radius: 8px; font-weight: 700; font-size: 0.88rem; color: var(--text-main);">
+            <span class="material-icons" style="color: #f59e0b; font-size: 1.2rem;">restaurant</span>
+            <span>Restaurant & Dining</span>
+            <span class="material-icons group-arrow" style="font-size: 1.1rem;">expand_more</span>
+          </div>
+          <ul class="drawer-submenu" style="padding-left: 0.5rem;">
+            <li class="drawer-item" id="menuRestTables" style="display: none; border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">table_restaurant</span>
+              <span>Dine-in Tables</span>
+            </li>
+            <li class="drawer-item" id="menuRestMenu" style="display: none; border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">restaurant_menu</span>
+              <span>Restaurant Menu</span>
+            </li>
+            <li class="drawer-item" id="menuRestOrders" style="display: none; border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">ramen_dining</span>
+              <span>Rest. Orders & KOT</span>
+            </li>
+            <li class="drawer-item" id="menuRestKds" style="display: none; border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">kitchen</span>
+              <span>Kitchen Queue (KDS)</span>
+            </li>
+          </ul>
         </li>
-        <li class="drawer-item" id="menuLicense">
-          <span class="material-icons">vpn_key</span>
-          <span>License & AMC</span>
+
+        <!-- 4. Hotel Management ERP -->
+        <li class="drawer-group expanded" id="groupHotelModule">
+          <div class="drawer-group-header" style="padding: 0.65rem 0.85rem; border-radius: 8px; font-weight: 700; font-size: 0.88rem; color: var(--text-main);">
+            <span class="material-icons" style="color: #ec4899; font-size: 1.2rem;">hotel</span>
+            <span>Hotel Management</span>
+            <span class="material-icons group-arrow" style="font-size: 1.1rem;">expand_more</span>
+          </div>
+          <ul class="drawer-submenu" style="padding-left: 0.5rem;">
+            <li class="drawer-item" id="menuHotelRooms" style="display: none; border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">bed</span>
+              <span>Hotel Rooms</span>
+            </li>
+            <li class="drawer-item" id="menuHotelGuests" style="display: none; border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">assignment_ind</span>
+              <span>Hotel Guests</span>
+            </li>
+            <li class="drawer-item" id="menuHotelBookings" style="display: none; border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">bedroom_parent</span>
+              <span>Room Bookings</span>
+            </li>
+          </ul>
         </li>
-        <li class="drawer-item" id="menuExit">
-          <span class="material-icons">exit_to_app</span>
-          <span>Exit</span>
+
+        <!-- 5. Staff & HRM -->
+        <li class="drawer-group expanded" id="groupAdminModule">
+          <div class="drawer-group-header" style="padding: 0.65rem 0.85rem; border-radius: 8px; font-weight: 700; font-size: 0.88rem; color: var(--text-main);">
+            <span class="material-icons" style="color: #06b6d4; font-size: 1.2rem;">people_alt</span>
+            <span>HRM & Staff</span>
+            <span class="material-icons group-arrow" style="font-size: 1.1rem;">expand_more</span>
+          </div>
+          <ul class="drawer-submenu" style="padding-left: 0.5rem;">
+            <li class="drawer-item" id="menuEmployees" style="display: none; border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">badge</span>
+              <span>Employee Directory</span>
+            </li>
+            <li class="drawer-item" id="menuAttendance" style="display: none; border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">edit_calendar</span>
+              <span>Staff Attendance</span>
+            </li>
+          </ul>
         </li>
+
+        <!-- 6. System Masters & Studio -->
+        <li class="drawer-group" id="groupMasters">
+          <div class="drawer-group-header" style="padding: 0.65rem 0.85rem; border-radius: 8px; font-weight: 700; font-size: 0.88rem; color: var(--text-main);">
+            <span class="material-icons" style="color: #8b5cf6; font-size: 1.2rem;">tune</span>
+            <span>System Masters & Admin</span>
+            <span class="material-icons group-arrow" style="font-size: 1.1rem;">expand_more</span>
+          </div>
+          <ul class="drawer-submenu" style="padding-left: 0.5rem;">
+            <li class="drawer-item" id="menuCategory" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">category</span>
+              <span>Category Master</span>
+            </li>
+            <li class="drawer-item" id="menuItem" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">inventory_2</span>
+              <span>Item Master</span>
+            </li>
+            <li class="drawer-item" id="menuCustomerListing" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">contact_mail</span>
+              <span>Customer Master</span>
+            </li>
+            <li class="drawer-item" id="menuVendorListing" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">local_shipping</span>
+              <span>Vendor Master</span>
+            </li>
+            <li class="drawer-item" id="menuUnit" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">straighten</span>
+              <span>Base Unit Master</span>
+            </li>
+            <li class="drawer-item" id="menuTax" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">percent</span>
+              <span>Tax Master</span>
+            </li>
+            <li class="drawer-item" id="menuUserListing" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">people</span>
+              <span>User Master</span>
+            </li>
+            <li class="drawer-item" id="menuRoleListing" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">security</span>
+              <span>Role Master</span>
+            </li>
+            <li class="drawer-item" id="menuBarcodeStudio" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">qr_code_2</span>
+              <span>Barcode & Label Studio</span>
+            </li>
+            <li class="drawer-item" id="menuClients" style="display: none; border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">business</span>
+              <span>Client Companies</span>
+            </li>
+            <li class="drawer-item" id="menuSettings" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">settings</span>
+              <span>System Settings</span>
+            </li>
+            <li class="drawer-item" id="menuLicense" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">vpn_key</span>
+              <span>License & Subscription</span>
+            </li>
+            <li class="drawer-item" id="menuSupport" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
+              <span class="material-icons" style="font-size: 1.1rem;">contact_support</span>
+              <span>Support & Help</span>
+            </li>
+          </ul>
+        </li>
+
       </ul>
     </div>
   </div>
