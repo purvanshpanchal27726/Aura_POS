@@ -50,6 +50,22 @@ document.addEventListener('DOMContentLoaded', () => {
   let allClients = [];
   let statusToastTimeout = null;
 
+  // 🌐 EXPOSE ALL MODAL FUNCTIONS ON WINDOW OBJECT FOR INSTANT INLINE ONCLICK EXECUTION
+  window.openEmployeeModal = openEmployeeModal;
+  window.openTableModal = openTableModal;
+  window.openPoModal = openPoModal;
+  window.openInvItemModal = openInvItemModal;
+  window.openStockMovementModal = openStockMovementModal;
+  window.openRoomModal = openRoomModal;
+  window.openGuestModal = openGuestModal;
+  window.openBookingModal = openBookingModal;
+  window.openCategoryModal = openCategoryModal;
+  window.openMenuItemModal = openMenuItemModal;
+  window.openRestOrderModal = openRestOrderModal;
+  window.deactivateEmployee = deactivateEmployee;
+  window.deleteTable = deleteTable;
+
+
   // 🚀 GLOBAL CLICK DELEGATION: Guarantees "+ Register Employee", "+ Add Table", "+ Add Item", and Edit/Delete buttons ALWAYS respond even if script errors occur
   document.addEventListener('click', (e) => {
     const target = e.target.closest('button, .btn, .btn-emp-edit, .btn-emp-del, .btn-table-edit, .btn-table-delete');
@@ -9533,12 +9549,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  window.openEmployeeModal = openEmployeeModal;
+  window.deactivateEmployee = deactivateEmployee;
+
   if (btnNewEmployee) btnNewEmployee.addEventListener('click', () => openEmployeeModal());
   if (document.getElementById('employeeModalClose')) {
-    document.getElementById('employeeModalClose').addEventListener('click', () => { employeeModal.style.display = 'none'; });
+    document.getElementById('employeeModalClose').addEventListener('click', () => { 
+      const modal = document.getElementById('employeeModal');
+      if (modal) modal.style.display = 'none'; 
+    });
   }
   if (document.getElementById('btnEmpCancel')) {
-    document.getElementById('btnEmpCancel').addEventListener('click', () => { employeeModal.style.display = 'none'; });
+    document.getElementById('btnEmpCancel').addEventListener('click', () => { 
+      const modal = document.getElementById('employeeModal');
+      if (modal) modal.style.display = 'none'; 
+    });
   }
 
   if (employeeForm) {

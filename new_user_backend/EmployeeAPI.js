@@ -33,16 +33,14 @@ router.get('/', async (req, res) => {
       FROM employees e
       INNER JOIN users u ON e.user_id = u.user_id
       LEFT JOIN roles r ON u.role_id = r.role_id
-      WHERE e.active = 1 AND 
+      WHERE e.active = 1
     `;
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
-      query += 'e.client_id = ?';
+    if (!isSuperAdmin) {
+      query += ' AND (e.client_id = ?)';
       params.push(clientId);
-    } else {
-      query += 'e.client_id IS NULL';
     }
-    query += ' ORDER BY u.first_name, u.last_name';
+    query += ' ORDER BY e.employee_id DESC';
 
     const [rows] = await db.execute(query, params);
     res.json(rows);
@@ -217,13 +215,11 @@ router.put('/:id', async (req, res) => {
   try {
     await conn.beginTransaction();
 
-    let queryEmp = 'SELECT user_id FROM employees WHERE employee_id = ? AND ';
+    let queryEmp = 'SELECT user_id FROM employees WHERE employee_id = ?';
     let paramsEmp = [empId];
-    if (clientId !== null && clientId !== undefined) {
-      queryEmp += 'client_id = ?';
+    if (!isSuperAdmin) {
+      queryEmp += ' AND client_id = ?';
       paramsEmp.push(clientId);
-    } else {
-      queryEmp += 'client_id IS NULL';
     }
 
     const [empRows] = await conn.execute(queryEmp, paramsEmp);
@@ -237,15 +233,13 @@ router.put('/:id', async (req, res) => {
     let userUpdateQuery = `
       UPDATE users 
       SET first_name = ?, last_name = ?, email_1 = ?, phone_1 = ?, role_id = ?
-      WHERE user_id = ? AND 
+      WHERE user_id = ?
     `;
     const safeEmail = email || `${first_name.toLowerCase()}_${phone.slice(-4)}@example.com`;
     let userUpdateParams = [first_name, last_name, safeEmail, phone, role_id || null, userId];
-    if (clientId !== null && clientId !== undefined) {
-      userUpdateQuery += 'client_id = ?';
+    if (!isSuperAdmin) {
+      userUpdateQuery += ' AND client_id = ?';
       userUpdateParams.push(clientId);
-    } else {
-      userUpdateQuery += 'client_id IS NULL';
     }
     await conn.execute(userUpdateQuery, userUpdateParams);
 
@@ -253,14 +247,12 @@ router.put('/:id', async (req, res) => {
     let empUpdateQuery = `
       UPDATE employees
       SET designation = ?, department = ?, salary = ?, join_date = ?
-      WHERE employee_id = ? AND 
+      WHERE employee_id = ?
     `;
     let empUpdateParams = [designation || null, department || null, salary || 0.0, join_date || null, empId];
-    if (clientId !== null && clientId !== undefined) {
-      empUpdateQuery += 'client_id = ?';
+    if (!isSuperAdmin) {
+      empUpdateQuery += ' AND client_id = ?';
       empUpdateParams.push(clientId);
-    } else {
-      empUpdateQuery += 'client_id IS NULL';
     }
     await conn.execute(empUpdateQuery, empUpdateParams);
 
@@ -283,13 +275,11 @@ router.delete('/:id', async (req, res) => {
   const empId = parseInt(req.params.id);
 
   try {
-    let query = 'UPDATE employees SET active = 0 WHERE employee_id = ? AND ';
+    let query = 'UPDATE employees SET active = 0 WHERE employee_id = ?';
     let params = [empId];
-    if (clientId !== null && clientId !== undefined) {
-      query += 'client_id = ?';
+    if (!isSuperAdmin) {
+      query += ' AND client_id = ?';
       params.push(clientId);
-    } else {
-      query += 'client_id IS NULL';
     }
     await db.execute(query, params);
     res.json({ message: 'Employee deactivated successfully' });

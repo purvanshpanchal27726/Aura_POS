@@ -403,7 +403,7 @@
               <span class="material-icons" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 1.1rem;">search</span>
               <input type="text" id="userSearchInput" placeholder="Search users..." style="padding: 0.45rem 0.75rem 0.45rem 2.2rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.85rem; width: 100%; outline: none;">
             </div>
-            <button type="button" id="btnNewUser" class="btn btn-primary">+ New User</button>
+            <button type="button" id="btnNewUser" onclick="openUserModal()" class="btn btn-primary">+ New User</button>
             <button type="button" id="btnRefresh" class="btn-icon-flat" title="Reload User Table">
               <span class="material-icons">sync</span>
             </button>
@@ -446,7 +446,7 @@
         <div class="list-header">
           <h2>Client Companies (Tenants)</h2>
           <div class="list-actions">
-            <button type="button" id="btnNewClient" class="btn btn-primary">+ New Client</button>
+            <button type="button" id="btnNewClient" onclick="openClientModal()" class="btn btn-primary">+ New Client</button>
             <button type="button" id="btnRefreshClients" class="btn-icon-flat" title="Reload Clients Table">
               <span class="material-icons">sync</span>
             </button>
@@ -485,7 +485,7 @@
               <span class="material-icons" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 1.1rem;">search</span>
               <input type="text" id="custSearchInput" placeholder="Search customers..." style="padding: 0.45rem 0.75rem 0.45rem 2.2rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.85rem; width: 100%; outline: none;">
             </div>
-            <button type="button" id="btnNewCustomer" class="btn btn-primary">+ New Customer</button>
+            <button type="button" id="btnNewCustomer" onclick="openCustomerModal()" class="btn btn-primary">+ New Customer</button>
             <button type="button" id="btnRefreshCustomers" class="btn-icon-flat" title="Reload Customer Table">
               <span class="material-icons">sync</span>
             </button>
@@ -531,7 +531,7 @@
               <span class="material-icons" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 1.1rem;">search</span>
               <input type="text" id="itemSearchInput" placeholder="Search items..." style="padding: 0.45rem 0.75rem 0.45rem 2.2rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.85rem; width: 100%; outline: none;">
             </div>
-            <button type="button" id="btnNewItem" class="btn btn-primary">+ New Item</button>
+            <button type="button" id="btnNewItem" onclick="openItemModal()" class="btn btn-primary">+ New Item</button>
             <button type="button" id="btnRefreshItems" class="btn-icon-flat" title="Reload Items Table">
               <span class="material-icons">sync</span>
             </button>
@@ -606,7 +606,7 @@
         <div class="list-header">
           <h2>Registered Units</h2>
           <div class="list-actions">
-            <button type="button" id="btnNewUnit" class="btn btn-primary">+ New Unit</button>
+            <button type="button" id="btnNewUnit" onclick="openUnitModal()" class="btn btn-primary">+ New Unit</button>
             <button type="button" id="btnRefreshUnits" class="btn-icon-flat" title="Reload Units Table">
               <span class="material-icons">sync</span>
             </button>
@@ -639,7 +639,7 @@
         <div class="list-header">
           <h2>Registered Taxes</h2>
           <div class="list-actions">
-            <button type="button" id="btnNewTax" class="btn btn-primary">+ New Tax</button>
+            <button type="button" id="btnNewTax" onclick="openTaxModal()" class="btn btn-primary">+ New Tax</button>
             <button type="button" id="btnRefreshTaxes" class="btn-icon-flat" title="Reload Taxes Table">
               <span class="material-icons">sync</span>
             </button>
@@ -1235,7 +1235,7 @@
               <span class="material-icons" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-secondary); font-size: 1.1rem;">search</span>
               <input type="text" id="vendorSearchInput" placeholder="Search vendors..." style="padding: 0.45rem 0.75rem 0.45rem 2.2rem; border-radius: 20px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.85rem; width: 100%; outline: none;">
             </div>
-            <button type="button" id="btnNewVendor" class="btn btn-primary">+ New Vendor</button>
+            <button type="button" id="btnNewVendor" onclick="openVendorModal()" class="btn btn-primary">+ New Vendor</button>
             <button type="button" id="btnRefreshVendors" class="btn-icon-flat" title="Reload Vendor Table">
               <span class="material-icons">sync</span>
             </button>
@@ -1310,7 +1310,7 @@
         <div class="list-header">
           <h2>Registered Roles</h2>
           <div class="list-actions">
-            <button type="button" id="btnNewRole" class="btn btn-primary">+ New Role</button>
+            <button type="button" id="btnNewRole" onclick="openRoleModal()" class="btn btn-primary">+ New Role</button>
             <button type="button" id="btnRefreshRoles" class="btn-icon-flat" title="Reload Role Table">
               <span class="material-icons">sync</span>
             </button>
@@ -1405,7 +1405,7 @@
             <h2>Restaurant Tables</h2>
             <p>Manage dine-in tables, sections, seating capacities, and live table status indicators.</p>
           </div>
-          <button type="button" id="btnNewTable" class="btn btn-primary">
+          <button type="button" id="btnNewTable" onclick="openTableModal()" class="btn btn-primary">
             <span class="material-icons">add</span> Add Table
           </button>
         </div>
@@ -1429,7 +1429,7 @@
             <h2>Menu Categories</h2>
             <p>Group your menu items into structured food and beverage categories.</p>
           </div>
-          <button type="button" id="btnNewMenuCategory" class="btn btn-primary">
+          <button type="button" id="btnNewMenuCategory" onclick="openCategoryModal()" class="btn btn-primary">
             <span class="material-icons">add</span> Add Category
           </button>
         </div>
@@ -1455,7 +1455,7 @@
             <h2>Menu Items</h2>
             <p>Create and edit dishes, beverages, pricing, prep times, and department routing.</p>
           </div>
-          <button type="button" id="btnNewMenuItem" class="btn btn-primary">
+          <button type="button" id="btnNewMenuItem" onclick="openMenuItemModal()" class="btn btn-primary">
             <span class="material-icons">add</span> Add Menu Item
           </button>
         </div>
@@ -1487,7 +1487,7 @@
             <h2>Dine-in & Takeaway Orders</h2>
             <p>Create new table orders, append KOT items, print guest bills, and complete check-outs.</p>
           </div>
-          <button type="button" id="btnNewRestOrder" class="btn btn-primary">
+          <button type="button" id="btnNewRestOrder" onclick="openRestOrderModal()" class="btn btn-primary">
             <span class="material-icons">add</span> Create New Order
           </button>
         </div>
@@ -1542,7 +1542,7 @@
             <h2>Hotel Rooms</h2>
             <p>Manage hotel room inventory, rates, statuses (Available, Occupied, Dirty, Maintenance).</p>
           </div>
-          <button type="button" id="btnNewRoom" class="btn btn-primary">
+          <button type="button" id="btnNewRoom" onclick="openRoomModal()" class="btn btn-primary">
             <span class="material-icons">add</span> Add Room
           </button>
         </div>
@@ -1560,7 +1560,7 @@
             <h2>Guest Registry</h2>
             <p>Maintain historical registers of checked-in guests, contact details, and ID verification logs.</p>
           </div>
-          <button type="button" id="btnNewGuest" class="btn btn-primary">
+          <button type="button" id="btnNewGuest" onclick="openGuestModal()" class="btn btn-primary">
             <span class="material-icons">add</span> Register Guest
           </button>
         </div>
@@ -1591,7 +1591,7 @@
             <h2>Room Bookings & Stay Check-in</h2>
             <p>Manage checked-in guest folios, stay durations, room service requests, and checkout billing.</p>
           </div>
-          <button type="button" id="btnNewBooking" class="btn btn-primary">
+          <button type="button" id="btnNewBooking" onclick="openBookingModal()" class="btn btn-primary">
             <span class="material-icons">add</span> New Check-in
           </button>
         </div>
@@ -1624,10 +1624,10 @@
             <p>Track warehouse stock balances, batch numbers, expirations, and manual stock reconciliation.</p>
           </div>
           <div style="display: flex; gap: 0.75rem;">
-            <button type="button" id="btnNewInvItem" class="btn btn-secondary">
+            <button type="button" id="btnNewInvItem" onclick="openInvItemModal()" class="btn btn-secondary">
               <span class="material-icons">add_box</span> Add Inventory Item
             </button>
-            <button type="button" id="btnStockAdjust" class="btn btn-primary">
+            <button type="button" id="btnStockAdjust" onclick="openStockMovementModal()" class="btn btn-primary">
               <span class="material-icons">published_with_changes</span> Post Stock Movement
             </button>
           </div>
@@ -1662,7 +1662,7 @@
             <h2>Purchase Orders (PO) & GRN Receiving</h2>
             <p>Draft vendor supply requests, track order statuses, and automatically receive inventory via GRN.</p>
           </div>
-          <button type="button" id="btnNewPO" class="btn btn-primary">
+          <button type="button" id="btnNewPO" onclick="openPoModal()" class="btn btn-primary">
             <span class="material-icons">local_shipping</span> Create Purchase Order
           </button>
         </div>
@@ -1694,7 +1694,7 @@
             <h2>Employee & Staff Directory</h2>
             <p>Manage employee credentials, designations, departments, salaries, and assign system access permissions.</p>
           </div>
-          <button type="button" id="btnNewEmployee" class="btn btn-primary">
+          <button type="button" id="btnNewEmployee" onclick="openEmployeeModal()" class="btn btn-primary">
             <span class="material-icons">person_add</span> Register Employee
           </button>
         </div>
