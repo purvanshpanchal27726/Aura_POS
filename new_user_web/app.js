@@ -7478,9 +7478,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewTable = document.getElementById('btnNewTable');
   const tableForm = document.getElementById('tableForm');
 
-  function openTableModal(id = null) {
-    if (!tableModal) return;
-    tableModal.style.display = 'flex';
+    function openTableModal(id = null) {
+    const modal = document.getElementById('tableModal');
+    if (!modal) return;
+    if (modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+    modal.style.zIndex = '999999';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+
+    const tableForm = document.getElementById('tableForm');
     if (tableForm) tableForm.reset();
     const idInput = document.getElementById('table_id');
     if (idInput) idInput.value = id || '';
@@ -7492,7 +7504,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (document.getElementById('table_capacity')) document.getElementById('table_capacity').value = table.capacity || 4;
       }
     }
-  };
+  }
 
   if (btnNewTable) btnNewTable.addEventListener('click', () => openTableModal());
   if (document.getElementById('tableModalClose')) {
@@ -7622,18 +7634,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewMenuCategory = document.getElementById('btnNewMenuCategory');
   const menuCategoryForm = document.getElementById('menuCategoryForm');
 
-  function openCategoryModal(id = null) {
-    if (!menuCategoryModal) return;
-    menuCategoryForm.reset();
-    document.getElementById('menu_category_id').value = id || '';
-    if (id) {
+    function openCategoryModal(id = null) {
+    const modal = document.getElementById('menuCategoryModal');
+    if (!modal) return;
+    if (modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+    modal.style.zIndex = '999999';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+
+    const menuCategoryForm = document.getElementById('menuCategoryForm');
+    if (menuCategoryForm) menuCategoryForm.reset();
+    const catIdInput = document.getElementById('menu_category_id');
+    if (catIdInput) catIdInput.value = id || '';
+    if (id && Array.isArray(allMenuCategories)) {
       const cat = allMenuCategories.find(c => c.category_id == id);
       if (cat) {
-        document.getElementById('menu_category_name').value = cat.name;
-        document.getElementById('menu_category_image').value = cat.image_url || '';
+        if (document.getElementById('menu_category_name')) document.getElementById('menu_category_name').value = cat.name || '';
+        if (document.getElementById('menu_category_image')) document.getElementById('menu_category_image').value = cat.image_url || '';
       }
     }
-    menuCategoryModal.style.display = 'flex';
   };
 
   if (btnNewMenuCategory) btnNewMenuCategory.addEventListener('click', () => openCategoryModal());
@@ -7741,34 +7766,43 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewMenuItem = document.getElementById('btnNewMenuItem');
   const menuItemForm = document.getElementById('menuItemForm');
 
-  function openMenuItemModal(id = null) {
-    if (!menuItemModal) return;
-    menuItemForm.reset();
-    
-    // Populate Categories dropdown inside form
-    const catSelect = document.getElementById('menu_item_category');
-    if (catSelect) {
-      catSelect.innerHTML = '<option value="">Select Category</option>' +
+    function openMenuItemModal(id = null) {
+    const modal = document.getElementById('menuItemModal');
+    if (!modal) return;
+    if (modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+    modal.style.zIndex = '999999';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+
+    const menuItemForm = document.getElementById('menuItemForm');
+    if (menuItemForm) menuItemForm.reset();
+    const itemIdInp = document.getElementById('menu_item_id');
+    if (itemIdInp) itemIdInp.value = id || '';
+
+    // Populate category dropdown
+    const catSelect = document.getElementById('menu_item_category_id');
+    if (catSelect && Array.isArray(allMenuCategories)) {
+      catSelect.innerHTML = '<option value="">-- Select Category --</option>' +
         allMenuCategories.map(c => `<option value="${c.category_id}">${c.name}</option>`).join('');
     }
 
-    document.getElementById('menu_item_id').value = id || '';
-    if (id) {
-      const item = allMenuItems.find(i => i.menu_item_id == id);
+    if (id && Array.isArray(allMenuItems)) {
+      const item = allMenuItems.find(i => i.item_id == id);
       if (item) {
-        document.getElementById('menu_item_name').value = item.name;
-        document.getElementById('menu_item_category').value = item.category_id || '';
-        document.getElementById('menu_item_price').value = item.price;
-        document.getElementById('menu_item_gst').value = item.gst_percent;
-        document.getElementById('menu_item_prep').value = item.preparation_time;
-        document.getElementById('menu_item_dept').value = item.kitchen_dept;
-        document.getElementById('menu_item_desc').value = item.description || '';
-        document.getElementById('menu_item_image').value = item.image_url || '';
-        document.getElementById('menu_item_veg').checked = item.is_veg === 1 || item.is_veg === true;
-        document.getElementById('menu_item_available').checked = item.available === 1 || item.available === true;
+        if (document.getElementById('menu_item_name')) document.getElementById('menu_item_name').value = item.name || '';
+        if (document.getElementById('menu_item_category_id')) document.getElementById('menu_item_category_id').value = item.category_id || '';
+        if (document.getElementById('menu_item_price')) document.getElementById('menu_item_price').value = item.price || '';
+        if (document.getElementById('menu_item_description')) document.getElementById('menu_item_description').value = item.description || '';
+        if (document.getElementById('menu_item_image')) document.getElementById('menu_item_image').value = item.image_url || '';
+        if (document.getElementById('menu_item_veg')) document.getElementById('menu_item_veg').value = item.is_veg ? '1' : '0';
       }
     }
-    menuItemModal.style.display = 'flex';
   };
 
   if (btnNewMenuItem) btnNewMenuItem.addEventListener('click', async () => {
@@ -8454,19 +8488,34 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewRoom = document.getElementById('btnNewRoom');
   const roomForm = document.getElementById('roomForm');
 
-  function openRoomModal(id = null) {
-    if (!roomModal) return;
-    roomForm.reset();
-    document.getElementById('room_id').value = id || '';
-    if (id) {
+    function openRoomModal(id = null) {
+    const modal = document.getElementById('roomModal');
+    if (!modal) return;
+    if (modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+    modal.style.zIndex = '999999';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+
+    const roomForm = document.getElementById('roomForm');
+    if (roomForm) roomForm.reset();
+    const roomIdInp = document.getElementById('room_id');
+    if (roomIdInp) roomIdInp.value = id || '';
+
+    if (id && Array.isArray(allRooms)) {
       const room = allRooms.find(r => r.room_id == id);
       if (room) {
-        document.getElementById('room_no').value = room.room_no;
-        document.getElementById('room_type').value = room.room_type;
-        document.getElementById('room_price').value = room.price_per_night;
+        if (document.getElementById('room_no')) document.getElementById('room_no').value = room.room_no || '';
+        if (document.getElementById('room_type')) document.getElementById('room_type').value = room.room_type || 'Standard';
+        if (document.getElementById('room_rate')) document.getElementById('room_rate').value = room.rate_per_night || '';
+        if (document.getElementById('room_status')) document.getElementById('room_status').value = room.status || 'available';
       }
     }
-    roomModal.style.display = 'flex';
   };
 
   if (btnNewRoom) btnNewRoom.addEventListener('click', () => openRoomModal());
@@ -8577,21 +8626,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewGuest = document.getElementById('btnNewGuest');
   const guestForm = document.getElementById('guestForm');
 
-  function openGuestModal(id = null) {
-    if (!guestModal) return;
-    guestForm.reset();
-    document.getElementById('guest_id').value = id || '';
-    if (id) {
+    function openGuestModal(id = null) {
+    const modal = document.getElementById('guestModal');
+    if (!modal) return;
+    if (modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+    modal.style.zIndex = '999999';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+
+    const guestForm = document.getElementById('guestForm');
+    if (guestForm) guestForm.reset();
+    const guestIdInp = document.getElementById('guest_id');
+    if (guestIdInp) guestIdInp.value = id || '';
+
+    if (id && Array.isArray(allGuests)) {
       const guest = allGuests.find(g => g.guest_id == id);
       if (guest) {
-        document.getElementById('guest_name').value = guest.name;
-        document.getElementById('guest_phone').value = guest.phone;
-        document.getElementById('guest_email').value = guest.email || '';
-        document.getElementById('guest_id_type').value = guest.id_proof_type || 'Aadhaar';
-        document.getElementById('guest_id_no').value = guest.id_proof_no || '';
+        if (document.getElementById('guest_name')) document.getElementById('guest_name').value = guest.full_name || '';
+        if (document.getElementById('guest_phone')) document.getElementById('guest_phone').value = guest.phone || '';
+        if (document.getElementById('guest_email')) document.getElementById('guest_email').value = guest.email || '';
+        if (document.getElementById('guest_id_proof')) document.getElementById('guest_id_proof').value = guest.id_proof_type || 'Aadhaar';
+        if (document.getElementById('guest_id_number')) document.getElementById('guest_id_number').value = guest.id_proof_number || '';
+        if (document.getElementById('guest_address')) document.getElementById('guest_address').value = guest.address || '';
       }
     }
-    guestModal.style.display = 'flex';
   };
 
   if (btnNewGuest) btnNewGuest.addEventListener('click', () => openGuestModal());
@@ -8714,9 +8778,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewBooking = document.getElementById('btnNewBooking');
   const bookingForm = document.getElementById('bookingForm');
 
-  async function openBookingModal() {
-    if (!bookingModal) return;
-    bookingModal.style.display = 'flex';
+    async function openBookingModal() {
+    const modal = document.getElementById('bookingModal');
+    if (!modal) return;
+    if (modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+    modal.style.zIndex = '999999';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
     bookingForm.reset();
 
     const now = new Date();
@@ -9038,23 +9112,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewInvItem = document.getElementById('btnNewInvItem');
   const invItemForm = document.getElementById('invItemForm');
 
-  function openInvItemModal(id = null) {
-    if (!invItemModal) return;
-    invItemForm.reset();
-    document.getElementById('inventory_id').value = id || '';
-    if (id) {
-      const item = allInventory.find(i => i.inventory_id == id);
+    function openInvItemModal(id = null) {
+    const modal = document.getElementById('invItemModal');
+    if (!modal) return;
+    if (modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+    modal.style.zIndex = '999999';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+
+    const invItemForm = document.getElementById('invItemForm');
+    if (invItemForm) invItemForm.reset();
+    const invIdInp = document.getElementById('inv_item_id');
+    if (invIdInp) invIdInp.value = id || '';
+
+    if (id && Array.isArray(allInventory)) {
+      const item = allInventory.find(i => i.item_id == id);
       if (item) {
-        document.getElementById('inv_item_name').value = item.item_name;
-        document.getElementById('inv_sku').value = item.sku || '';
-        document.getElementById('inv_barcode').value = item.barcode || '';
-        document.getElementById('inv_unit').value = item.unit || 'pcs';
-        document.getElementById('inv_min_stock').value = item.min_stock;
-        document.getElementById('inv_batch').value = item.batch_no || '';
-        document.getElementById('inv_expiry').value = item.expiry_date ? item.expiry_date.slice(0, 10) : '';
+        if (document.getElementById('inv_item_name')) document.getElementById('inv_item_name').value = item.item_name || '';
+        if (document.getElementById('inv_sku')) document.getElementById('inv_sku').value = item.sku || '';
+        if (document.getElementById('inv_category')) document.getElementById('inv_category').value = item.category || '';
+        if (document.getElementById('inv_unit')) document.getElementById('inv_unit').value = item.unit || 'pcs';
+        if (document.getElementById('inv_min_stock')) document.getElementById('inv_min_stock').value = item.min_stock_alert || 5;
+        if (document.getElementById('inv_unit_cost')) document.getElementById('inv_unit_cost').value = item.unit_cost || 0;
       }
     }
-    invItemModal.style.display = 'flex';
   };
 
   if (btnNewInvItem) btnNewInvItem.addEventListener('click', () => openInvItemModal());
@@ -9253,9 +9340,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const poForm = document.getElementById('poForm');
   const poItemsCartBody = document.getElementById('poItemsCartBody');
 
-  async function openPoModal() {
-    if (!purchaseOrderModal) return;
-    purchaseOrderModal.style.display = 'flex';
+    async function openPoModal() {
+    const modal = document.getElementById('purchaseOrderModal');
+    if (!modal) return;
+    if (modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
+    modal.style.display = 'flex';
+    modal.style.zIndex = '999999';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
     if (poForm) poForm.reset();
     poCartItems = [];
     renderPoCart();
