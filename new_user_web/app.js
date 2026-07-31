@@ -9528,7 +9528,16 @@ document.addEventListener('DOMContentLoaded', () => {
   async function openEmployeeModal(id = null) {
     const modal = document.getElementById('employeeModal');
     if (!modal) return;
+    if (modal.parentNode !== document.body) {
+      document.body.appendChild(modal);
+    }
     modal.style.display = 'flex';
+    modal.style.zIndex = '999999';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
     const form = document.getElementById('employeeForm');
     if (form) form.reset();
     const empIdInp = document.getElementById('employee_id');
