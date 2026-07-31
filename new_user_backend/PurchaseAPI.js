@@ -252,7 +252,7 @@ router.delete('/:id', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [rows] = await db.execute(query, params);

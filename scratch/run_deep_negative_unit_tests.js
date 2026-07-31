@@ -6,7 +6,7 @@ let authToken = '';
 
 function login() {
   return new Promise((resolve, reject) => {
-    const postData = JSON.stringify({ username: 'admin', password: 'Admin@123' });
+    const postData = JSON.stringify({ username: 'Parshav', password: 'Parshav' });
     const req = http.request(`${BASE_URL}/api/users/login`, {
       method: 'POST',
       headers: {

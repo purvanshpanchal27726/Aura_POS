@@ -4446,6 +4446,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${c.client_id}</td>
           <td>
             <strong>${c.name}</strong>
+            ${c.admin_username ? `<br><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">👤 Admin: <strong>${c.admin_username}</strong></span>` : ''}
             ${c.logo_url ? `<br><img src="${c.logo_url}" onerror="this.style.display=\'none\';" style="height:24px; max-width:80px; margin-top:4px; object-fit:contain;">` : ''}
           </td>
           <td>${contactInfo}</td>

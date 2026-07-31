@@ -119,11 +119,11 @@ router.get('/', async (req, res) => {
       WHERE 
     `;
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && !isSuperAdmin) {
       query += 'sm.client_id = $1';
       params.push(clientId);
     } else {
-      query += 'sm.client_id IS NULL';
+      query += '1=1';
     }
     query += ' ORDER BY sm.sales_id DESC';
 

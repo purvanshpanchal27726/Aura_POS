@@ -39,7 +39,7 @@ router.get('/tables', async (req, res) => {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
     query += ' ORDER BY table_no';
 
@@ -102,7 +102,7 @@ router.put('/tables/:id', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [rows] = await db.execute(query, params);
@@ -163,7 +163,7 @@ router.delete('/tables/:id', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [rows] = await db.execute(query, params);
@@ -201,7 +201,7 @@ router.get('/menu/categories', async (req, res) => {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
     query += ' ORDER BY name';
 
@@ -259,7 +259,7 @@ router.put('/menu/categories/:id', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [rows] = await db.execute(query, params);
@@ -310,7 +310,7 @@ router.delete('/menu/categories/:id', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     await db.execute(query, params);
@@ -341,7 +341,7 @@ router.get('/menu/items', async (req, res) => {
       query += 'mi.client_id = $1';
       params.push(clientId);
     } else {
-      query += 'mi.client_id IS NULL';
+      query += '1=1';
     }
     query += ' ORDER BY mi.name';
 
@@ -413,7 +413,7 @@ router.put('/menu/items/:id', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [rows] = await db.execute(query, params);
@@ -481,7 +481,7 @@ router.delete('/menu/items/:id', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     await db.execute(query, params);
@@ -618,7 +618,7 @@ router.post('/orders/:id/items', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [order] = await db.execute(query, params);
@@ -680,7 +680,7 @@ router.put('/orders/:id/status', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [rows] = await db.execute(query, params);

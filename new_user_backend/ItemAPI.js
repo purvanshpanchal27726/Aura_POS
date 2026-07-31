@@ -171,7 +171,7 @@ router.get('/', async (req, res) => {
       if (isSuperAdmin) {
         query += '1=1';
       } else {
-        query += 'i.client_id IS NULL';
+        query += '1=1';
       }
     }
     query += ' ORDER BY i.item_id ASC';
@@ -221,7 +221,7 @@ router.get('/:id', async (req, res) => {
       query += 'i.client_id = ?';
       params.push(clientId);
     } else {
-      query += 'i.client_id IS NULL';
+      query += '1=1';
     }
 
     const [rows] = await db.execute(query, params);

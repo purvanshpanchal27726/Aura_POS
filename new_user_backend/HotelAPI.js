@@ -39,7 +39,7 @@ router.get('/rooms', async (req, res) => {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
     query += ' ORDER BY room_no';
 
@@ -101,7 +101,7 @@ router.put('/rooms/:id', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [rows] = await db.execute(query, params);
@@ -162,7 +162,7 @@ router.delete('/rooms/:id', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     await db.execute(query, params);
@@ -195,7 +195,7 @@ router.get('/guests', async (req, res) => {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
     query += ' ORDER BY first_name, last_name';
 
@@ -260,7 +260,7 @@ router.put('/guests/:id', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [rows] = await db.execute(query, params);
@@ -343,7 +343,7 @@ router.get('/bookings', async (req, res) => {
       query += 'hb.client_id = ?';
       params.push(clientId);
     } else {
-      query += 'hb.client_id IS NULL';
+      query += '1=1';
     }
     query += ' ORDER BY hb.booking_id DESC';
 
@@ -408,7 +408,7 @@ router.put('/bookings/:id/status', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [booking] = await db.execute(query, params);
@@ -480,7 +480,7 @@ router.post('/bookings/:id/services', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [booking] = await db.execute(query, params);

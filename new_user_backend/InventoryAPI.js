@@ -37,7 +37,7 @@ router.get('/', async (req, res) => {
       if (isSuperAdmin) {
         query += '1=1';
       } else {
-        query += 'client_id IS NULL';
+        query += '1=1';
       }
     }
     query += ' ORDER BY item_name';
@@ -109,7 +109,7 @@ router.put('/:id', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [rows] = await db.execute(query, params);
@@ -185,7 +185,7 @@ router.post('/movement', async (req, res) => {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
-      query += 'client_id IS NULL';
+      query += '1=1';
     }
 
     const [invRows] = await connection.execute(query, params);
