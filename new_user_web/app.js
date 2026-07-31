@@ -7964,11 +7964,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return `<span style="font-size: 0.8rem; color: var(--text-muted); font-style: italic;">Settled</span>`;
       };
 
+      let tableText = 'Parcel/Del.';
+      if (o.table_no) {
+        const cleanTbl = o.table_no.toString().replace(/^table\s+/i, '');
+        const secText = (o.section && o.section !== 'null' && o.section !== 'undefined') ? ` (${o.section})` : '';
+        tableText = `<strong>Table ${cleanTbl}</strong>${secText}`;
+      }
+
       return `
         <tr>
           <td><strong>#OR-${o.order_id}</strong></td>
           <td style="text-transform: uppercase;"><strong>${o.order_type}</strong></td>
-          <td>${o.table_no ? `<strong>Table ${o.table_no}</strong> (${o.section})` : 'Parcel/Del.'}</td>
+          <td>${tableText}</td>
           <td>${o.customer_name || 'Walk-in Guest'}</td>
           <td><strong>₹${parseFloat(o.total).toFixed(2)}</strong></td>
           <td><span class="status-badge" style="background: ${statusColor}22; color: ${statusColor}; font-weight: bold; text-transform: uppercase;">${o.status}</span></td>
@@ -8800,10 +8807,13 @@ document.addEventListener('DOMContentLoaded', () => {
         return `<span style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">Settled Folio</span>`;
       };
 
+      const cleanRm = (b.room_no || 'N/A').toString().replace(/^room\s+/i, '');
+      const rmType = (b.room_type && b.room_type !== 'null' && b.room_type !== 'undefined') ? b.room_type : '';
+
       return `
         <tr>
           <td><strong>#BK-${b.booking_id}</strong></td>
-          <td><strong>Room ${b.room_no}</strong><br><small>${b.room_type}</small></td>
+          <td><strong>Room ${cleanRm}</strong>${rmType ? `<br><small>${rmType}</small>` : ''}</td>
           <td><strong>${b.guest_name}</strong></td>
           <td>${b.guest_phone}</td>
           <td>${inStr}</td>
