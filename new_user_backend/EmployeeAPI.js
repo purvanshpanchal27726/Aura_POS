@@ -305,14 +305,16 @@ router.get('/attendance', async (req, res) => {
              COALESCE(a.status, 'absent') AS status
       FROM employees e
       INNER JOIN users u ON e.user_id = u.user_id
-      LEFT JOIN attendance a ON e.employee_id = a.employee_id AND a.date = ? AND ${clientId ? 'a.client_id = ?' : 'a.client_id IS NULL'}
-      WHERE e.active = 1 AND ${clientId ? 'e.client_id = ?' : 'e.client_id IS NULL'}
-      ORDER BY u.first_name, u.last_name
+      LEFT JOIN attendance a ON e.employee_id = a.employee_id AND a.date = ?
+      WHERE e.active = 1
     `;
     let params = [date];
-    if (clientId !== null && clientId !== undefined) {
-      params.push(clientId, clientId);
+
+    if (!isSuperAdmin) {
+      query += ' AND e.client_id = ?';
+      params.push(clientId);
     }
+    query += ' ORDER BY e.employee_id ASC';
 
     const [rows] = await db.execute(query, params);
     res.json(rows);

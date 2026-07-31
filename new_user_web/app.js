@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return res;
   };
   // Global Application State Variables (Declared at top to prevent TDZ ReferenceErrors)
+  let activeScreen = 'screenDashboard';
   let activeUser = null;
   let allUsersList = [];
   // allUsers hoisted to top
@@ -1054,7 +1055,10 @@ document.addEventListener('DOMContentLoaded', () => {
     Object.keys(screens).forEach(key => {
       const screen = screens[key];
       if (key === screenName) {
-        if (screen.view) screen.view.style.display = 'block';
+        if (screen.view) {
+          screen.view.style.display = 'block';
+          activeScreen = screen.view.id;
+        }
         if (screen.menu) screen.menu.classList.add('active');
         if (appBarTitle) appBarTitle.textContent = screen.title;
         if (screen.onTransition) screen.onTransition();
@@ -7608,9 +7612,9 @@ document.addEventListener('DOMContentLoaded', () => {
       tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No categories registered yet.</td></tr>`;
       return;
     }
-    tbody.innerHTML = allMenuCategories.map(c => `
+    tbody.innerHTML = allMenuCategories.map((c, idx) => `
       <tr>
-        <td><strong>${c.display_id || c.category_id}</strong></td>
+        <td><strong>#${idx + 1}</strong></td>
         <td><strong>${c.name}</strong></td>
         <td>${c.image_url || 'None'}</td>
         <td style="text-align: center;">
@@ -8455,7 +8459,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    container.innerHTML = allRooms.map(r => {
+    container.innerHTML = allRooms.map((r, idx) => {
       let statusColor = '#10B981'; // Available - Green
       if (r.status === 'occupied') statusColor = '#EF4444'; // Occupied - Red
       else if (r.status === 'dirty') statusColor = '#F59E0B'; // Dirty - Amber
@@ -8597,7 +8601,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    tbody.innerHTML = allGuests.map(g => {
+    tbody.innerHTML = allGuests.map((g, idx) => {
       const dateVal = new Date(g.created_date || Date.now());
       const dateStr = `${dateVal.getDate()}/${dateVal.getMonth()+1}/${dateVal.getFullYear()}`;
       return `
@@ -8724,7 +8728,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    tbody.innerHTML = allBookings.map(b => {
+    tbody.innerHTML = allBookings.map((b, idx) => {
       const inDate = new Date(b.check_in_date);
       const inStr = `${inDate.getDate()}/${inDate.getMonth()+1} ${inDate.getHours().toString().padStart(2,'0')}:${inDate.getMinutes().toString().padStart(2,'0')}`;
       
@@ -9078,7 +9082,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    tbody.innerHTML = allInventory.map(i => {
+    tbody.innerHTML = allInventory.map((i, idx) => {
       const current = parseFloat(i.current_stock || 0);
       const minStock = parseFloat(i.min_stock || 0);
       const isLow = current <= minStock;
@@ -9270,7 +9274,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    tbody.innerHTML = allPOs.map(po => {
+    tbody.innerHTML = allPOs.map((po, idx) => {
       const dateVal = new Date(po.created_date);
       const dateStr = `${dateVal.getDate()}/${dateVal.getMonth()+1}/${dateVal.getFullYear()}`;
       
@@ -9293,7 +9297,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <tr>
-          <td><strong>#PO-${po.po_id}</strong></td>
+          <td><strong>#PO-${idx + 1}</strong></td>
           <td><strong>${po.vendor_company || 'N/A'}</strong><br><small>${po.vendor_name}</small></td>
           <td>${po.created_by || 'System'}</td>
           <td><strong>₹${parseFloat(po.total).toFixed(2)}</strong></td>
@@ -9592,7 +9596,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <tr>
-          <td><strong>#EMP-${e.employee_id}</strong></td>
+          <td><strong>#EMP-${idx + 1}</strong></td>
           <td><strong>${e.first_name} ${e.last_name}</strong></td>
           <td>${e.designation || 'N/A'}</td>
           <td>${e.department || 'N/A'}</td>
