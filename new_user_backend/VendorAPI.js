@@ -45,12 +45,17 @@ router.post('/', async (req, res) => {
     }
     if (!phone_1 && data.phone) phone_1 = data.phone;
     if (!address_1 && data.address) address_1 = data.address;
+    if (!address_1) address_1 = 'General Vendor Address';
     if (!city) city = 'Ahmedabad';
     if (!country) country = 'India';
     if (!last_name) last_name = 'Supplier';
 
     if (!first_name || !phone_1) {
       return res.status(400).json({ error: 'Missing required fields (first_name, phone_1) for Vendor creation.' });
+    }
+
+    if (phone_1 && !/^[0-9+ \-()]{7,15}$/.test(phone_1.toString().trim())) {
+      return res.status(400).json({ error: 'Please provide a valid vendor phone number.' });
     }
 
     // Duplicate check

@@ -41,10 +41,8 @@ router.post('/', async (req, res) => {
     const active = data.active !== undefined ? data.active : (data.acitve !== undefined ? data.acitve : 1);
     const created_by = data.created_by || data.createdBy || 'System';
 
-    if (!name) {
-      return res.status(400).json({
-        error: 'Missing required fields. Please ensure name is provided.'
-      });
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'Category name is required and cannot be blank.' });
     }
 
     // Duplicate Check

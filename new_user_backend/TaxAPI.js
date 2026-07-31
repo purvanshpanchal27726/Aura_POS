@@ -42,10 +42,11 @@ router.post('/', async (req, res) => {
     const active = data.active !== undefined ? data.active : (data.acitve !== undefined ? data.acitve : 1);
     const created_by = data.created_by || data.createdBy || 'System';
 
-    if (!name) {
-      return res.status(400).json({
-        error: 'Missing required fields. Please ensure name is provided.'
-      });
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'Tax name is required and cannot be blank.' });
+    }
+    if (isNaN(finalPercentage) || finalPercentage < 0 || finalPercentage > 100) {
+      return res.status(400).json({ error: 'Tax percentage must be a valid number between 0% and 100%.' });
     }
 
     // Duplicate Check

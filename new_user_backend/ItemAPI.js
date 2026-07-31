@@ -64,10 +64,16 @@ router.post('/', async (req, res) => {
     const show_in_restaurant = data.show_in_restaurant !== undefined ? data.show_in_restaurant : (data.showInRestaurant !== undefined ? data.showInRestaurant : 0);
     const is_hotel_service = data.is_hotel_service !== undefined ? data.is_hotel_service : (data.isHotelService !== undefined ? data.isHotelService : 0);
 
-    if (!name) {
-      return res.status(400).json({
-        error: 'Missing required fields. Please ensure name is provided.'
-      });
+    if (!name || typeof name !== 'string' || !name.trim()) {
+      return res.status(400).json({ error: 'Item name is required and cannot be blank.' });
+    }
+    const parsedSalesPrice = parseFloat(sales_price);
+    const parsedPurchasePrice = parseFloat(purchase_price);
+    if (isNaN(parsedSalesPrice) || parsedSalesPrice < 0) {
+      return res.status(400).json({ error: 'Retail sales price must be a valid non-negative number.' });
+    }
+    if (purchase_price !== null && purchase_price !== undefined && (isNaN(parsedPurchasePrice) || parsedPurchasePrice < 0)) {
+      return res.status(400).json({ error: 'Purchase price must be a valid non-negative number.' });
     }
 
     // Duplicate Check
