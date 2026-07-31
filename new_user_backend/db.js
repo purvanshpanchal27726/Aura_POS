@@ -174,6 +174,7 @@ async function dbQuery(clientOrPool, sql, values = []) {
       const tableName = insertTableMatch[1].replace(/["']/g, '').trim().toLowerCase();
       pkField = tablePrimaryKeyMap[tableName];
     }
+    cleanSql = cleanSql.trim().replace(/;+$/, '');
     if (!cleanSql.toUpperCase().includes('RETURNING')) {
       cleanSql += ' RETURNING *';
     }
