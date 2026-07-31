@@ -289,7 +289,8 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       source.onerror = () => {
-        // SSE auto-reconnects natively, just catch error logs if server restarts
+        // Close EventSource stream on error to prevent infinite 401 reconnect loops
+        try { source.close(); } catch (e) {}
       };
     } catch (e) {
       console.warn('Real-time updates not supported or blocked:', e);
@@ -8285,9 +8286,8 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     sse.onerror = (err) => {
-      console.warn('SSE disconnected, reconnecting in 5s...');
-      sse.close();
-      setTimeout(initRestaurantSSE, 5000);
+      // Close SSE stream on error to prevent infinite 401 reconnect loops
+      try { sse.close(); } catch (e) {}
     };
   };
 
