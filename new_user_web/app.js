@@ -2977,13 +2977,18 @@ document.addEventListener('DOMContentLoaded', () => {
     resetItemFormState();
   };
 
+  function openItemModal() {
+    resetItemFormState();
+    if (itemModal) {
+      document.body.appendChild(itemModal);
+      itemModal.style.zIndex = '999999';
+      itemModal.style.display = 'flex';
+    }
+  }
+  window.openItemModal = openItemModal;
+
   if (btnNewItem) {
-    btnNewItem.addEventListener('click', () => {
-      resetItemFormState();
-      if (itemModal) {
-        itemModal.style.display = 'flex';
-      }
-    });
+    btnNewItem.addEventListener('click', openItemModal);
   }
 
   if (btnRefreshItems) {
