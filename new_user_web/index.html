@@ -759,10 +759,15 @@
     <div id="screenSales" class="screen-view" style="display: none;">
       <div class="pos-terminal">
         <form id="invoiceForm" class="pos-toolbar">
-          <div class="form-field">
-            <label for="invoiceCustomer">Customer <span class="required-star">*</span></label>
-            <select id="invoiceCustomer" required>
-              <option value="">Choose Customer</option>
+          <div class="form-field" style="flex: 1.5;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+              <label for="invoiceCustomer" style="margin: 0; font-weight: 600;">Customer <span class="required-star">*</span></label>
+              <button type="button" onclick="openCustomerModal()" class="btn btn-primary" style="padding: 0.15rem 0.5rem; font-size: 0.75rem; font-weight: bold; border-radius: 4px; display: inline-flex; align-items: center; gap: 2px;">
+                <span class="material-icons" style="font-size: 0.85rem;">add</span> New
+              </button>
+            </div>
+            <select id="invoiceCustomer" required style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-weight: 500;">
+              <option value="">-- Select Customer --</option>
             </select>
           </div>
           <div class="form-field">
@@ -775,10 +780,13 @@
           </div>
           <div class="form-field">
             <label for="invoicePaymentMethod">Payment Method</label>
-            <select id="invoicePaymentMethod" style="padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-weight: 500;">
-              <option value="Cash">Cash</option>
-              <option value="UPI">UPI</option>
-              <option value="Half Cash + Half UPI">Half Cash + Half UPI</option>
+            <select id="invoicePaymentMethod" style="padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-weight: 600;">
+              <option value="Cash">Cash (INR)</option>
+              <option value="UPI">UPI / QR Code (PhonePe, GPay, Paytm)</option>
+              <option value="Card">Card (Debit / Credit Card)</option>
+              <option value="Net Banking">Net Banking / NEFT</option>
+              <option value="Credit">Credit / Pay Later</option>
+              <option value="Half Cash + Half UPI">Split (Cash + UPI)</option>
             </select>
           </div>
           <div class="form-field pos-bill-field">
@@ -823,21 +831,24 @@
           </section>
 
           <section class="pos-product-panel">
-            <div class="pos-search-row">
+            <div class="pos-search-row" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.75rem; align-items: end; margin-bottom: 1rem;">
               <div class="form-field">
-                <label for="salesItemSearch">Item Name</label>
-                <input type="text" id="salesItemSearch" placeholder="Search item">
+                <label for="salesItemSelect" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Select Item / Search Catalog</label>
+                <select id="salesItemSelect" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem; font-weight: 500;">
+                  <option value="">-- Choose Item from List --</option>
+                </select>
               </div>
               <div class="form-field">
-                <label for="salesCodeSearch">Item Code</label>
-                <input type="text" id="salesCodeSearch" placeholder="Scan or type code">
+                <label for="salesCodeSearch" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Barcode Scan</label>
+                <input type="text" id="salesCodeSearch" placeholder="Scan or type code..." style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem;">
               </div>
               <div class="form-field pos-qty-field">
-                <label for="adderQty">Qty</label>
-                <input type="number" step="0.01" id="adderQty" value="1.00">
+                <label for="adderQty" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Default Qty</label>
+                <input type="number" step="0.01" id="adderQty" value="1.00" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem; text-align: center; font-weight: bold;">
               </div>
             </div>
-            <div class="pos-hidden-adder" aria-hidden="true">
+            <input type="hidden" id="salesItemSearch">
+            <div class="pos-hidden-adder"  aria-hidden="true">
               <select id="adderItem"><option value="">Select Item</option></select>
               <input type="number" step="0.01" id="adderRate" readonly>
               <input type="text" id="adderTaxName" readonly>
@@ -858,10 +869,15 @@
     <div id="screenPurchase" class="screen-view" style="display: none;">
       <div class="pos-terminal purchase-mode">
         <form id="purchaseForm" class="pos-toolbar">
-          <div class="form-field">
-            <label for="purchaseVendor">Vendor / Supplier <span class="required-star">*</span></label>
-            <select id="purchaseVendor" required>
-              <option value="">Choose Supplier</option>
+          <div class="form-field" style="flex: 1.5;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+              <label for="purchaseVendor" style="margin: 0; font-weight: 600;">Vendor / Supplier <span class="required-star">*</span></label>
+              <button type="button" onclick="openVendorModal()" class="btn btn-primary" style="padding: 0.15rem 0.5rem; font-size: 0.75rem; font-weight: bold; border-radius: 4px; display: inline-flex; align-items: center; gap: 2px;">
+                <span class="material-icons" style="font-size: 0.85rem;">add</span> New
+              </button>
+            </div>
+            <select id="purchaseVendor" required style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-weight: 500;">
+              <option value="">-- Select Supplier --</option>
             </select>
           </div>
           <div class="form-field">
@@ -914,21 +930,24 @@
           </section>
 
           <section class="pos-product-panel">
-            <div class="pos-search-row">
+            <div class="pos-search-row" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.75rem; align-items: end; margin-bottom: 1rem;">
               <div class="form-field">
-                <label for="purchaseItemSearch">Item Name</label>
-                <input type="text" id="purchaseItemSearch" placeholder="Search item">
+                <label for="salesItemSelect" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Select Item / Search Catalog</label>
+                <select id="salesItemSelect" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem; font-weight: 500;">
+                  <option value="">-- Choose Item from List --</option>
+                </select>
               </div>
               <div class="form-field">
-                <label for="purchaseCodeSearch">Item Code</label>
-                <input type="text" id="purchaseCodeSearch" placeholder="Scan or type code">
+                <label for="salesCodeSearch" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Barcode Scan</label>
+                <input type="text" id="salesCodeSearch" placeholder="Scan or type code..." style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem;">
               </div>
               <div class="form-field pos-qty-field">
-                <label for="purchaseAdderQty">Qty</label>
-                <input type="number" step="0.01" id="purchaseAdderQty" value="1.00">
+                <label for="adderQty" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Default Qty</label>
+                <input type="number" step="0.01" id="adderQty" value="1.00" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem; text-align: center; font-weight: bold;">
               </div>
             </div>
-            <div class="pos-hidden-adder" aria-hidden="true">
+            <input type="hidden" id="salesItemSearch">
+            <div class="pos-hidden-adder"  aria-hidden="true">
               <select id="purchaseAdderItem"><option value="">Select Item</option></select>
               <input type="number" step="0.01" id="purchaseAdderRate">
               <input type="text" id="purchaseAdderTaxName" readonly>

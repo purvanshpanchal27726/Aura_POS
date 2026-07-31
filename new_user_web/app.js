@@ -3608,6 +3608,21 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  const salesItemSelect = document.getElementById('salesItemSelect');
+  if (salesItemSelect) {
+    salesItemSelect.addEventListener('change', () => {
+      const selectedId = salesItemSelect.value;
+      if (selectedId) {
+        const item = availableItems.find(i => i.item_id == selectedId);
+        if (item) {
+          AudioSynth.beep(880, 0.05, 'sine');
+          addSalesItemLine(item, adderQty ? adderQty.value : 1);
+          salesItemSelect.value = '';
+        }
+      }
+    });
+  }
+
   [salesItemSearch, salesCodeSearch].forEach(input => {
     if (input) input.addEventListener('input', renderSalesCatalog);
   });
