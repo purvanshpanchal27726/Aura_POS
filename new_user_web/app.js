@@ -3538,11 +3538,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    adderItem.value = '';
-    adderRate.value = '';
-    adderRate.readOnly = true;
-    adderQty.value = '1.00';
-    adderTaxName.value = '';
+    if (adderItem) adderItem.value = '';
+    if (adderRate) { adderRate.value = ''; adderRate.readOnly = true; }
+    if (adderQty) adderQty.value = '1.00';
+    if (adderTaxName) adderTaxName.value = '';
     renderInvoiceLines();
   };
 
@@ -4909,10 +4908,10 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    purchaseAdderItem.value = '';
-    purchaseAdderRate.value = '';
-    purchaseAdderQty.value = '1.00';
-    purchaseAdderTaxName.value = '';
+    if (purchaseAdderItem) purchaseAdderItem.value = '';
+    if (purchaseAdderRate) purchaseAdderRate.value = '';
+    if (purchaseAdderQty) purchaseAdderQty.value = '1.00';
+    if (purchaseAdderTaxName) purchaseAdderTaxName.value = '';
     renderPurchaseLines();
   };
 
