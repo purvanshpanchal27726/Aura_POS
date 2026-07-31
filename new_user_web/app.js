@@ -50,20 +50,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let allClients = [];
   let statusToastTimeout = null;
 
-  // 🌐 EXPOSE ALL MODAL FUNCTIONS ON WINDOW OBJECT FOR INSTANT INLINE ONCLICK EXECUTION
-  window.openEmployeeModal = openEmployeeModal;
-  window.openTableModal = openTableModal;
-  window.openPoModal = openPoModal;
-  window.openInvItemModal = openInvItemModal;
-  window.openStockMovementModal = openStockMovementModal;
-  window.openRoomModal = openRoomModal;
-  window.openGuestModal = openGuestModal;
-  window.openBookingModal = openBookingModal;
-  window.openCategoryModal = openCategoryModal;
-  window.openMenuItemModal = openMenuItemModal;
-  window.openRestOrderModal = openRestOrderModal;
-  window.deactivateEmployee = deactivateEmployee;
-  window.deleteTable = deleteTable;
+  // 🌐 SAFE GLOBAL WINDOW WRAPPERS FOR INSTANT INLINE ONCLICK EXECUTION
+  window.openEmployeeModal = function(...a) { if (typeof openEmployeeModal === 'function') return openEmployeeModal(...a); };
+  window.openTableModal = function(...a) { if (typeof openTableModal === 'function') return openTableModal(...a); };
+  window.openPoModal = function(...a) { if (typeof openPoModal === 'function') return openPoModal(...a); };
+  window.openInvItemModal = function(...a) { if (typeof openInvItemModal === 'function') return openInvItemModal(...a); };
+  window.openStockMovementModal = function(...a) { if (typeof openStockMovementModal === 'function') return openStockMovementModal(...a); };
+  window.openRoomModal = function(...a) { if (typeof openRoomModal === 'function') return openRoomModal(...a); };
+  window.openGuestModal = function(...a) { if (typeof openGuestModal === 'function') return openGuestModal(...a); };
+  window.openBookingModal = function(...a) { if (typeof openBookingModal === 'function') return openBookingModal(...a); };
+  window.openCategoryModal = function(...a) { if (typeof openCategoryModal === 'function') return openCategoryModal(...a); };
+  window.openMenuItemModal = function(...a) { if (typeof openMenuItemModal === 'function') return openMenuItemModal(...a); };
+  window.openRestOrderModal = function(...a) { if (typeof openRestOrderModal === 'function') return openRestOrderModal(...a); };
+  window.deactivateEmployee = function(...a) { if (typeof deactivateEmployee === 'function') return deactivateEmployee(...a); };
+  window.deleteTable = function(...a) { if (typeof deleteTable === 'function') return deleteTable(...a); };
 
 
   // 🚀 GLOBAL CLICK DELEGATION: Guarantees "+ Register Employee", "+ Add Table", "+ Add Item", and Edit/Delete buttons ALWAYS respond even if script errors occur
@@ -4440,7 +4440,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const openEditClientModal = async (id) => {
+  async function openEditClientModal(id) {
     const client = allClients.find(c => c.client_id == id);
     if (!client) return;
 
@@ -6941,7 +6941,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let cmdSelectedIndex = 0;
   let cmdCurrentMatches = [];
 
-  const openCommandPalette = () => {
+  function openCommandPalette() {
     if (!cmdModal) return;
     cmdModal.style.display = 'flex';
     if (cmdInput) {
@@ -7967,7 +7967,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const orderSelectedItemsBody = document.getElementById('orderSelectedItemsBody');
   const orderGrandTotal = document.getElementById('orderGrandTotal');
 
-  const openRestOrderModal = async (id = null) => {
+  async function openRestOrderModal(id = null) {
     if (!restOrderModal) return;
     restOrderForm.reset();
     currentOrderItems = [];
@@ -8699,7 +8699,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnNewBooking = document.getElementById('btnNewBooking');
   const bookingForm = document.getElementById('bookingForm');
 
-  const openBookingModal = async () => {
+  async function openBookingModal() {
     if (!bookingModal) return;
     bookingModal.style.display = 'flex';
     bookingForm.reset();
@@ -8780,7 +8780,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const roomServiceForm = document.getElementById('roomServiceForm');
   const roomServiceItemsBody = document.getElementById('roomServiceItemsBody');
 
-  const openRoomServiceModal = async (bookingId) => {
+  async function openRoomServiceModal(bookingId) {
     if (!roomServiceModal) return;
     roomServiceForm.reset();
     document.getElementById('service_booking_id').value = bookingId;
@@ -9360,7 +9360,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const grnItemsTableBody = document.getElementById('grnItemsTableBody');
   let activePoDetails = null;
 
-  const openGrnModal = async (poId) => {
+  async function openGrnModal(poId) {
     if (!grnModal) return;
     grnForm.reset();
     document.getElementById('grn_po_id').value = poId;
