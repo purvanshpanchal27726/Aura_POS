@@ -9637,7 +9637,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    tbody.innerHTML = allEmployees.map(e => {
+    tbody.innerHTML = allEmployees.map((e, idx) => {
       const salaryVal = parseFloat(e.salary || 0);
       const joinStr = e.join_date ? new Date(e.join_date).toLocaleDateString() : 'N/A';
 
