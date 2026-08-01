@@ -19,10 +19,6 @@ module.exports = (req, res, next) => {
     (req.method === 'GET' && (url.startsWith('/api/users') || url.startsWith('/api/User'))) ||
     (req.method === 'GET' && (url.startsWith('/api/permissions') || url.startsWith('/api/Permission')));
 
-  if (isPublic) {
-    return next();
-  }
-
   let token = null;
   const authHeader = req.headers['authorization'];
   if (authHeader) {
@@ -34,26 +30,29 @@ module.exports = (req, res, next) => {
     token = req.query.token;
   }
 
-  if (!token) {
+  if (token) {
+    try {
+      const secret = process.env.JWT_SECRET || 'mySuperSecretJWTKeyForPOSSystem2026';
+      const decoded = jwt.verify(token, secret);
+      req.user = decoded; // Contains user_id, client_id, role_id
+      
+      const headerClientId = req.headers['x-client-id'];
+      const userCid = (decoded.client_id === null || decoded.client_id === undefined) ? 0 : parseInt(decoded.client_id);
+      const isSuperAdmin = (decoded.role_id === 1 || userCid === 0);
+
+      if (!isSuperAdmin && headerClientId && headerClientId.toString() !== userCid.toString()) {
+        return res.status(403).json({ error: 'Forbidden: Client ID mismatch with token' });
+      }
+    } catch (err) {
+      if (!isPublic) {
+        return res.status(401).json({ error: 'Invalid or expired token' });
+      }
+    }
+  }
+
+  if (!isPublic && !req.user) {
     return res.status(401).json({ error: 'Authorization token is missing' });
   }
-  const secret = process.env.JWT_SECRET || 'mySuperSecretJWTKeyForPOSSystem2026';
 
-  try {
-    const decoded = jwt.verify(token, secret);
-    req.user = decoded; // Contains user_id, client_id, role_id
-    
-    // Strict multi-tenant client isolation verification
-    const headerClientId = req.headers['x-client-id'];
-    const userCid = (decoded.client_id === null || decoded.client_id === undefined) ? 0 : parseInt(decoded.client_id);
-    const isSuperAdmin = (decoded.role_id === 1 || userCid === 0);
-
-    if (!isSuperAdmin && headerClientId && headerClientId.toString() !== userCid.toString()) {
-      return res.status(403).json({ error: 'Forbidden: Client ID mismatch with token' });
-    }
-    
-    next();
-  } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
-  }
+  next();
 };
