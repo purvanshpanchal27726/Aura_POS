@@ -157,6 +157,17 @@ router.post('/', checkWriteAccess, async (req, res) => {
 
     const [result] = await db.execute(query, values);
     
+    // Bidirectional Sync: If creating an Admin user (role_id = 2), ensure matching client exists in clients table
+    if (finalRoleId === 2 && targetClientId) {
+      const [existingClient] = await db.execute('SELECT * FROM clients WHERE client_id = $1', [targetClientId]);
+      if (existingClient.length === 0) {
+        await db.execute(
+          'INSERT INTO clients (client_id, name, email, phone, address, active) VALUES ($1, $2, $3, $4, $5, 1)',
+          [targetClientId, `${first_name}'s Enterprise`, email_1, phone_1, `${city}, ${country}`]
+        );
+      }
+    }
+
     res.status(201).json({
       message: 'User created successfully',
       user_id: result.insertId

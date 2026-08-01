@@ -835,91 +835,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Client-level module group gating
-    const clientModules = activeUser.clientModules || ['ALL'];
-    const hasAll = clientModules.includes('ALL');
-    const hasKirana = hasAll || clientModules.includes('Kirana') || clientModules.includes('POS');
-
-    // Super-Admin only view: Clients menu is only visible to super-admin (no client_id and clientModules = ALL)
+    const isSuperAdmin = activeUser && (activeUser.role_id == 1 || activeUser.role_id === 1);
+    
+    // Super-Admin only view: Clients menu is only visible to Super-Admin
     const menuClients = document.getElementById('menuClients');
     if (menuClients) {
-      menuClients.style.display = (hasAll && !activeUser.client_id) ? 'flex' : 'none';
+      menuClients.style.display = isSuperAdmin ? 'flex' : 'none';
     }
 
-    // Gate Kirana / POS menu items
-    const kiranaMenus = [
+    // Every Client Admin & Super-Admin has full access to ALL sub-menus in their client scope
+    const allDrawerMenus = [
       document.getElementById('menuSales'),
       document.getElementById('menuPurchase'),
       document.getElementById('menuReceipt'),
-      document.getElementById('menuReports')
-    ];
-
-    if (!hasKirana) {
-      kiranaMenus.forEach(menuEl => {
-        if (menuEl) menuEl.style.display = 'none';
-      });
-    }
-
-    // Gate Restaurant menu items
-    const hasRestaurant = hasAll || clientModules.includes('Restaurant');
-    const restMenus = [
+      document.getElementById('menuReports'),
+      document.getElementById('menuInventory'),
+      document.getElementById('menuPurchaseOrders'),
       document.getElementById('menuRestTables'),
       document.getElementById('menuRestMenu'),
       document.getElementById('menuRestOrders'),
-      document.getElementById('menuRestKds')
-    ];
-
-    restMenus.forEach(menuEl => {
-      if (menuEl) {
-        menuEl.style.display = hasRestaurant ? 'flex' : 'none';
-      }
-    });
-
-    // Gate Hotel menu items
-    const hasHotel = hasAll || clientModules.includes('Hotel');
-    const hotelMenus = [
+      document.getElementById('menuRestKds'),
       document.getElementById('menuHotelRooms'),
       document.getElementById('menuHotelGuests'),
-      document.getElementById('menuHotelBookings')
-    ];
-
-    hotelMenus.forEach(menuEl => {
-      if (menuEl) {
-        menuEl.style.display = hasHotel ? 'flex' : 'none';
-      }
-    });
-
-    // Gate Inventory & PO menu items
-    const invMenus = [
-      document.getElementById('menuInventory'),
-      document.getElementById('menuPurchaseOrders')
-    ];
-    invMenus.forEach(menuEl => {
-      if (menuEl) {
-        menuEl.style.display = hasKirana ? 'flex' : 'none';
-      }
-    });
-
-    // Gate Employees & Attendance menu items
-    const employeeMenus = [
+      document.getElementById('menuHotelBookings'),
       document.getElementById('menuEmployees'),
-      document.getElementById('menuAttendance')
+      document.getElementById('menuAttendance'),
+      document.getElementById('menuCategory'),
+      document.getElementById('menuItem'),
+      document.getElementById('menuCustomerListing'),
+      document.getElementById('menuVendorListing'),
+      document.getElementById('menuUnit'),
+      document.getElementById('menuTax'),
+      document.getElementById('menuUserListing'),
+      document.getElementById('menuRoleListing')
     ];
-    employeeMenus.forEach(menuEl => {
+
+    allDrawerMenus.forEach(menuEl => {
       if (menuEl) {
         menuEl.style.display = 'flex';
       }
     });
 
-    const masterGroup = document.getElementById('groupMasters');
-    if (masterGroup) {
-      if (!hasKirana) {
-        masterGroup.style.display = 'none';
-      } else {
-        const visibleChild = Array.from(masterGroup.querySelectorAll('.drawer-submenu .drawer-item'))
-          .some(item => item.style.display !== 'none');
-        masterGroup.style.display = visibleChild ? 'block' : 'none';
-      }
-    }
+    const drawerGroups = [
+      document.getElementById('groupInventoryModule'),
+      document.getElementById('groupRestaurantModule'),
+      document.getElementById('groupHotelModule'),
+      document.getElementById('groupAdminModule'),
+      document.getElementById('groupMasters')
+    ];
+    drawerGroups.forEach(grp => {
+      if (grp) grp.style.display = 'block';
+    });
 
     const activeScreenKey = Object.keys(screens).find(key => screens[key].view?.style.display === 'block');
     if (activeScreenKey) {
