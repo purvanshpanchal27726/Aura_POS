@@ -9907,14 +9907,23 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   window.switchSettingsTab = function(tabId) {
-    document.querySelectorAll('.settings-tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
+    const allBtns = document.querySelectorAll('.settings-tab-btn');
+    const allContents = document.querySelectorAll('.settings-tab-content');
 
-    const activeBtn = Array.from(document.querySelectorAll('.settings-tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabId));
+    allBtns.forEach(btn => btn.classList.remove('active'));
+    allContents.forEach(c => {
+      c.classList.remove('active');
+      c.style.display = 'none';
+    });
+
+    const activeBtn = Array.from(allBtns).find(b => b.getAttribute('onclick')?.includes(tabId));
     if (activeBtn) activeBtn.classList.add('active');
 
-    const content = document.getElementById(tabId);
-    if (content) content.classList.add('active');
+    const targetContent = document.getElementById(tabId);
+    if (targetContent) {
+      targetContent.classList.add('active');
+      targetContent.style.display = 'block';
+    }
   };
 
   window.updateReceiptLivePreview = function() {

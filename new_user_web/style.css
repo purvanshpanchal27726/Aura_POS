@@ -2057,37 +2057,38 @@ body.print-report-active th, body.print-report-active td {
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
-  padding: 0.65rem 1.25rem;
+  padding: 0.7rem 1.25rem;
   border-radius: 10px;
   font-weight: 600;
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: var(--text-main);
   background: var(--card-bg);
-  border: 1px solid var(--border-color);
+  border: 1.5px solid var(--border-color);
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.2s ease;
 }
 
 .settings-tab-btn:hover {
-  color: var(--text-main);
+  color: var(--primary-color);
   border-color: var(--primary-color);
   background: rgba(99, 102, 241, 0.08);
 }
 
 .settings-tab-btn.active {
-  color: #fff;
-  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
-  border-color: #6366f1;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4) !important;
 }
 
 .settings-tab-content {
-  display: none;
+  display: none !important;
   animation: fadeInSettings 0.25s ease-in-out forwards;
 }
 
 .settings-tab-content.active {
-  display: block;
+  display: block !important;
 }
 
 @keyframes fadeInSettings {
