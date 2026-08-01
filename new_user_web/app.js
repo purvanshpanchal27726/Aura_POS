@@ -9890,6 +9890,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  window.switchSettingsTab = function(tabId) {
+    document.querySelectorAll('.settings-tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
+
+    const activeBtn = Array.from(document.querySelectorAll('.settings-tab-btn')).find(b => b.getAttribute('onclick')?.includes(tabId));
+    if (activeBtn) activeBtn.classList.add('active');
+
+    const content = document.getElementById(tabId);
+    if (content) content.classList.add('active');
+  };
+
+  window.updateReceiptLivePreview = function() {
+    const tInput = document.getElementById('setting_receipt_title');
+    const sInput = document.getElementById('setting_receipt_subtitle');
+    const fInput = document.getElementById('setting_receipt_footer');
+
+    const prevTitle = document.getElementById('prevTitle');
+    const prevSubtitle = document.getElementById('prevSubtitle');
+    const prevFooter = document.getElementById('prevFooter');
+
+    if (prevTitle && tInput) prevTitle.textContent = (tInput.value || 'VANSHEE POS').toUpperCase();
+    if (prevSubtitle && sInput) prevSubtitle.textContent = (sInput.value || 'AHMEDABAD, GUJARAT, INDIA').toUpperCase();
+    if (prevFooter && fInput) prevFooter.textContent = (fInput.value || 'THANK YOU! VISIT AGAIN.').toUpperCase();
+  };
+
+  const btnSaveAllSettings = document.getElementById('btnSaveAllSettings');
+  if (btnSaveAllSettings) {
+    btnSaveAllSettings.addEventListener('click', () => {
+      const printerForm = document.getElementById('printerSettingsForm');
+      if (printerForm) {
+        const btnSavePrinter = document.getElementById('btnSavePrinterSettings');
+        if (btnSavePrinter) btnSavePrinter.click();
+      }
+      showToast('Settings Saved', 'All system settings, store profile, and printer preferences updated!', 'success');
+    });
+  }
+
   window.fetchLicenseDetails = fetchLicenseDetails;
 
   // Session Check initialization

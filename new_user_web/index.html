@@ -1153,139 +1153,270 @@
       </section>
     </div>
 
-    <!-- Screen 12: Settings -->
+    <!-- Screen 12: Premium Settings Control Hub -->
     <div id="screenSettings" class="screen-view" style="display: none;">
-      <!-- General Application Configuration -->
-      <section class="form-section card" style="max-width: 1000px; margin: 0 auto 1.5rem auto; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg);">
-        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-          <span class="material-icons" style="color: var(--primary-color);">settings_applications</span>
-          <h2 style="margin: 0; color: var(--text-main); font-size: 1.25rem;">General Settings</h2>
-        </div>
-        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">Configure global administrative variables and operational mode.</p>
+      <div class="settings-hub-container">
         
-        <div class="form-grid col-2">
-          <div class="form-field">
-            <label for="settingAppMode" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem; display: block;">Application Mode</label>
-            <select id="settingAppMode" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
-              <option value="retail">Retail POS Mode (Includes purchases and pricing)</option>
-              <option value="restaurant">Restaurant POS Mode (Hides purchase price & inward billing)</option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <!-- Printer Configuration Settings -->
-      <section class="form-section card" style="max-width: 1000px; margin: 0 auto 1.5rem auto; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg);">
-        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
-          <span class="material-icons" style="color: var(--primary-color);">print</span>
-          <h2 style="margin: 0; color: var(--text-main); font-size: 1.25rem;">Printer Settings</h2>
-        </div>
-        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">Configure POS thermal receipt printer preferences.</p>
-        
-        <form id="printerSettingsForm">
-          <div class="form-grid col-3">
-            <div class="form-field">
-              <label for="printer_name">Printer Device Name</label>
-              <input type="text" id="setting_printer_name" name="printer_name" placeholder="e.g. POS-80, Default Printer" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
-            </div>
-            <div class="form-field">
-              <label for="printer_type">Printer Type</label>
-              <select id="setting_printer_type" name="printer_type" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
-                <option value="thermal">Thermal POS Printer</option>
-                <option value="laser">Laser / Inkjet Standard</option>
-              </select>
-            </div>
-            <div class="form-field">
-              <label for="paper_size">Paper Dimension Size</label>
-              <select id="setting_paper_size" name="paper_size" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
-                <option value="small">Small (58mm Roll)</option>
-                <option value="medium" selected>Medium (80mm Standard Roll)</option>
-                <option value="large">Large (A4 Document Page)</option>
-              </select>
-            </div>
-          </div>
-          
-          <div class="form-grid col-3" style="margin-top: 1rem;">
-            <div class="form-field">
-              <label for="connection">Connection Port Type</label>
-              <select id="setting_connection" name="connection" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
-                <option value="usb">USB Local Port</option>
-                <option value="network">LAN / Wi-Fi Network</option>
-                <option value="bluetooth">Bluetooth Device</option>
-              </select>
-            </div>
-            <div class="form-field">
-              <label for="ip_address">Network IP Address</label>
-              <input type="text" id="setting_ip_address" name="ip_address" placeholder="e.g. 192.168.1.100" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
-            </div>
-            <div class="form-field">
-              <label for="port">Network Port</label>
-              <input type="number" id="setting_port" name="port" value="9100" placeholder="9100" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
-            </div>
-          </div>
-
-          <!-- Thermal Receipt Header & Footer Customizer -->
-          <div class="form-grid col-3" style="margin-top: 1rem; border-top: 1.5px dashed var(--border-color); padding-top: 1rem;">
-            <div class="form-field">
-              <label for="receipt_title">Receipt Title Header</label>
-              <input type="text" id="setting_receipt_title" name="receipt_title" placeholder="e.g. Vanshee POS" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
-            </div>
-            <div class="form-field">
-              <label for="receipt_subtitle">Header Address Subtitle</label>
-              <input type="text" id="setting_receipt_subtitle" name="receipt_subtitle" placeholder="e.g. AHMEDABAD, GUJARAT, INDIA" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
-            </div>
-            <div class="form-field">
-              <label for="receipt_footer">Footer Thank-you Note</label>
-              <input type="text" id="setting_receipt_footer" name="receipt_footer" placeholder="e.g. THANK YOU! VISIT AGAIN." style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
-            </div>
-          </div>
-          
-          <div class="form-grid col-2" style="margin-top: 1rem; align-items: center;">
-            <div class="form-field" style="display: flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;">
-              <input type="checkbox" id="setting_auto_print" name="auto_print" style="width: auto;">
-              <label for="setting_auto_print" style="margin-bottom: 0; font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Enable Direct / Auto-Print on Billing</label>
-            </div>
-            <div class="form-field">
-              <label for="copies" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main); margin-bottom: 0.5rem; display: block;">Number of Copies</label>
-              <input type="number" id="setting_copies" name="copies" value="1" min="1" max="5" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main);">
-            </div>
-          </div>
-          
-          <div style="display: flex; justify-content: flex-end; margin-top: 1.5rem;">
-            <button type="submit" id="btnSavePrinterSettings" class="btn btn-primary">Save Printer Settings</button>
-          </div>
-        </form>
-      </section>
-
-      <section class="list-section card" style="max-width: 1000px; margin: 0 auto;">
-        <div class="list-header" style="margin-bottom: 1.5rem;">
+        <!-- Header & Title -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
           <div>
-            <h2>Rolewise Security Permissions Matrix</h2>
-            <p style="color: #64748b; font-size: 0.85rem; margin-top: 0.25rem;">Define screen access permissions for registered roles. Note: Administrator role holds full system access by default.</p>
+            <h1 style="font-size: 1.6rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.6rem;">
+              <span class="material-icons" style="color: var(--primary-color); font-size: 2rem;">settings</span>
+              System Settings & Control Hub
+            </h1>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 0.25rem 0 0 0;">Manage store profile, hardware printers, security permissions, and licensing.</p>
           </div>
-          <button type="button" id="btnSavePermissions" class="btn btn-primary">Save Settings</button>
+          <button type="button" id="btnSaveAllSettings" class="btn btn-primary" style="padding: 0.65rem 1.5rem; font-size: 0.95rem; font-weight: 700; box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);">
+            <span class="material-icons" style="font-size: 1.1rem; margin-right: 0.4rem;">save</span> Save Settings
+          </button>
         </div>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Security Role</th>
-                <th style="text-align: center; width: 120px;">User Master</th>
-                <th style="text-align: center; width: 120px;">Customer Master</th>
-                <th style="text-align: center; width: 120px;">Item Master</th>
-                <th style="text-align: center; width: 120px;">Sales (Sell)</th>
-                <th style="text-align: center; width: 120px;">Purchase</th>
-                <th style="text-align: center; width: 120px;">Reports</th>
-              </tr>
-            </thead>
-            <tbody id="permissionsTableBody">
-              <tr>
-                <td colspan="7" class="empty-state">Loading permissions matrix...</td>
-              </tr>
-            </tbody>
-          </table>
+
+        <!-- Navigation Tabs -->
+        <div class="settings-tab-nav">
+          <button type="button" class="settings-tab-btn active" onclick="switchSettingsTab('tabStoreProfile')">
+            <span class="material-icons">store</span> Store Profile & General
+          </button>
+          <button type="button" class="settings-tab-btn" onclick="switchSettingsTab('tabPrinterSetup')">
+            <span class="material-icons">print</span> Printer & Receipt Studio
+          </button>
+          <button type="button" class="settings-tab-btn" onclick="switchSettingsTab('tabSecurityMatrix')">
+            <span class="material-icons">security</span> Security Permissions
+          </button>
+          <button type="button" class="settings-tab-btn" onclick="switchSettingsTab('tabSystemLicense')">
+            <span class="material-icons">verified_user</span> License & System Info
+          </button>
         </div>
-      </section>
+
+        <!-- TAB 1: Store Profile & General Settings -->
+        <div id="tabStoreProfile" class="settings-tab-content active">
+          <div class="card" style="padding: 1.75rem; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+              <span class="material-icons" style="color: var(--primary-color);">storefront</span>
+              <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-main);">Store & Business Profile</h3>
+            </div>
+            
+            <form id="storeProfileForm">
+              <div class="form-grid col-3">
+                <div class="form-field">
+                  <label for="setting_store_name" style="font-weight: 600; color: var(--text-main);">Store / Business Name</label>
+                  <input type="text" id="setting_store_name" value="Vanshee POS Enterprise" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+                <div class="form-field">
+                  <label for="setting_gst_no" style="font-weight: 600; color: var(--text-main);">GST / Tax Registration No.</label>
+                  <input type="text" id="setting_gst_no" value="24AAACV1234F1Z5" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+                <div class="form-field">
+                  <label for="settingAppMode" style="font-weight: 600; color: var(--text-main);">Operational Mode</label>
+                  <select id="settingAppMode" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                    <option value="retail" selected>Retail POS Mode (Includes purchases & inventory)</option>
+                    <option value="restaurant">Restaurant POS Mode (Orders & KOT focus)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-grid col-3" style="margin-top: 1rem;">
+                <div class="form-field">
+                  <label for="setting_store_phone" style="font-weight: 600; color: var(--text-main);">Store Phone Number</label>
+                  <input type="text" id="setting_store_phone" value="9876543210" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+                <div class="form-field">
+                  <label for="setting_store_email" style="font-weight: 600; color: var(--text-main);">Store Support Email</label>
+                  <input type="email" id="setting_store_email" value="support@vanshee.com" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                </div>
+                <div class="form-field">
+                  <label for="setting_currency" style="font-weight: 600; color: var(--text-main);">Base Currency Symbol</label>
+                  <input type="text" id="setting_currency" value="₹ (INR)" readonly style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main); opacity: 0.8;">
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- TAB 2: Printer Setup & Receipt Customization -->
+        <div id="tabPrinterSetup" class="settings-tab-content">
+          <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.5rem;">
+            
+            <!-- Left: Printer Settings Form -->
+            <div class="card" style="padding: 1.75rem; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--border-color);">
+              <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                <span class="material-icons" style="color: var(--primary-color);">print</span>
+                <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-main);">Thermal Printer Configuration</h3>
+              </div>
+
+              <form id="printerSettingsForm">
+                <div class="form-grid col-3">
+                  <div class="form-field">
+                    <label for="setting_printer_name" style="font-weight: 600; color: var(--text-main);">Printer Name</label>
+                    <input type="text" id="setting_printer_name" name="printer_name" value="Default Printer" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                  </div>
+                  <div class="form-field">
+                    <label for="setting_printer_type" style="font-weight: 600; color: var(--text-main);">Printer Type</label>
+                    <select id="setting_printer_type" name="printer_type" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                      <option value="thermal" selected>Thermal POS Printer</option>
+                      <option value="laser">Laser / Inkjet Standard</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label for="setting_paper_size" style="font-weight: 600; color: var(--text-main);">Paper Roll Size</label>
+                    <select id="setting_paper_size" name="paper_size" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                      <option value="small">Small (58mm Roll)</option>
+                      <option value="medium" selected>Medium (80mm Standard Roll)</option>
+                      <option value="large">Large (A4 Page)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-grid col-3" style="margin-top: 1rem;">
+                  <div class="form-field">
+                    <label for="setting_connection" style="font-weight: 600; color: var(--text-main);">Connection Port</label>
+                    <select id="setting_connection" name="connection" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                      <option value="usb" selected>USB Local Port</option>
+                      <option value="network">LAN / Wi-Fi Network</option>
+                      <option value="bluetooth">Bluetooth Device</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label for="setting_ip_address" style="font-weight: 600; color: var(--text-main);">Network IP Address</label>
+                    <input type="text" id="setting_ip_address" name="ip_address" placeholder="192.168.1.100" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                  </div>
+                  <div class="form-field">
+                    <label for="setting_port" style="font-weight: 600; color: var(--text-main);">Network Port</label>
+                    <input type="number" id="setting_port" name="port" value="9100" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                  </div>
+                </div>
+
+                <!-- Header & Footer Customizer -->
+                <div style="margin-top: 1.25rem; border-top: 1px dashed var(--border-color); padding-top: 1rem;">
+                  <h4 style="margin: 0 0 1rem 0; font-size: 1rem; color: var(--text-main);">Receipt Header & Footer Customization</h4>
+                  <div class="form-grid col-3">
+                    <div class="form-field">
+                      <label for="setting_receipt_title" style="font-weight: 600; color: var(--text-main);">Receipt Header Title</label>
+                      <input type="text" id="setting_receipt_title" name="receipt_title" value="Vanshee POS" oninput="updateReceiptLivePreview()" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                    </div>
+                    <div class="form-field">
+                      <label for="setting_receipt_subtitle" style="font-weight: 600; color: var(--text-main);">Header Subtitle Address</label>
+                      <input type="text" id="setting_receipt_subtitle" name="receipt_subtitle" value="AHMEDABAD, GUJARAT, INDIA" oninput="updateReceiptLivePreview()" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                    </div>
+                    <div class="form-field">
+                      <label for="setting_receipt_footer" style="font-weight: 600; color: var(--text-main);">Footer Thank-You Message</label>
+                      <input type="text" id="setting_receipt_footer" name="receipt_footer" value="THANK YOU! VISIT AGAIN." oninput="updateReceiptLivePreview()" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-grid col-2" style="margin-top: 1.25rem; align-items: center;">
+                  <div class="form-field" style="display: flex; align-items: center; gap: 0.75rem;">
+                    <label class="switch-toggle">
+                      <input type="checkbox" id="setting_auto_print" name="auto_print">
+                      <span class="switch-slider"></span>
+                    </label>
+                    <label for="setting_auto_print" style="margin: 0; font-weight: 600; color: var(--text-main); cursor: pointer;">Enable Direct Auto-Print on Billing</label>
+                  </div>
+                  <div class="form-field">
+                    <label for="setting_copies" style="font-weight: 600; color: var(--text-main);">Print Copies Count</label>
+                    <input type="number" id="setting_copies" name="copies" value="1" min="1" max="5" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                  </div>
+                </div>
+              </form>
+            </div>
+
+            <!-- Right: Receipt Live Interactive Preview -->
+            <div class="card" style="padding: 1.5rem; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--border-color);">
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <span class="material-icons" style="color: #10b981;">receipt_long</span>
+                <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-main);">Live Receipt Preview</h4>
+              </div>
+              <div class="receipt-live-preview" id="receiptPreviewBox">
+                <div style="text-align: center; font-weight: bold; font-size: 1.1rem;" id="prevTitle">VANSHEE POS</div>
+                <div style="text-align: center; font-size: 0.75rem; margin-bottom: 0.75rem;" id="prevSubtitle">AHMEDABAD, GUJARAT, INDIA</div>
+                <div style="border-bottom: 1px dashed #94a3b8; margin-bottom: 0.5rem;"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                  <span>INV #1001</span>
+                  <span>31/07/2026</span>
+                </div>
+                <div style="border-bottom: 1px dashed #94a3b8; margin: 0.5rem 0;"></div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                  <span>Amul Milk 500ml x 1</span>
+                  <span>₹34.00</span>
+                </div>
+                <div style="border-bottom: 1px dashed #94a3b8; margin: 0.5rem 0;"></div>
+                <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem;">
+                  <span>TOTAL:</span>
+                  <span>₹34.00</span>
+                </div>
+                <div style="border-bottom: 1px dashed #94a3b8; margin: 0.5rem 0;"></div>
+                <div style="text-align: center; font-size: 0.75rem; margin-top: 0.75rem; font-weight: bold;" id="prevFooter">THANK YOU! VISIT AGAIN.</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- TAB 3: Rolewise Security Permissions Matrix -->
+        <div id="tabSecurityMatrix" class="settings-tab-content">
+          <div class="card" style="padding: 1.75rem; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--border-color);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+              <div>
+                <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-main);">Rolewise Module Access Control</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0 0;">Toggle module access rights per user role. Super-Admins retain global governance by default.</p>
+              </div>
+              <button type="button" id="btnSavePermissions" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Save Permissions Matrix</button>
+            </div>
+            
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Security Role</th>
+                    <th style="text-align: center; width: 110px;">User Master</th>
+                    <th style="text-align: center; width: 110px;">Customer Master</th>
+                    <th style="text-align: center; width: 110px;">Item Master</th>
+                    <th style="text-align: center; width: 110px;">Sales (Sell)</th>
+                    <th style="text-align: center; width: 110px;">Purchase</th>
+                    <th style="text-align: center; width: 110px;">Reports</th>
+                  </tr>
+                </thead>
+                <tbody id="permissionsTableBody">
+                  <tr>
+                    <td colspan="7" class="empty-state">Loading security permissions matrix...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: Software License & System Information -->
+        <div id="tabSystemLicense" class="settings-tab-content">
+          <div class="card" style="padding: 1.75rem; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+              <span class="material-icons" style="color: #10b981;">verified_user</span>
+              <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-main);">Software License & Node Information</h3>
+            </div>
+
+            <div class="form-grid col-3">
+              <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 1.25rem;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: #10b981; font-weight: 700;">License Status</div>
+                <div style="font-size: 1.4rem; font-weight: 800; color: #10b981; margin-top: 0.25rem;">ACTIVE - VALID</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">Enterprise Multi-Tenant Edition</div>
+              </div>
+
+              <div style="background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); font-weight: 700;">Software Serial Key</div>
+                <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-top: 0.25rem; font-family: monospace;">POS-ENT-2026-V3X</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">Registered to Client #1</div>
+              </div>
+
+              <div style="background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem;">
+                <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); font-weight: 700;">License Expiry</div>
+                <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-top: 0.25rem;">31 DEC 2030</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">Perpetual Multi-Client License</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
 
     <!-- Screen 13: Vendor Listing [NEW] -->
