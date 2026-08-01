@@ -187,13 +187,17 @@ router.get('/', async (req, res) => {
     `;
     let params = [];
 
-    if (clientId !== null && clientId !== undefined) {
-      query += 'u.client_id = $1';
-      params.push(clientId);
-    } else {
-      if (isSuperAdmin) {
-        // Super Admin default context: show all registered users in the database
+    if (isSuperAdmin) {
+      if (req.query.client_id && req.query.client_id !== 'ALL' && req.query.client_id !== '0') {
+        query += 'u.client_id = $1';
+        params.push(parseInt(req.query.client_id));
+      } else {
         query += '1=1';
+      }
+    } else {
+      if (clientId !== null && clientId !== undefined) {
+        query += 'u.client_id = $1';
+        params.push(clientId);
       } else {
         query += 'u.client_id IS NULL';
       }

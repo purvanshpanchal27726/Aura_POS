@@ -1348,7 +1348,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${name}</td>
           <td>${location}</td>
           <td>${contact}</td>
-          <td><span class="badge badge-light" style="background-color:#f1f5f9; color:#475569; padding: 4px 8px; border-radius: 4px; font-weight: 500;">${user.role_name || 'User'}</span></td>
+          <td>
+            <span class="badge badge-light" style="background-color:#f1f5f9; color:#475569; padding: 4px 8px; border-radius: 4px; font-weight: 500;">${user.role_name || 'User'}</span>
+            ${user.client_name ? `<br><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">🏢 ${user.client_name}</span>` : ''}
+          </td>
           <td>
             <div class="action-buttons">
               <button type="button" class="btn-icon btn-edit" data-id="${user.user_id}" title="Edit User">

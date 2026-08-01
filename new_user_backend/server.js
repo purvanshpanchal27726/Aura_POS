@@ -171,22 +171,29 @@ app.get('/api/realtime-events', (req, res) => {
 app.get('/api/dashboard/stats', async (req, res) => {
   try {
     const db = require('./db');
-    const headerCid = req.headers['x-client-id'];
-    const userCid = (req.user && req.user.client_id !== undefined && req.user.client_id !== null) ? parseInt(req.user.client_id) : null;
-    const isSuperAdmin = !req.user || req.user.role_id === 1 || userCid === 0;
+    const headerCid = req.headers['x-client-id'] || req.query.client_id;
+    const isSuperAdmin = req.user && req.user.role_id === 1;
 
     let cidFilter = '';
     let params = [];
 
     if (!isSuperAdmin) {
-      const targetCid = headerCid !== undefined ? parseInt(headerCid) : userCid;
-      if (!isNaN(targetCid)) {
-        cidFilter = ' WHERE client_id = ?';
-        params = [targetCid];
+      const targetCid = req.user?.client_id || 1;
+      cidFilter = ' WHERE client_id = $1';
+      params = [targetCid];
+    } else {
+      if (headerCid && headerCid !== 'ALL' && headerCid !== '0') {
+        cidFilter = ' WHERE client_id = $1';
+        params = [parseInt(headerCid)];
+      } else {
+        // Super Admin default view: Client 1 stats
+        const defaultCid = req.user?.client_id || 1;
+        cidFilter = ' WHERE client_id = $1';
+        params = [defaultCid];
       }
     }
 
-    const [users] = await db.execute(`SELECT COUNT(*) AS count FROM users${cidFilter}`, params);
+    const [users] = await db.execute(`SELECT COUNT(*) AS count FROM users`, []);
     const [customers] = await db.execute(`SELECT COUNT(*) AS count FROM customers${cidFilter}`, params);
     const [items] = await db.execute(`SELECT COUNT(*) AS count FROM items${cidFilter}`, params);
     const [categories] = await db.execute(`SELECT COUNT(*) AS count FROM categories${cidFilter}`, params);
