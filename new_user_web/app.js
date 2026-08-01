@@ -4042,14 +4042,34 @@ document.addEventListener('DOMContentLoaded', () => {
   async function fetchPrinterSettings() {
     if (!printerSettingsForm) return;
     try {
+      // 1. Load current client store profile
+      const clientRes = await authFetch(getApiUrl('/api/clients/current'));
+      if (clientRes.ok) {
+        const clientData = await clientRes.json();
+        const stName = document.getElementById('setting_store_name');
+        const stPhone = document.getElementById('setting_store_phone');
+        const stEmail = document.getElementById('setting_store_email');
+        const stGst = document.getElementById('setting_gst_no');
+        const titleInp = document.getElementById('setting_receipt_title');
+        const subInp = document.getElementById('setting_receipt_subtitle');
+
+        if (stName) stName.value = clientData.name || '';
+        if (stPhone) stPhone.value = clientData.phone || '';
+        if (stEmail) stEmail.value = clientData.email || '';
+        if (stGst) stGst.value = clientData.gst_no || 'N/A';
+        if (titleInp) titleInp.value = clientData.name || 'Vanshee POS';
+        if (subInp) subInp.value = clientData.address || 'AHMEDABAD, GUJARAT, INDIA';
+      }
+
+      // 2. Load printer settings
       const response = await authFetch(getApiUrl('/api/settings/printer'));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to load printer settings.');
-        }
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to load printer settings.');
+      }
       const settings = await response.json();
 
-      document.getElementById('setting_printer_name').value = settings.printer_name || '';
+      document.getElementById('setting_printer_name').value = settings.printer_name || 'Default Printer';
       document.getElementById('setting_printer_type').value = settings.printer_type || 'thermal';
       document.getElementById('setting_paper_size').value = settings.paper_size || 'medium';
       document.getElementById('setting_connection').value = settings.connection || 'usb';
@@ -4058,15 +4078,11 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('setting_auto_print').checked = settings.auto_print === 1 || settings.auto_print === true;
       document.getElementById('setting_copies').value = settings.copies || 1;
 
-      const titleInp = document.getElementById('setting_receipt_title');
-      const subInp = document.getElementById('setting_receipt_subtitle');
-      const footInp = document.getElementById('setting_receipt_footer');
-
-      if (titleInp) titleInp.value = localStorage.getItem('pos_receipt_title') || settings.receipt_title || 'Vanshee POS';
-      if (subInp) subInp.value = localStorage.getItem('pos_receipt_subtitle') || settings.receipt_subtitle || 'AHMEDABAD, GUJARAT, INDIA';
-      if (footInp) footInp.value = localStorage.getItem('pos_receipt_footer') || settings.receipt_footer || 'THANK YOU! VISIT AGAIN.';
+      if (window.updateReceiptLivePreview) {
+        window.updateReceiptLivePreview();
+      }
     } catch (err) {
-      console.error('Error fetching printer settings:', err);
+      console.error('Error fetching settings:', err);
     }
   };
 
@@ -9917,13 +9933,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const btnSaveAllSettings = document.getElementById('btnSaveAllSettings');
   if (btnSaveAllSettings) {
-    btnSaveAllSettings.addEventListener('click', () => {
+    btnSaveAllSettings.addEventListener('click', async () => {
+      // 1. Save store profile
+      const name = document.getElementById('setting_store_name')?.value.trim();
+      const phone = document.getElementById('setting_store_phone')?.value.trim();
+      const email = document.getElementById('setting_store_email')?.value.trim();
+      const gst_no = document.getElementById('setting_gst_no')?.value.trim();
+
+      try {
+        await authFetch(getApiUrl('/api/clients/current'), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, phone, email, gst_no })
+        });
+      } catch (e) {
+        console.error('Error saving store profile:', e);
+      }
+
+      // 2. Save printer settings
       const printerForm = document.getElementById('printerSettingsForm');
       if (printerForm) {
         const btnSavePrinter = document.getElementById('btnSavePrinterSettings');
         if (btnSavePrinter) btnSavePrinter.click();
       }
-      showToast('Settings Saved', 'All system settings, store profile, and printer preferences updated!', 'success');
+      showToast('Settings Saved', 'Store profile and printer settings updated for your company!', 'success');
     });
   }
 

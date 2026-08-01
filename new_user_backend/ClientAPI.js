@@ -4,6 +4,41 @@ const db = require('./db');
 const router = express.Router();
 
 /**
+ * GET /api/clients/current
+ * Fetches store profile for current tenant client.
+ */
+router.get('/current', async (req, res) => {
+  try {
+    const clientId = (req.user && req.user.client_id) ? req.user.client_id : 1;
+    const [rows] = await db.query('SELECT * FROM clients WHERE client_id = $1', [clientId]);
+    if (rows.length === 0) {
+      return res.json({ name: 'Vanshee POS Enterprise', email: 'admin@vanshee.com', phone: '9876543210', gst_no: '24AAACV1234F1Z5' });
+    }
+    res.json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * PUT /api/clients/current
+ * Updates store profile for current tenant client.
+ */
+router.put('/current', async (req, res) => {
+  try {
+    const clientId = (req.user && req.user.client_id) ? req.user.client_id : 1;
+    const { name, phone, email, gst_no, address } = req.body;
+    await db.execute(
+      'UPDATE clients SET name = COALESCE($1, name), phone = COALESCE($2, phone), email = COALESCE($3, email), gst_no = COALESCE($4, gst_no), address = COALESCE($5, address) WHERE client_id = $6',
+      [name, phone, email, gst_no, address, clientId]
+    );
+    res.json({ message: 'Store profile updated successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * GET /api/clients
  * Fetches all clients.
  */

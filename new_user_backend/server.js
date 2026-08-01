@@ -193,7 +193,7 @@ app.get('/api/dashboard/stats', async (req, res) => {
       }
     }
 
-    const [users] = await db.execute(`SELECT COUNT(*) AS count FROM users`, []);
+    const [users] = await db.execute(`SELECT COUNT(*) AS count FROM users${cidFilter}`, params);
     const [customers] = await db.execute(`SELECT COUNT(*) AS count FROM customers${cidFilter}`, params);
     const [items] = await db.execute(`SELECT COUNT(*) AS count FROM items${cidFilter}`, params);
     const [categories] = await db.execute(`SELECT COUNT(*) AS count FROM categories${cidFilter}`, params);
