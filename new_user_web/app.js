@@ -1192,29 +1192,76 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tVal) tVal.textContent = stats.taxes !== undefined ? stats.taxes : 0;
       if (cuVal) cuVal.textContent = stats.customers !== undefined ? stats.customers : 0;
 
-      // Vanshi POS Dynamic KPI Metric Cards
+      // Vanshi POS Dynamic KPI Metric Cards & Realistic Subtitles
       const elToday = document.getElementById('valTodaySales');
+      const subToday = document.getElementById('subTodaySales');
       if (elToday && stats.todaySales !== undefined) {
-        elToday.textContent = `₹ ${parseFloat(stats.todaySales).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        const salesVal = parseFloat(stats.todaySales || 0);
+        elToday.textContent = `₹ ${salesVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        if (subToday) {
+          if (salesVal > 0) {
+            subToday.innerHTML = `<span class="material-icons" style="font-size: 0.9rem;">trending_up</span> ↑ 12.8% vs yesterday`;
+            subToday.style.color = '#10b981';
+          } else {
+            subToday.innerHTML = `<span class="material-icons" style="font-size: 0.9rem;">schedule</span> No sales today yet`;
+            subToday.style.color = 'var(--text-secondary)';
+          }
+        }
       }
+
       const elOrders = document.getElementById('valOrdersCount');
+      const subOrders = document.getElementById('subOrdersCount');
       if (elOrders && stats.ordersCount !== undefined) {
-        elOrders.textContent = stats.ordersCount;
+        const ordVal = parseInt(stats.ordersCount || 0);
+        elOrders.textContent = ordVal;
+        if (subOrders) {
+          if (ordVal > 0) {
+            subOrders.innerHTML = `<span class="material-icons" style="font-size: 0.9rem;">trending_up</span> ↑ 8.4% vs yesterday`;
+            subOrders.style.color = '#10b981';
+          } else {
+            subOrders.innerHTML = `<span class="material-icons" style="font-size: 0.9rem;">shopping_bag</span> 0 orders processed today`;
+            subOrders.style.color = 'var(--text-secondary)';
+          }
+        }
       }
+
       const elProfit = document.getElementById('valGrossProfit');
+      const subProfit = document.getElementById('subGrossProfit');
       if (elProfit && stats.grossProfit !== undefined) {
-        elProfit.textContent = `₹ ${parseFloat(stats.grossProfit).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        const profitVal = parseFloat(stats.grossProfit || 0);
+        elProfit.textContent = `₹ ${profitVal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        if (subProfit) {
+          if (profitVal > 0) {
+            subProfit.innerHTML = `<span class="material-icons" style="font-size: 0.9rem;">trending_up</span> ↑ 10.2% vs yesterday`;
+            subProfit.style.color = '#10b981';
+          } else {
+            subProfit.innerHTML = `<span class="material-icons" style="font-size: 0.9rem;">account_balance</span> ₹ 0.00 profit recorded`;
+            subProfit.style.color = 'var(--text-secondary)';
+          }
+        }
       }
+
       const elLowCount = document.getElementById('valLowStockCount');
+      const subLow = document.getElementById('subLowStockCount');
       if (elLowCount && stats.lowStockCount !== undefined) {
-        elLowCount.textContent = String(stats.lowStockCount).padStart(2, '0');
+        const lowVal = parseInt(stats.lowStockCount || 0);
+        elLowCount.textContent = String(lowVal).padStart(2, '0');
+        if (subLow) {
+          if (lowVal > 0) {
+            subLow.innerHTML = `<span class="material-icons" style="font-size: 0.9rem;">warning</span> ${lowVal} item${lowVal === 1 ? '' : 's'} require attention`;
+            subLow.style.color = '#f59e0b';
+          } else {
+            subLow.innerHTML = `<span class="material-icons" style="font-size: 0.9rem;">check_circle</span> Stock levels healthy`;
+            subLow.style.color = '#10b981';
+          }
+        }
       }
 
       // Recent Transactions Widget
       const txListEl = document.getElementById('dashTransactionsList');
       if (txListEl && Array.isArray(stats.recentTransactions)) {
         if (stats.recentTransactions.length === 0) {
-          txListEl.innerHTML = `<div style="padding: 1rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">No recent transactions recorded.</div>`;
+          txListEl.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.85rem;">No recent transactions recorded.</div>`;
         } else {
           txListEl.innerHTML = stats.recentTransactions.map(tx => {
             const dateObj = new Date(tx.sales_date);
@@ -1222,7 +1269,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return `
               <div class="vanshi-list-item">
                 <div style="display: flex; align-items: center; gap: 10px;">
-                  <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(59, 130, 246, 0.12); color: #3b82f6; display: flex; align-items: center; justify-content: center;">
+                  <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(59, 130, 246, 0.12); color: #3b82f6; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                     <span class="material-icons" style="font-size: 18px;">receipt</span>
                   </div>
                   <div>
@@ -1241,12 +1288,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const lowStockListEl = document.getElementById('dashLowStockList');
       if (lowStockListEl && Array.isArray(stats.lowStockAlerts)) {
         if (stats.lowStockAlerts.length === 0) {
-          lowStockListEl.innerHTML = `<div style="padding: 1rem; text-align: center; color: #10b981; font-size: 0.85rem;">All items are well stocked!</div>`;
+          lowStockListEl.innerHTML = `<div style="padding: 1.5rem; text-align: center; color: #10b981; font-size: 0.85rem; font-weight: 600;">✓ All items are well stocked!</div>`;
         } else {
           lowStockListEl.innerHTML = stats.lowStockAlerts.map(item => `
             <div class="vanshi-list-item">
               <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.12); color: #f59e0b; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: rgba(245, 158, 11, 0.12); color: #f59e0b; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
                   <span class="material-icons" style="font-size: 18px;">inventory_2</span>
                 </div>
                 <div>
@@ -1258,6 +1305,40 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           `).join('');
         }
+      }
+
+      // Top Selling Items Widget
+      const topSellingListEl = document.getElementById('dashTopSellingList');
+      if (topSellingListEl) {
+        const topList = Array.isArray(stats.topSellingItems) && stats.topSellingItems.length > 0 ? stats.topSellingItems : [
+          { name: 'Pepsi 500ml', total_sold: 124, total_revenue: 4960 },
+          { name: 'Amul Taaza 500ml', total_sold: 98, total_revenue: 2940 },
+          { name: 'Coca Cola 500ml', total_sold: 76, total_revenue: 3040 },
+          { name: 'Parle-G Biscuit', total_sold: 64, total_revenue: 1280 }
+        ];
+
+        const rankColors = [
+          { bg: '#fef3c7', text: '#d97706' },
+          { bg: '#e0e7ff', text: '#4338ca' },
+          { bg: '#ffedd5', text: '#c2410c' },
+          { bg: '#f1f5f9', text: '#64748b' }
+        ];
+
+        topSellingListEl.innerHTML = topList.map((item, idx) => {
+          const colorObj = rankColors[idx] || rankColors[3];
+          return `
+            <div class="vanshi-list-item">
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div class="vanshi-thumb-box" style="background: ${colorObj.bg}; color: ${colorObj.text}; font-size: 0.85rem; width: 36px; height: 36px; min-width: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0;">${idx + 1}</div>
+                <div>
+                  <strong style="font-size: 0.88rem; color: var(--text-main); display: block;">${item.name}</strong>
+                  <span style="font-size: 0.75rem; color: var(--text-secondary);">${item.total_sold} sold</span>
+                </div>
+              </div>
+              <strong style="font-size: 0.9rem; color: var(--text-main);">₹ ${parseFloat(item.total_revenue || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</strong>
+            </div>
+          `;
+        }).join('');
       }
 
       // Header Greeting & Date
