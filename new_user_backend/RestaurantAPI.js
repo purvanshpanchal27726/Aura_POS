@@ -723,15 +723,25 @@ router.put('/orders/items/:itemId/status', async (req, res) => {
 
     if (itemRows.length === 0) return res.status(404).json({ error: 'Order item not found' });
 
+    const orderId = itemRows[0].order_id;
     await db.execute(
       'UPDATE restaurant_order_items SET status = ?, chef_id = ? WHERE id = ?',
       [status, chef_id || null, itemId]
     );
 
-    // Notify KDS UI about change
-    eventBus.emit('broadcast', { type: 'KDS_ITEM_UPDATED', client_id: clientId, order_id: itemRows[0].order_id });
+    // Check if item is marked ready or if all items for order are ready
+    if (status && status.toLowerCase() === 'ready') {
+      await db.execute(
+        `UPDATE restaurant_orders SET status = 'READY' WHERE order_id = ?`,
+        [orderId]
+      );
+    }
 
-    res.json({ message: 'Item status updated' });
+    // Notify KDS and Orders UI about real-time status update
+    eventBus.emit('broadcast', { type: 'KDS_ITEM_UPDATED', client_id: clientId, order_id: orderId });
+    eventBus.emit('broadcast', { type: 'RESTAURANT_ORDER_UPDATED', client_id: clientId, order_id: orderId });
+
+    res.json({ message: 'Item status updated successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

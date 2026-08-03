@@ -5164,10 +5164,16 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('Please add at least one line item to save the inward cost.');
         return;
       }
-      const vendor_id = parseInt(purchaseVendor.value);
-      const purchase_date = purchaseDate.value;
-      const purchase_bill_no = purchaseBillNo.textContent;
-      const gross = parseFloat(purchaseSummaryGross.textContent.replace('Rs.', ''));
+      const vendorSelect = document.getElementById('purchaseVendor');
+      const vendor_id = vendorSelect && vendorSelect.value ? parseInt(vendorSelect.value) : null;
+      if (!vendor_id) {
+        alert('Please select a valid Vendor/Supplier.');
+        return;
+      }
+      const dateInput = document.getElementById('purchaseDate');
+      const purchase_date = dateInput && dateInput.value ? dateInput.value : new Date().toISOString().split('T')[0];
+      const purchase_bill_no = purchaseBillNo ? purchaseBillNo.textContent : '--';
+      const gross = purchaseSummaryGross ? parseFloat(purchaseSummaryGross.textContent.replace('Rs.', '')) : 0;
       const tax = parseFloat(purchaseSummaryTax.textContent.replace('Rs.', ''));
       const total = parseFloat(purchaseSummaryNet.textContent.replace('Rs.', ''));
       const created_by = activeUser ? activeUser.username : 'System';
@@ -8393,6 +8399,9 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(errRes.error || errRes.message || 'Failed to update KDS item state');
         }
       fetchKdsQueue();
+      if (typeof fetchRestOrders === 'function') {
+        fetchRestOrders();
+      }
     } catch (err) {
       alert(err.message);
     }
@@ -8417,9 +8426,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log('Real-Time Event Received:', data.type);
         
-        if (activeScreen === 'rest_kds') {
+        if (activeScreen === 'rest_kds' || activeScreen === 'rest_orders') {
           fetchKdsQueue();
-        } else if (activeScreen === 'rest_orders') {
           fetchRestOrders();
         } else if (activeScreen === 'rest_tables') {
           fetchRestTables();
