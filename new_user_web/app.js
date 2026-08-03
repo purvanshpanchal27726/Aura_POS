@@ -3998,22 +3998,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderPermissionMatrix() {
     if (!permissionsTableBody) return;
+
+    // Dynamically render headers if modules are available
+    const permTableHeader = document.querySelector('#tabSecurityMatrix table thead tr');
+    if (permTableHeader && matrixModules && matrixModules.length > 0) {
+      permTableHeader.innerHTML = `
+        <th>Security Role</th>
+        ${matrixModules.map(m => `<th style="text-align: center; font-size: 0.8rem; padding: 0.5rem; white-space: nowrap;">${m.name}</th>`).join('')}
+      `;
+    }
+
     permissionsTableBody.innerHTML = matrixRoles.map(role => {
       const getCheckbox = (mId) => {
         const perm = matrixPermissions.find(p => p.role_id == role.role_id && p.module_id == mId);
-        const checked = perm && perm.allowed == 1 ? 'checked' : '';
+        const checked = (perm && (perm.allowed == 1 || perm.allowed === true)) || role.role_id == 1 ? 'checked' : '';
         const disabled = role.role_id == 1 ? 'disabled' : '';
-        return `<input type="checkbox" class="perm-chk" data-role="${role.role_id}" data-module="${mId}" ${checked} ${disabled}>`;
+        return `
+          <label class="switch-toggle" style="margin: 0 auto; display: inline-block;">
+            <input type="checkbox" class="perm-chk" data-role="${role.role_id}" data-module="${mId}" ${checked} ${disabled}>
+            <span class="switch-slider"></span>
+          </label>
+        `;
       };
+      
+      const moduleList = (matrixModules && matrixModules.length > 0) ? matrixModules : [
+        { module_id: 1, name: 'User Master' },
+        { module_id: 2, name: 'Customer Master' },
+        { module_id: 3, name: 'Item Master' },
+        { module_id: 4, name: 'Sales (Sell)' },
+        { module_id: 5, name: 'Purchase' },
+        { module_id: 6, name: 'Reports' }
+      ];
+
       return `
         <tr>
-          <td><strong>${role.name}</strong></td>
-          <td style="text-align: center;">${getCheckbox(1)}</td>
-          <td style="text-align: center;">${getCheckbox(2)}</td>
-          <td style="text-align: center;">${getCheckbox(3)}</td>
-          <td style="text-align: center;">${getCheckbox(4)}</td>
-          <td style="text-align: center;">${getCheckbox(5)}</td>
-          <td style="text-align: center;">${getCheckbox(6)}</td>
+          <td>
+            <strong style="color: var(--text-main); font-size: 0.95rem;">${role.name}</strong>
+            ${role.role_id == 1 ? '<br><span style="font-size: 0.75rem; color: #10b981; font-weight: 700;">(Full Access Owner)</span>' : ''}
+          </td>
+          ${moduleList.map(m => `<td style="text-align: center; vertical-align: middle;">${getCheckbox(m.module_id)}</td>`).join('')}
         </tr>
       `;
     }).join('');

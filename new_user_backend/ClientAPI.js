@@ -44,7 +44,14 @@ router.put('/current', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT c.*, u.username AS admin_username, u.user_id AS admin_user_id FROM clients c LEFT JOIN users u ON (u.client_id = c.client_id AND u.role_id = 2) ORDER BY c.client_id ASC');
+    const [rows] = await db.query(`
+      SELECT c.*, 
+             COALESCE(STRING_AGG(u.username, ', '), 'N/A') AS admin_username 
+      FROM clients c 
+      LEFT JOIN users u ON (u.client_id = c.client_id AND u.role_id = 2) 
+      GROUP BY c.client_id, c.name, c.email, c.phone, c.address, c.gst_no, c.created_at, c.updated_at 
+      ORDER BY c.client_id ASC
+    `);
     const mappedRows = rows.map(r => ({
       ...r,
       id: r.client_id

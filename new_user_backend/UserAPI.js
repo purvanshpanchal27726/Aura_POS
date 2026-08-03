@@ -218,6 +218,9 @@ router.get('/', async (req, res) => {
     const [rows] = await db.execute(query, params);
     const cleanedRows = rows.map(row => {
       delete row.password;
+      if (!row.client_name && (row.role_id === 1 || row.client_id === 1 || !row.client_id)) {
+        row.client_name = 'Vanshee POS Enterprise';
+      }
       return row;
     });
     res.json(cleanedRows);
