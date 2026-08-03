@@ -3484,7 +3484,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const salesRes = await authFetch(getApiUrl('/api/sales'));
       const sales = salesRes.ok ? await salesRes.json() : [];
       invoiceBillCount = sales.length + 1;
-      invoiceBillNo.textContent = invoiceBillCount;
+      const currentYear = new Date().getFullYear();
+      invoiceBillNo.textContent = `INV-${currentYear}-${String(invoiceBillCount).padStart(4, '0')}`;
 
       invoiceLines = [];
       renderInvoiceLines();
@@ -3983,8 +3984,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <td style="text-align: right;">₹${parseFloat(r.tax).toFixed(2)}</td>
           <td style="text-align: right; font-weight: bold; color: var(--primary-color);">₹${parseFloat(r.total).toFixed(2)}</td>
           <td style="text-align: center;">
-            <div class="table-actions" style="justify-content: center;">
+            <div class="table-actions" style="justify-content: center; gap: 6px;">
               <button type="button" class="btn btn-secondary btn-view-receipt" data-id="${r.sales_id}" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;">View Bill</button>
+              <button type="button" class="btn btn-outline-danger btn-delete-receipt" data-id="${r.sales_id}" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" title="Delete Receipt">
+                <span class="material-icons" style="font-size: 16px; vertical-align: middle;">delete</span>
+              </button>
             </div>
           </td>
         </tr>
@@ -3994,9 +3998,49 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.btn-view-receipt').forEach(btn => {
       btn.addEventListener('click', () => openPrintReceipt(btn.getAttribute('data-id')));
     });
+
+    document.querySelectorAll('.btn-delete-receipt').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const salesId = btn.getAttribute('data-id');
+        if (confirm('Are you sure you want to delete this invoice receipt?')) {
+          try {
+            const res = await authFetch(getApiUrl(`/api/sales/${salesId}`), { method: 'DELETE' });
+            if (res.ok) {
+              showToast('Success', 'Invoice receipt deleted successfully!', 'success');
+              fetchReceipts();
+            } else {
+              const errData = await res.json().catch(() => ({}));
+              alert(errData.error || 'Failed to delete receipt.');
+            }
+          } catch (err) {
+            alert(err.message);
+          }
+        }
+      });
+    });
   };
 
   if (btnRefreshReceipts) btnRefreshReceipts.addEventListener('click', fetchReceipts);
+
+  const btnClearAllReceipts = document.getElementById('btnClearAllReceipts');
+  if (btnClearAllReceipts) {
+    btnClearAllReceipts.addEventListener('click', async () => {
+      if (confirm('Are you sure you want to clear all test invoice receipts? This will delete all mock test bills.')) {
+        try {
+          const res = await authFetch(getApiUrl('/api/sales/all/clear'), { method: 'DELETE' });
+          if (res.ok) {
+            showToast('Cleared', 'All invoice receipts cleared successfully!', 'info');
+            fetchReceipts();
+          } else {
+            const errData = await res.json().catch(() => ({}));
+            alert(errData.error || 'Failed to clear receipts.');
+          }
+        } catch (err) {
+          alert(err.message);
+        }
+      }
+    });
+  }
 
   // Settings permission matrix
   const permissionsTableBody = document.getElementById('permissionsTableBody');

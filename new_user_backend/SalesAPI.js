@@ -224,6 +224,34 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * DELETE /api/sales/all/clear
+ * Clears all sales receipts for the active client.
+ */
+router.delete('/all/clear', async (req, res) => {
+  try {
+    const clientId = getClientId(req);
+    const isSuperAdmin = checkSuperAdmin(req);
+    if (clientId === null && !isSuperAdmin) {
+      return res.status(400).json({ error: 'Client ID required' });
+    }
+
+    let deleteQuery = 'DELETE FROM sales_master WHERE ';
+    let params = [];
+    if (clientId !== null && clientId !== undefined && !isSuperAdmin) {
+      deleteQuery += 'client_id = $1';
+      params.push(clientId);
+    } else {
+      deleteQuery += '1=1';
+    }
+
+    await db.execute(deleteQuery, params);
+    res.json({ message: 'All receipts cleared successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
  * DELETE /api/sales/:id
  * Deletes a specific invoice.
  */
@@ -238,11 +266,11 @@ router.delete('/:id', async (req, res) => {
 
     let queryExist = 'SELECT * FROM sales_master WHERE sales_id = $1 AND ';
     let paramsExist = [salesId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && !isSuperAdmin) {
       queryExist += 'client_id = $2';
       paramsExist.push(clientId);
     } else {
-      queryExist += 'client_id IS NULL';
+      queryExist += '1=1';
     }
 
     const [rows] = await db.execute(queryExist, paramsExist);
@@ -252,11 +280,11 @@ router.delete('/:id', async (req, res) => {
 
     let deleteQuery = 'DELETE FROM sales_master WHERE sales_id = $1 AND ';
     let deleteParams = [salesId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && !isSuperAdmin) {
       deleteQuery += 'client_id = $2';
       deleteParams.push(clientId);
     } else {
-      deleteQuery += 'client_id IS NULL';
+      deleteQuery += '1=1';
     }
 
     await db.execute(deleteQuery, deleteParams);

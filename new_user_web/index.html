@@ -1663,9 +1663,14 @@
       <section class="list-section card">
         <div class="list-header">
           <h2>Invoices & Receipts</h2>
-          <button type="button" id="btnRefreshReceipts" class="btn-icon-flat" title="Reload Receipts">
-            <span class="material-icons">sync</span>
-          </button>
+          <div class="list-actions" style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" id="btnClearAllReceipts" class="btn btn-outline-danger" style="font-size: 0.82rem; padding: 0.35rem 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+              <span class="material-icons" style="font-size: 16px;">delete_sweep</span> Clear Test Receipts
+            </button>
+            <button type="button" id="btnRefreshReceipts" class="btn-icon-flat" title="Reload Receipts">
+              <span class="material-icons">sync</span>
+            </button>
+          </div>
         </div>
         <div class="table-container">
           <table>
