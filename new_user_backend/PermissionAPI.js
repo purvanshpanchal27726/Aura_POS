@@ -9,8 +9,34 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const [roles] = await db.query('SELECT * FROM roles');
-    const [modules] = await db.query('SELECT * FROM modules');
+    const [roles] = await db.query('SELECT * FROM roles ORDER BY role_id ASC');
+    let [modules] = await db.query('SELECT * FROM modules ORDER BY module_id ASC');
+    
+    // Ensure all 10 core modules exist in database
+    const standardModules = [
+      { module_id: 1, name: 'User Master' },
+      { module_id: 2, name: 'Customer Master' },
+      { module_id: 3, name: 'Item & Stock' },
+      { module_id: 4, name: 'Category & Tax' },
+      { module_id: 5, name: 'Sales Billing (POS)' },
+      { module_id: 6, name: 'Purchase Inward' },
+      { module_id: 7, name: 'Restaurant POS' },
+      { module_id: 8, name: 'Hotel Management' },
+      { module_id: 9, name: 'Employee Staff' },
+      { module_id: 10, name: 'Reports & Analytics' }
+    ];
+
+    if (!modules || modules.length < 10) {
+      for (const sm of standardModules) {
+        await db.execute(
+          'INSERT INTO modules (module_id, name) VALUES ($1, $2) ON CONFLICT (module_id) DO UPDATE SET name = EXCLUDED.name',
+          [sm.module_id, sm.name]
+        );
+      }
+      const [refreshed] = await db.query('SELECT * FROM modules ORDER BY module_id ASC');
+      modules = refreshed;
+    }
+
     const [permissions] = await db.query('SELECT * FROM role_permissions');
 
     res.json({

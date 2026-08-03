@@ -44,6 +44,25 @@ router.put('/current', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
+    // Auto-sync missing client companies from users table if any exist
+    const [userClients] = await db.query('SELECT DISTINCT client_id FROM users WHERE client_id IS NOT NULL');
+    for (const uc of userClients) {
+      const cid = parseInt(uc.client_id);
+      if (isNaN(cid)) continue;
+      const [cRows] = await db.query('SELECT * FROM clients WHERE client_id = $1', [cid]);
+      if (cRows.length === 0) {
+        let cName = cid === 1 ? 'Vanshee POS Enterprise' : `Client Company #${cid}`;
+        const [uAdmin] = await db.query('SELECT first_name, last_name, email_1, phone_1 FROM users WHERE client_id = $1 AND role_id = 2 LIMIT 1', [cid]);
+        if (uAdmin.length > 0 && uAdmin[0].first_name) {
+          cName = `${uAdmin[0].first_name} ${uAdmin[0].last_name || ''}`.trim();
+        }
+        await db.execute(
+          'INSERT INTO clients (client_id, name, email, phone, address, active) VALUES ($1, $2, $3, $4, $5, 1) ON CONFLICT (client_id) DO NOTHING',
+          [cid, cName, uAdmin[0]?.email_1 || `client${cid}@pos.com`, uAdmin[0]?.phone_1 || '9876543210', 'Company Office, India']
+        );
+      }
+    }
+
     const [rows] = await db.query(`
       SELECT c.*, 
              COALESCE(STRING_AGG(u.username, ', '), 'N/A') AS admin_username 
@@ -105,11 +124,12 @@ router.post('/', async (req, res) => {
     const query = `
       INSERT INTO clients (name, email, phone, address, gst_no, logo_url, active)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING client_id
     `;
     const values = [name, email || null, phone || null, address || null, gst_no || null, logo_url || null, active ? 1 : 0];
 
     const [result] = await connection.execute(query, values);
-    const clientId = result.insertId;
+    const clientId = result[0]?.client_id || result.insertId;
 
     // 4. Initialize default printer settings for this new client
     await connection.execute(`

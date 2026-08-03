@@ -123,9 +123,14 @@ router.post('/', checkWriteAccess, async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const targetClientId = isCallerSuperAdmin
+    let targetClientId = isCallerSuperAdmin
       ? (client_id !== undefined && client_id !== null && client_id !== '' ? parseInt(client_id) : null)
       : (req.user?.client_id || getClientId(req));
+
+    if (finalRoleId === 2 && (!targetClientId || isNaN(targetClientId))) {
+      const [maxRow] = await db.query('SELECT COALESCE(MAX(client_id), 1) + 1 AS next_cid FROM clients');
+      targetClientId = parseInt(maxRow[0]?.next_cid || 2);
+    }
 
     const query = `
       INSERT INTO users (
@@ -159,13 +164,10 @@ router.post('/', checkWriteAccess, async (req, res) => {
     
     // Bidirectional Sync: If creating an Admin user (role_id = 2), ensure matching client exists in clients table
     if (finalRoleId === 2 && targetClientId) {
-      const [existingClient] = await db.execute('SELECT * FROM clients WHERE client_id = $1', [targetClientId]);
-      if (existingClient.length === 0) {
-        await db.execute(
-          'INSERT INTO clients (client_id, name, email, phone, address, active) VALUES ($1, $2, $3, $4, $5, 1)',
-          [targetClientId, `${first_name}'s Enterprise`, email_1, phone_1, `${city}, ${country}`]
-        );
-      }
+      await db.execute(
+        'INSERT INTO clients (client_id, name, email, phone, address, active) VALUES ($1, $2, $3, $4, $5, 1) ON CONFLICT (client_id) DO NOTHING',
+        [targetClientId, `${first_name} ${last_name} Enterprise`, email_1, phone_1, `${city}, ${country}`]
+      );
     }
 
     res.status(201).json({
