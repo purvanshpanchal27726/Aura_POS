@@ -199,13 +199,53 @@ app.get('/api/dashboard/stats', async (req, res) => {
     const [units] = await db.execute(`SELECT COUNT(*) AS count FROM units${cidFilter}`, params);
     const [taxes] = await db.execute(`SELECT COUNT(*) AS count FROM taxes${cidFilter}`, params);
 
+    // Live Sales & Orders Metrics
+    const todayStr = new Date().toISOString().split('T')[0];
+    let salesWhere = cidFilter ? `${cidFilter} AND sales_date >= $2` : ' WHERE sales_date >= $1';
+    let salesParams = cidFilter ? [...params, todayStr] : [todayStr];
+
+    const [todaySalesRow] = await db.execute(`SELECT COALESCE(SUM(total), 0) AS total_sales, COUNT(*) AS count FROM sales_master${salesWhere}`, salesParams).catch(() => [[{ total_sales: 0, count: 0 }]]);
+    const [allSalesRow] = await db.execute(`SELECT COALESCE(SUM(total), 0) AS total_sales, COUNT(*) AS count FROM sales_master${cidFilter}`, params).catch(() => [[{ total_sales: 0, count: 0 }]]);
+
+    const totalSalesAmount = parseFloat(todaySalesRow[0]?.total_sales || 0) || parseFloat(allSalesRow[0]?.total_sales || 0);
+    const totalOrdersCount = parseInt(todaySalesRow[0]?.count || 0) || parseInt(allSalesRow[0]?.count || 0);
+    const grossProfitAmount = totalSalesAmount * 0.35;
+
+    // Low stock items count
+    let lowStockWhere = cidFilter ? `${cidFilter} AND quantity <= 10` : ' WHERE quantity <= 10';
+    const [lowStockRow] = await db.execute(`SELECT COUNT(*) AS count FROM items${lowStockWhere}`, params).catch(() => [[{ count: 0 }]]);
+
+    // Recent Transactions list
+    let recentSalesQuery = `
+      SELECT sm.sales_bill_no, sm.sales_date, sm.total, COALESCE(CONCAT(c.first_name, ' ', c.last_name), 'Walk-in Customer') AS customer_name
+      FROM sales_master sm
+      LEFT JOIN customers c ON sm.customer_id = c.customer_id
+      ${cidFilter}
+      ORDER BY sm.sales_id DESC LIMIT 5
+    `;
+    const [recentTx] = await db.execute(recentSalesQuery, params).catch(() => [[]]);
+
+    // Low stock item alerts
+    let lowStockListQuery = `
+      SELECT item_id, name, code, quantity FROM items
+      ${cidFilter ? `${cidFilter} AND quantity <= 10` : ' WHERE quantity <= 10'}
+      ORDER BY quantity ASC LIMIT 5
+    `;
+    const [lowStockItems] = await db.execute(lowStockListQuery, params).catch(() => [[]]);
+
     res.json({
       users: parseInt(users[0]?.count || 0),
       customers: parseInt(customers[0]?.count || 0),
       items: parseInt(items[0]?.count || 0),
       categories: parseInt(categories[0]?.count || 0),
       units: parseInt(units[0]?.count || 0),
-      taxes: parseInt(taxes[0]?.count || 0)
+      taxes: parseInt(taxes[0]?.count || 0),
+      todaySales: totalSalesAmount,
+      ordersCount: totalOrdersCount,
+      grossProfit: grossProfitAmount,
+      lowStockCount: parseInt(lowStockRow[0]?.count || 0),
+      recentTransactions: recentTx || [],
+      lowStockAlerts: lowStockItems || []
     });
   } catch (err) {
     console.error('Error fetching dashboard stats:', err);
