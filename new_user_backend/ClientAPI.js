@@ -44,39 +44,63 @@ router.put('/current', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    // Auto-sync missing client companies from users table if any exist
-    const [userClients] = await db.query('SELECT DISTINCT client_id FROM users WHERE client_id IS NOT NULL');
+    // 1. Ensure Client 1 (Vanshee POS Enterprise) exists in clients table
+    await db.execute(
+      `INSERT INTO clients (client_id, name, email, phone, address, active) 
+       VALUES (1, 'Vanshee POS Enterprise', 'admin@vanshee.com', '9876543210', 'SG Highway, Ahmedabad, India', 1) 
+       ON CONFLICT (client_id) DO NOTHING`
+    );
+
+    // 2. Auto-sync any other client_ids referenced in users table
+    const [userClients] = await db.query('SELECT DISTINCT client_id FROM users WHERE client_id IS NOT NULL AND client_id > 1');
     for (const uc of userClients) {
       const cid = parseInt(uc.client_id);
       if (isNaN(cid)) continue;
-      const [cRows] = await db.query('SELECT * FROM clients WHERE client_id = $1', [cid]);
-      if (cRows.length === 0) {
-        let cName = cid === 1 ? 'Vanshee POS Enterprise' : `Client Company #${cid}`;
-        const [uAdmin] = await db.query('SELECT first_name, last_name, email_1, phone_1 FROM users WHERE client_id = $1 AND role_id = 2 LIMIT 1', [cid]);
-        if (uAdmin.length > 0 && uAdmin[0].first_name) {
-          cName = `${uAdmin[0].first_name} ${uAdmin[0].last_name || ''}`.trim();
-        }
-        await db.execute(
-          'INSERT INTO clients (client_id, name, email, phone, address, active) VALUES ($1, $2, $3, $4, $5, 1) ON CONFLICT (client_id) DO NOTHING',
-          [cid, cName, uAdmin[0]?.email_1 || `client${cid}@pos.com`, uAdmin[0]?.phone_1 || '9876543210', 'Company Office, India']
-        );
+      const [uAdmin] = await db.query('SELECT first_name, last_name, email_1, phone_1, address_1, city, country FROM users WHERE client_id = $1 AND role_id = 2 LIMIT 1', [cid]);
+      let cName = `Client Company #${cid}`;
+      let cEmail = `client${cid}@pos.com`;
+      let cPhone = '9876543210';
+      let cAddress = 'Company Office, India';
+
+      if (uAdmin.length > 0) {
+        if (uAdmin[0].first_name) cName = `${uAdmin[0].first_name} ${uAdmin[0].last_name || ''}`.trim();
+        if (uAdmin[0].email_1) cEmail = uAdmin[0].email_1;
+        if (uAdmin[0].phone_1) cPhone = uAdmin[0].phone_1;
+        if (uAdmin[0].address_1) cAddress = `${uAdmin[0].address_1}, ${uAdmin[0].city || ''}`;
       }
+
+      await db.execute(
+        `INSERT INTO clients (client_id, name, email, phone, address, active) 
+         VALUES ($1, $2, $3, $4, $5, 1) 
+         ON CONFLICT (client_id) DO NOTHING`,
+        [cid, cName, cEmail, cPhone, cAddress]
+      );
     }
 
+    // 3. Fetch all clients grouped by client_id
     const [rows] = await db.query(`
-      SELECT c.*, 
+      SELECT c.client_id, 
+             c.name, 
+             c.email, 
+             c.phone, 
+             c.address, 
+             c.gst_no, 
              COALESCE(STRING_AGG(u.username, ', '), 'N/A') AS admin_username 
       FROM clients c 
       LEFT JOIN users u ON (u.client_id = c.client_id AND u.role_id = 2) 
-      GROUP BY c.client_id, c.name, c.email, c.phone, c.address, c.gst_no, c.created_at, c.updated_at 
+      GROUP BY c.client_id, c.name, c.email, c.phone, c.address, c.gst_no 
       ORDER BY c.client_id ASC
     `);
+
     const mappedRows = rows.map(r => ({
       ...r,
-      id: r.client_id
+      id: r.client_id,
+      active: 1
     }));
+
     res.json(mappedRows);
   } catch (err) {
+    console.error('Error fetching clients:', err);
     res.status(500).json({ error: err.message });
   }
 });
