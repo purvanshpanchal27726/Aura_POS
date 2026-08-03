@@ -1818,14 +1818,21 @@ document.addEventListener('DOMContentLoaded', () => {
     customerForm.reset();
   };
 
+  window.openCustomerModal = function() {
+    if (customerForm) customerForm.reset();
+    if (customerModal) customerModal.style.display = 'flex';
+  };
+
+  window.openVendorModal = function() {
+    const vendorForm = document.getElementById('vendorForm');
+    const vendorModal = document.getElementById('vendorModal');
+    if (vendorForm) vendorForm.reset();
+    if (vendorModal) vendorModal.style.display = 'flex';
+  };
+
   // Customer Modal & form triggers
   if (btnNewCustomer) {
-    btnNewCustomer.addEventListener('click', () => {
-      customerForm.reset();
-      if (customerModal) {
-        customerModal.style.display = 'flex';
-      }
-    });
+    btnNewCustomer.addEventListener('click', window.openCustomerModal);
   }
 
   if (btnRefreshCustomers) {
@@ -3423,16 +3430,24 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const custRes = await authFetch(getApiUrl('/api/customers'));
       availableCustomers = custRes.ok ? await custRes.json() : [];
-      invoiceCustomer.innerHTML = '<option value="">Choose Customer</option>' + 
-        availableCustomers.map(c => `<option value="${c.customer_id}">${c.first_name} ${c.last_name}</option>`).join('');
+      if (invoiceCustomer) {
+        invoiceCustomer.innerHTML = '<option value="">-- Choose Customer --</option>' + 
+          availableCustomers.map(c => `<option value="${c.customer_id}">${c.first_name} ${c.last_name} (${c.phone || 'No phone'})</option>`).join('');
+      }
 
       const itemsRes = await authFetch(getApiUrl('/api/items'));
       availableItems = itemsRes.ok ? (await itemsRes.json()).filter(item => item.visible !== 0 && item.visible !== "0" && item.visible !== false && item.active !== 0 && item.active !== "0" && item.active !== false) : [];
-      if (adderItem) {
-        adderItem.innerHTML = '<option value="">Select Item</option>' + 
-          availableItems.map(i => `<option value="${i.item_id}">${i.name}</option>`).join('');
+      
+      const salesItemSelect = document.getElementById('salesItemSelect');
+      if (salesItemSelect) {
+        salesItemSelect.innerHTML = '<option value="">-- Choose Item from List --</option>' + 
+          availableItems.map(i => `<option value="${i.item_id}">${i.name} - Rs.${i.sell_price || i.unit_price || 0}</option>`).join('');
       }
-      renderSalesCategories(); renderSalesCatalog();
+      if (adderItem) {
+        adderItem.innerHTML = '<option value="">-- Choose Item from List --</option>' + 
+          availableItems.map(i => `<option value="${i.item_id}">${i.name} - Rs.${i.sell_price || i.unit_price || 0}</option>`).join('');
+      }
+      renderSalesCategories(); 
       renderSalesCatalog();
 
       const taxesRes = await authFetch(getApiUrl('/api/taxes'));

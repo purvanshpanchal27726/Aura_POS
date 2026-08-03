@@ -186,10 +186,9 @@ app.get('/api/dashboard/stats', async (req, res) => {
         cidFilter = ' WHERE client_id = $1';
         params = [parseInt(headerCid)];
       } else {
-        // Super Admin default view: Client 1 stats
-        const defaultCid = req.user?.client_id || 1;
-        cidFilter = ' WHERE client_id = $1';
-        params = [defaultCid];
+        // Super Admin global view
+        cidFilter = '';
+        params = [];
       }
     }
 
