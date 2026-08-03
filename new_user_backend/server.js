@@ -171,8 +171,8 @@ app.get('/api/realtime-events', (req, res) => {
 app.get('/api/dashboard/stats', async (req, res) => {
   try {
     const db = require('./db');
-    const headerCid = req.headers['x-client-id'] || req.query.client_id;
-    const isSuperAdmin = req.user && req.user.role_id === 1;
+    const explicitQueryCid = req.query.client_id;
+    const isSuperAdmin = req.user && (parseInt(req.user.role_id) === 1 || req.user.role_id === '1');
 
     let cidFilter = '';
     let params = [];
@@ -182,11 +182,11 @@ app.get('/api/dashboard/stats', async (req, res) => {
       cidFilter = ' WHERE client_id = $1';
       params = [targetCid];
     } else {
-      if (headerCid && headerCid !== 'ALL' && headerCid !== '0') {
+      if (explicitQueryCid && explicitQueryCid !== 'ALL' && explicitQueryCid !== '0') {
         cidFilter = ' WHERE client_id = $1';
-        params = [parseInt(headerCid)];
+        params = [parseInt(explicitQueryCid)];
       } else {
-        // Super Admin global view
+        // Super Admin global view: show all registered users and items
         cidFilter = '';
         params = [];
       }
