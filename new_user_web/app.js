@@ -1165,9 +1165,9 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await authFetch(getApiUrl('/api/dashboard/stats'));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to fetch dashboard statistics');
-        }
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to fetch dashboard statistics');
+      }
       const stats = await response.json();
 
       const uVal = document.getElementById('valUsers');
@@ -1183,6 +1183,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (unVal) unVal.textContent = stats.units !== undefined ? stats.units : 0;
       if (tVal) tVal.textContent = stats.taxes !== undefined ? stats.taxes : 0;
       if (cuVal) cuVal.textContent = stats.customers !== undefined ? stats.customers : 0;
+
+      // Vanshi POS KPI Cards Dynamic Wiring
+      const dashUserName = document.getElementById('dashUserName');
+      if (dashUserName && activeUser) {
+        dashUserName.textContent = activeUser.first_name || activeUser.username || 'Administrator';
+      }
+
+      const dashDate = document.getElementById('dashCurrentDate');
+      if (dashDate) {
+        const now = new Date();
+        dashDate.textContent = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
 
       renderDashboardCharts();
     } catch (err) {
@@ -1205,9 +1217,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (cardTax) cardTax.addEventListener('click', () => switchScreen('tax'));
     if (cardCustomer) cardCustomer.addEventListener('click', () => switchScreen('customer_listing'));
 
+    // Vanshi POS Quick Action Tiles
     const btnSale = document.getElementById('dashQuickSale');
     const btnItem = document.getElementById('dashQuickItem');
+    const btnPurchase = document.getElementById('dashQuickPurchase');
     const btnCustomer = document.getElementById('dashQuickCustomer');
+    const btnReceipt = document.getElementById('dashQuickReceipt');
+    const btnStockAdjust = document.getElementById('dashQuickStockAdjust');
     const btnReports = document.getElementById('dashQuickReports');
 
     if (btnSale) btnSale.addEventListener('click', () => switchScreen('sales'));
@@ -1216,12 +1232,24 @@ document.addEventListener('DOMContentLoaded', () => {
       const btnNew = document.getElementById('btnNewItem');
       if (btnNew) btnNew.click();
     });
+    if (btnPurchase) btnPurchase.addEventListener('click', () => switchScreen('purchase'));
     if (btnCustomer) btnCustomer.addEventListener('click', () => {
       switchScreen('customer_listing');
       const btnNew = document.getElementById('btnNewCustomer');
       if (btnNew) btnNew.click();
     });
+    if (btnReceipt) btnReceipt.addEventListener('click', () => switchScreen('receipt'));
+    if (btnStockAdjust) btnStockAdjust.addEventListener('click', () => switchScreen('inventory'));
     if (btnReports) btnReports.addEventListener('click', () => switchScreen('reports'));
+
+    // View All links
+    const linkLowStock = document.getElementById('linkLowStockViewAll');
+    const linkTx = document.getElementById('linkTransactionsViewAll');
+    const linkTop = document.getElementById('linkTopSellingViewAll');
+
+    if (linkLowStock) linkLowStock.addEventListener('click', (e) => { e.preventDefault(); switchScreen('inventory'); });
+    if (linkTx) linkTx.addEventListener('click', (e) => { e.preventDefault(); switchScreen('receipt'); });
+    if (linkTop) linkTop.addEventListener('click', (e) => { e.preventDefault(); switchScreen('reports'); });
   };
 
   bindCardClicks();

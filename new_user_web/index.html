@@ -315,132 +315,324 @@
     <div class="main-content">
       <!-- Screen 1: Dashboard (Default view) -->
       <div id="screenDashboard" class="screen-view">
-        <div class="dashboard-header-panel">
-          <h1>POS System Summary</h1>
-          <p>Real-time administration overview of registered masters and configurations.</p>
+        <!-- Dashboard Header Welcome Banner -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+              Good morning, <span id="dashUserName">Krinna</span>! 👋
+            </h1>
+            <p style="color: var(--text-secondary); margin: 0.25rem 0 0 0; font-size: 0.95rem;">Here's what's happening with your business today.</p>
+          </div>
+          <div style="background: var(--card-bg); border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: 10px; font-weight: 600; font-size: 0.88rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; box-shadow: var(--shadow-sm);">
+            <span class="material-icons" style="font-size: 1.1rem; color: var(--primary-color);">calendar_today</span>
+            <span id="dashCurrentDate">May 24, 2025</span>
+          </div>
         </div>
-        <div class="dashboard-grid">
-          <div class="dashboard-card" id="cardUsers">
-            <div class="card-icon-wrapper color-users">
-              <span class="material-icons">people</span>
+
+        <!-- Row 1: 4 Vanshi POS Metric KPI Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+          <!-- Card 1: Today's Sales -->
+          <div class="vanshi-kpi-card" id="cardTodaySales" style="cursor: pointer;">
+            <div>
+              <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.35rem 0;">Today's Sales</p>
+              <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);" id="valTodaySales">₹ 42,580.00</h2>
+              <span style="font-size: 0.78rem; font-weight: 700; color: #10b981; display: inline-flex; align-items: center; gap: 2px;">
+                <span class="material-icons" style="font-size: 0.9rem;">trending_up</span> ↑ 12.8% vs yesterday
+              </span>
             </div>
-            <div class="card-details">
-              <h3>Registered Users</h3>
-              <div class="card-value" id="valUsers">0</div>
-            </div>
-            <div class="card-arrow">
-              <span class="material-icons">chevron_right</span>
-            </div>
-          </div>
-          
-          <div class="dashboard-card" id="cardItems">
-            <div class="card-icon-wrapper color-items">
-              <span class="material-icons">inventory_2</span>
-            </div>
-            <div class="card-details">
-              <h3>Stock Items</h3>
-              <div class="card-value" id="valItems">0</div>
-            </div>
-            <div class="card-arrow">
-              <span class="material-icons">chevron_right</span>
+            <div class="vanshi-icon-circle" style="background: rgba(37, 99, 235, 0.12); color: #3b82f6;">
+              <span class="material-icons">trending_up</span>
             </div>
           </div>
 
-          <div class="dashboard-card" id="cardCategories">
-            <div class="card-icon-wrapper color-categories">
-              <span class="material-icons">category</span>
+          <!-- Card 2: Orders -->
+          <div class="vanshi-kpi-card" id="cardOrders" style="cursor: pointer;">
+            <div>
+              <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.35rem 0;">Orders</p>
+              <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);" id="valOrdersCount">186</h2>
+              <span style="font-size: 0.78rem; font-weight: 700; color: #10b981; display: inline-flex; align-items: center; gap: 2px;">
+                <span class="material-icons" style="font-size: 0.9rem;">trending_up</span> ↑ 8.4% vs yesterday
+              </span>
             </div>
-            <div class="card-details">
-              <h3>Categories</h3>
-              <div class="card-value" id="valCategories">0</div>
-            </div>
-            <div class="card-arrow">
-              <span class="material-icons">chevron_right</span>
-            </div>
-          </div>
-
-          <div class="dashboard-card" id="cardUnits">
-            <div class="card-icon-wrapper color-units">
-              <span class="material-icons">straighten</span>
-            </div>
-            <div class="card-details">
-              <h3>Measurement Units</h3>
-              <div class="card-value" id="valUnits">0</div>
-            </div>
-            <div class="card-arrow">
-              <span class="material-icons">chevron_right</span>
+            <div class="vanshi-icon-circle" style="background: rgba(99, 102, 241, 0.12); color: #6366f1;">
+              <span class="material-icons">shopping_cart</span>
             </div>
           </div>
 
-          <div class="dashboard-card" id="cardTaxes">
-            <div class="card-icon-wrapper color-taxes">
-              <span class="material-icons">percent</span>
+          <!-- Card 3: Gross Profit -->
+          <div class="vanshi-kpi-card" id="cardGrossProfit" style="cursor: pointer;">
+            <div>
+              <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.35rem 0;">Gross Profit</p>
+              <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);" id="valGrossProfit">₹ 12,840.00</h2>
+              <span style="font-size: 0.78rem; font-weight: 700; color: #10b981; display: inline-flex; align-items: center; gap: 2px;">
+                <span class="material-icons" style="font-size: 0.9rem;">trending_up</span> ↑ 10.2% vs yesterday
+              </span>
             </div>
-            <div class="card-details">
-              <h3>Tax Configurations</h3>
-              <div class="card-value" id="valTaxes">0</div>
-            </div>
-            <div class="card-arrow">
-              <span class="material-icons">chevron_right</span>
+            <div class="vanshi-icon-circle" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
+              <span class="material-icons">account_balance_wallet</span>
             </div>
           </div>
 
-          <div class="dashboard-card" id="cardCustomers">
-            <div class="card-icon-wrapper color-customers">
-              <span class="material-icons">contact_mail</span>
+          <!-- Card 4: Low Stock Items -->
+          <div class="vanshi-kpi-card" id="cardLowStock" style="cursor: pointer;">
+            <div>
+              <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.35rem 0;">Low Stock Items</p>
+              <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);" id="valLowStockCount">08</h2>
+              <span style="font-size: 0.78rem; font-weight: 700; color: #f59e0b; display: inline-flex; align-items: center; gap: 2px;">
+                <span class="material-icons" style="font-size: 0.9rem;">warning</span> Requires attention
+              </span>
             </div>
-            <div class="card-details">
-              <h3>Registered Customers</h3>
-              <div class="card-value" id="valCustomers">0</div>
-            </div>
-            <div class="card-arrow">
-              <span class="material-icons">chevron_right</span>
+            <div class="vanshi-icon-circle" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">
+              <span class="material-icons">warning</span>
             </div>
           </div>
         </div>
 
-        <!-- Dashboard Quick Actions Bar -->
-        <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
-          <button type="button" id="dashQuickSale" class="btn btn-primary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 20px; padding: 0.5rem 1.25rem; font-weight: bold;">
-            <span class="material-icons" style="font-size: 1.1rem;">add_shopping_cart</span> New POS Sale
-          </button>
-          <button type="button" id="dashQuickItem" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 20px; padding: 0.5rem 1.25rem; font-weight: 600;">
-            <span class="material-icons" style="font-size: 1.1rem;">add_box</span> Add Item
-          </button>
-          <button type="button" id="dashQuickCustomer" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 20px; padding: 0.5rem 1.25rem; font-weight: 600;">
-            <span class="material-icons" style="font-size: 1.1rem;">person_add</span> Add Customer
-          </button>
-          <button type="button" id="dashQuickReports" class="btn btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; border-radius: 20px; padding: 0.5rem 1.25rem; font-weight: 600;">
-            <span class="material-icons" style="font-size: 1.1rem;">analytics</span> View Reports
-          </button>
-        </div>
-
-        <!-- Interactive Dashboard Analytics Charts Panel -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-          
-          <!-- Sales Revenue Trend Line Chart -->
-          <div class="card" style="padding: 1.25rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                <span class="material-icons" style="color: var(--primary-color);">show_chart</span> Sales Revenue Trend
-              </h3>
-              <span class="badge badge-light" style="background: var(--input-bg); color: var(--text-secondary); padding: 2px 8px; font-size: 0.75rem;">Live</span>
+        <!-- Row 2: Sales Overview Chart & Quick Actions -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+          <!-- Sales Overview Area Chart -->
+          <div class="vanshi-widget-card">
+            <div class="vanshi-widget-header">
+              <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Sales Overview</h3>
+              <select id="salesTrendPeriod" style="padding: 0.35rem 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.85rem; font-weight: 600;">
+                <option value="week" selected>This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+              </select>
             </div>
             <div style="height: 220px; position: relative;">
               <canvas id="dashSalesTrendChart"></canvas>
             </div>
           </div>
 
-          <!-- Category Revenue Share Doughnut Chart -->
-          <div class="card" style="padding: 1.25rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <h3 style="font-size: 1rem; font-weight: 700; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                <span class="material-icons" style="color: #10b981;">pie_chart</span> Category Revenue Share
-              </h3>
-              <span class="badge badge-light" style="background: var(--input-bg); color: var(--text-secondary); padding: 2px 8px; font-size: 0.75rem;">Summary</span>
+          <!-- Quick Actions Grid -->
+          <div class="vanshi-widget-card">
+            <div class="vanshi-widget-header">
+              <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Quick Actions</h3>
             </div>
-            <div style="height: 220px; position: relative;">
-              <canvas id="dashCategoryChart"></canvas>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+              <div class="vanshi-quick-action" id="dashQuickSale">
+                <span style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                  <span class="material-icons" style="color: #3b82f6;">add_shopping_cart</span> + New Sale
+                </span>
+                <span class="material-icons" style="font-size: 1rem; color: var(--text-secondary);">chevron_right</span>
+              </div>
+              <div class="vanshi-quick-action" id="dashQuickItem">
+                <span style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                  <span class="material-icons" style="color: #10b981;">add_box</span> + Add Item
+                </span>
+                <span class="material-icons" style="font-size: 1rem; color: var(--text-secondary);">chevron_right</span>
+              </div>
+              <div class="vanshi-quick-action" id="dashQuickPurchase">
+                <span style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                  <span class="material-icons" style="color: #6366f1;">local_shipping</span> + Purchase
+                </span>
+                <span class="material-icons" style="font-size: 1rem; color: var(--text-secondary);">chevron_right</span>
+              </div>
+              <div class="vanshi-quick-action" id="dashQuickCustomer">
+                <span style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                  <span class="material-icons" style="color: #ec4899;">person_add</span> + Add Customer
+                </span>
+                <span class="material-icons" style="font-size: 1rem; color: var(--text-secondary);">chevron_right</span>
+              </div>
+              <div class="vanshi-quick-action" id="dashQuickReceipt">
+                <span style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                  <span class="material-icons" style="color: #f59e0b;">receipt</span> + New Receipt
+                </span>
+                <span class="material-icons" style="font-size: 1rem; color: var(--text-secondary);">chevron_right</span>
+              </div>
+              <div class="vanshi-quick-action" id="dashQuickStockAdjust">
+                <span style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                  <span class="material-icons" style="color: #14b8a6;">inventory_2</span> + Stock Adjust
+                </span>
+                <span class="material-icons" style="font-size: 1rem; color: var(--text-secondary);">chevron_right</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: 3 Bottom Widgets (Low Stock Alerts, Recent Transactions, Top Selling Items) -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+          
+          <!-- Widget 1: Low Stock Alerts -->
+          <div class="vanshi-widget-card">
+            <div class="vanshi-widget-header">
+              <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Low Stock Alerts</h3>
+              <a href="#" id="linkLowStockViewAll" style="font-size: 0.85rem; color: var(--primary-color); font-weight: 600; text-decoration: none;">View All</a>
+            </div>
+            <div id="dashLowStockList">
+              <!-- Item 1 -->
+              <div class="vanshi-list-item">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="vanshi-thumb-box">🥛</div>
+                  <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">Amul Taaza 500ml</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">SKU-64315</span>
+                  </div>
+                </div>
+                <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-weight: 700; font-size: 0.78rem; padding: 4px 10px; border-radius: 6px;">3 left</span>
+              </div>
+              <!-- Item 2 -->
+              <div class="vanshi-list-item">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="vanshi-thumb-box">🥤</div>
+                  <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">Pepsi 500ml</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">ITM-002</span>
+                  </div>
+                </div>
+                <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; font-weight: 700; font-size: 0.78rem; padding: 4px 10px; border-radius: 6px;">2 left</span>
+              </div>
+              <!-- Item 3 -->
+              <div class="vanshi-list-item">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="vanshi-thumb-box">🥤</div>
+                  <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">Coca Cola 500ml</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">ITM-003</span>
+                  </div>
+                </div>
+                <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #ef4444; font-weight: 700; font-size: 0.78rem; padding: 4px 10px; border-radius: 6px;">1 left</span>
+              </div>
+              <!-- Item 4 -->
+              <div class="vanshi-list-item">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="vanshi-thumb-box">🍪</div>
+                  <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">Parle-G Biscuit</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">ITM-045</span>
+                  </div>
+                </div>
+                <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; font-weight: 700; font-size: 0.78rem; padding: 4px 10px; border-radius: 6px;">5 left</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Widget 2: Recent Transactions -->
+          <div class="vanshi-widget-card">
+            <div class="vanshi-widget-header">
+              <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Recent Transactions</h3>
+              <a href="#" id="linkTransactionsViewAll" style="font-size: 0.85rem; color: var(--primary-color); font-weight: 600; text-decoration: none;">View All</a>
+            </div>
+            <div id="dashTransactionsList">
+              <!-- Tx 1 -->
+              <div class="vanshi-list-item">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="vanshi-thumb-box" style="background: rgba(37, 99, 235, 0.1); color: #3b82f6;">
+                    <span class="material-icons" style="font-size: 1.2rem;">receipt</span>
+                  </div>
+                  <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">#INV-1024</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">May 24, 2025 · 11:45 AM</span>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">₹ 1,250.00</strong>
+                  <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">Paid</span>
+                </div>
+              </div>
+              <!-- Tx 2 -->
+              <div class="vanshi-list-item">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="vanshi-thumb-box" style="background: rgba(37, 99, 235, 0.1); color: #3b82f6;">
+                    <span class="material-icons" style="font-size: 1.2rem;">receipt</span>
+                  </div>
+                  <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">#INV-1023</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">May 24, 2025 · 10:30 AM</span>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">₹ 840.00</strong>
+                  <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-size: 0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">Paid</span>
+                </div>
+              </div>
+              <!-- Tx 3 -->
+              <div class="vanshi-list-item">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="vanshi-thumb-box" style="background: rgba(99, 102, 241, 0.1); color: #6366f1;">
+                    <span class="material-icons" style="font-size: 1.2rem;">receipt</span>
+                  </div>
+                  <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">#INV-1022</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">May 24, 2025 · 09:15 AM</span>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">₹ 2,100.00</strong>
+                  <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #6366f1; font-size: 0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">UPI</span>
+                </div>
+              </div>
+              <!-- Tx 4 -->
+              <div class="vanshi-list-item">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="vanshi-thumb-box" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+                    <span class="material-icons" style="font-size: 1.2rem;">receipt</span>
+                  </div>
+                  <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">#INV-1021</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">May 23, 2025 · 08:50 PM</span>
+                  </div>
+                </div>
+                <div style="text-align: right;">
+                  <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">₹ 560.00</strong>
+                  <span class="badge" style="background: rgba(168, 85, 247, 0.15); color: #a855f7; font-size: 0.75rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;">Card</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Widget 3: Top Selling Items -->
+          <div class="vanshi-widget-card">
+            <div class="vanshi-widget-header">
+              <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Top Selling Items</h3>
+              <a href="#" id="linkTopSellingViewAll" style="font-size: 0.85rem; color: var(--primary-color); font-weight: 600; text-decoration: none;">View All</a>
+            </div>
+            <div id="dashTopSellingList">
+              <!-- Item 1 -->
+              <div class="vanshi-list-item">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="vanshi-thumb-box" style="background: #fef3c7; color: #d97706; font-size: 0.85rem;">1</div>
+                  <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">Pepsi 500ml</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">124 sold</span>
+                  </div>
+                </div>
+                <strong style="font-size: 0.9rem; color: var(--text-main);">₹ 4,960.00</strong>
+              </div>
+              <!-- Item 2 -->
+              <div class="vanshi-list-item">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="vanshi-thumb-box" style="background: #e0e7ff; color: #4338ca; font-size: 0.85rem;">2</div>
+                  <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">Amul Taaza 500ml</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">98 sold</span>
+                  </div>
+                </div>
+                <strong style="font-size: 0.9rem; color: var(--text-main);">₹ 2,940.00</strong>
+              </div>
+              <!-- Item 3 -->
+              <div class="vanshi-list-item">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="vanshi-thumb-box" style="background: #ffedd5; color: #c2410c; font-size: 0.85rem;">3</div>
+                  <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">Coca Cola 500ml</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">76 sold</span>
+                  </div>
+                </div>
+                <strong style="font-size: 0.9rem; color: var(--text-main);">₹ 3,040.00</strong>
+              </div>
+              <!-- Item 4 -->
+              <div class="vanshi-list-item">
+                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                  <div class="vanshi-thumb-box" style="background: #f3f4f6; color: #4b5563; font-size: 0.85rem;">4</div>
+                  <div>
+                    <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">Parle-G Biscuit</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">64 sold</span>
+                  </div>
+                </div>
+                <strong style="font-size: 0.9rem; color: var(--text-main);">₹ 1,280.00</strong>
+              </div>
             </div>
           </div>
 
