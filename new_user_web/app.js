@@ -4993,8 +4993,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnPurchaseAdderAdd) {
     btnPurchaseAdderAdd.addEventListener('click', () => {
-      const item = availableItems.find(i => i.item_id == purchaseAdderItem.value);
-      addPurchaseItemLine(item, purchaseAdderQty.value, purchaseAdderRate.value);
+      const item = availableItems.find(i => i.item_id == purchaseAdderItem?.value);
+      addPurchaseItemLine(item, purchaseAdderQty?.value, purchaseAdderRate?.value);
     });
   }
 
@@ -5048,7 +5048,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.addEventListener('click', () => {
         AudioSynth.beep(880, 0.05, 'sine');
         const item = availableItems.find(i => i.item_id == card.getAttribute('data-id'));
-        addPurchaseItemLine(item, purchaseAdderQty.value);
+        addPurchaseItemLine(item, purchaseAdderQty?.value);
       });
     });
   };
@@ -5174,8 +5174,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const purchase_date = dateInput && dateInput.value ? dateInput.value : new Date().toISOString().split('T')[0];
       const purchase_bill_no = purchaseBillNo ? purchaseBillNo.textContent : '--';
       const gross = purchaseSummaryGross ? parseFloat(purchaseSummaryGross.textContent.replace('Rs.', '')) : 0;
-      const tax = parseFloat(purchaseSummaryTax.textContent.replace('Rs.', ''));
-      const total = parseFloat(purchaseSummaryNet.textContent.replace('Rs.', ''));
+      const tax = purchaseSummaryTax ? parseFloat(purchaseSummaryTax.textContent.replace('Rs.', '')) : 0;
+      const total = purchaseSummaryNet ? parseFloat(purchaseSummaryNet.textContent.replace('Rs.', '')) : 0;
       const created_by = activeUser ? activeUser.username : 'System';
 
       const data = { vendor_id, purchase_date, purchase_bill_no, gross, tax, total, created_by, items: purchaseLines };
