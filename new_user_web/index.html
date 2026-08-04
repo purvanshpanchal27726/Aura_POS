@@ -1379,6 +1379,9 @@
           <button type="button" class="settings-tab-btn" onclick="switchSettingsTab('tabSecurityMatrix')">
             <span class="material-icons">security</span> Security Permissions
           </button>
+          <button type="button" class="settings-tab-btn" onclick="switchSettingsTab('tabBackupRestore')">
+            <span class="material-icons">cloud_sync</span> Database Backup & Migration
+          </button>
           <button type="button" class="settings-tab-btn" onclick="switchSettingsTab('tabSystemLicense')">
             <span class="material-icons">verified_user</span> License & System Info
           </button>
@@ -1608,6 +1611,51 @@
                 <div style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); font-weight: 700;">License Expiry</div>
                 <div style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-top: 0.25rem;">31 DEC 2030</div>
                 <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem;">Perpetual Multi-Client License</div>
+              </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: Database Backup & Migration for Render Free PostgreSQL -->
+        <div id="tabBackupRestore" class="settings-tab-content">
+          <div class="card" style="padding: 1.75rem; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+              <span class="material-icons" style="font-size: 2rem; color: var(--primary-color);">storage</span>
+              <div>
+                <h3 style="margin: 0; font-size: 1.2rem; color: var(--text-main);">Render PostgreSQL Database Backup & One-Click Migration</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0.25rem 0 0 0;">Download a complete snapshot of all clients, users, items, sales, customers & settings, or restore to a new Render PostgreSQL instance with 1-click!</p>
+              </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;">
+              <!-- Export Card -->
+              <div style="background: var(--input-bg); border: 1.5px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                  <span class="material-icons" style="color: #10b981;">download</span>
+                  <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-main);">1. Export / Download Database Backup</h4>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.5;">
+                  Download a complete `.json` database file containing all your business records across all modules. Store this before your Render database expires.
+                </p>
+                <button type="button" id="btnDownloadBackup" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                  <span class="material-icons">cloud_download</span> Download Full Database Backup (.json)
+                </button>
+              </div>
+
+              <!-- Restore Card -->
+              <div style="background: var(--input-bg); border: 1.5px solid var(--border-color); border-radius: 12px; padding: 1.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                  <span class="material-icons" style="color: #3b82f6;">upload</span>
+                  <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-main);">2. Restore / Populate New Render Database</h4>
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.5;">
+                  When Render provides a new empty database, select your downloaded `.json` backup file below to restore all your data instantly.
+                </p>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                  <input type="file" id="inputRestoreFile" accept=".json" style="font-size: 0.85rem; padding: 0.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-main);">
+                  <button type="button" id="btnRestoreBackup" class="btn btn-secondary" style="width: 100%; padding: 0.75rem; font-weight: bold; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                    <span class="material-icons">cloud_upload</span> Restore Backup to Database
+                  </button>
+                </div>
               </div>
             </div>
           </div>

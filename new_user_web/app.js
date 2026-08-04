@@ -4223,6 +4223,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const billNo = currentReceiptInvoice.sales_bill_no || '--';
       const total = parseFloat(currentReceiptInvoice.total || 0).toFixed(2);
       
+      let rawPhone = (currentReceiptInvoice.customer_phone || '').toString().replace(/\D/g, '');
+      if (!rawPhone) {
+        const inputPhone = prompt('Enter Customer WhatsApp Mobile Number (10 digits):', '');
+        if (!inputPhone) return;
+        rawPhone = inputPhone.replace(/\D/g, '');
+      }
+
+      if (rawPhone.length === 10) {
+        rawPhone = '91' + rawPhone;
+      }
+
       if (typeof showToast === 'function') {
         showToast('Cloudinary Invoice Link', 'Preparing PDF & Bill Link...', 'info');
       }
@@ -4231,8 +4242,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const message = `Hello ${custName},\n\nThank you for shopping with Vanshee POS! 🛍️\nYour Invoice #${billNo} of ₹${total} has been generated.\n\n📄 Download PDF Bill: ${links.pdfUrl}\n🔗 View Digital Bill: ${links.billUrl}\n\nThank you for your business! Have a wonderful day!`;
       
       const text = encodeURIComponent(message);
-      const phone = (currentReceiptInvoice.customer_phone || '').replace(/\D/g, '');
-      const waUrl = phone ? `https://wa.me/91${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+      const waUrl = rawPhone 
+        ? `https://web.whatsapp.com/send?phone=${rawPhone}&text=${text}`
+        : `https://api.whatsapp.com/send?text=${text}`;
       window.open(waUrl, '_blank');
     });
   }
@@ -4244,6 +4256,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const billNo = currentReceiptInvoice.sales_bill_no || '--';
       const total = parseFloat(currentReceiptInvoice.total || 0).toFixed(2);
 
+      let email = (currentReceiptInvoice.customer_email || '').trim();
+      if (!email) {
+        const inputEmail = prompt('Enter Customer Email Address:', '');
+        if (!inputEmail) return;
+        email = inputEmail.trim();
+      }
+
       if (typeof showToast === 'function') {
         showToast('Cloudinary Invoice Link', 'Preparing Email with PDF & Bill Link...', 'info');
       }
@@ -4251,7 +4270,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const links = await generateCloudinaryBillLink(currentReceiptInvoice);
       const subject = encodeURIComponent(`Invoice #${billNo} - Thank You for Shopping with Vanshee POS`);
       const body = encodeURIComponent(`Dear ${custName},\n\nThank you for your transaction with Vanshee POS System.\n\nInvoice Number: ${billNo}\nTotal Amount Paid: ₹${total}\n\n📄 Download PDF Invoice: ${links.pdfUrl}\n🔗 View Online Digital Bill: ${links.billUrl}\n\nThank you for your business!\n\nBest regards,\nVanshee POS Team`);
-      const email = currentReceiptInvoice.customer_email || '';
       window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
     });
   }
@@ -10409,6 +10427,79 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnSavePrinter) btnSavePrinter.click();
       }
       showToast('Settings Saved', 'Store profile and printer settings updated for your company!', 'success');
+    });
+  }
+
+  // --- DATABASE BACKUP & RESTORE HANDLERS ---
+  const btnDownloadBackup = document.getElementById('btnDownloadBackup');
+  if (btnDownloadBackup) {
+    btnDownloadBackup.addEventListener('click', async () => {
+      try {
+        if (typeof showToast === 'function') {
+          showToast('Database Backup', 'Generating full PostgreSQL database snapshot...', 'info');
+        }
+        const res = await authFetch(getApiUrl('/api/backup/export'));
+        if (!res.ok) throw new Error('Failed to generate database backup.');
+        
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = `pos_pg_backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        
+        if (typeof showToast === 'function') {
+          showToast('Backup Complete', 'Full database snapshot downloaded successfully!', 'success');
+        }
+      } catch (err) {
+        alert(`Database Backup Error: ${err.message}`);
+      }
+    });
+  }
+
+  const btnRestoreBackup = document.getElementById('btnRestoreBackup');
+  const inputRestoreFile = document.getElementById('inputRestoreFile');
+
+  if (btnRestoreBackup && inputRestoreFile) {
+    btnRestoreBackup.addEventListener('click', async () => {
+      const file = inputRestoreFile.files[0];
+      if (!file) {
+        alert('Please select a .json database backup file first!');
+        return;
+      }
+
+      if (!confirm('⚠️ WARNING: Restoring a backup will import and update database records. Do you want to proceed?')) {
+        return;
+      }
+
+      try {
+        if (typeof showToast === 'function') {
+          showToast('Database Restore', 'Reading and importing backup file into database...', 'info');
+        }
+
+        const text = await file.text();
+        const backupJson = JSON.parse(text);
+
+        const res = await authFetch(getApiUrl('/api/backup/restore'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(backupJson)
+        });
+
+        if (!res.ok) {
+          const errRes = await res.json().catch(() => ({}));
+          throw new Error(errRes.error || 'Database restore failed.');
+        }
+
+        const result = await res.json();
+        alert(`✅ ${result.message}`);
+        window.location.reload();
+      } catch (err) {
+        alert(`Database Restore Error: ${err.message}`);
+      }
     });
   }
 

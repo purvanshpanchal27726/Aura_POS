@@ -121,6 +121,10 @@ const settingsRoutes = require('./SettingsAPI');
 app.use('/api/settings', settingsRoutes);
 app.use('/api/Settings', settingsRoutes);
 
+const backupRoutes = require('./BackupAPI');
+app.use('/api/backup', backupRoutes);
+app.use('/api/Backup', backupRoutes);
+
 const restaurantRoutes = require('./RestaurantAPI');
 app.use('/api/restaurant', restaurantRoutes);
 app.use('/api/Restaurant', restaurantRoutes);
