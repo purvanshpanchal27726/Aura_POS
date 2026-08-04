@@ -27,8 +27,10 @@ if (process.env.DATABASE_URL) {
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }, // Required for Render PostgreSQL
     max: 10,
-    idleTimeoutMillis: 30000,
+    idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 10000,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 5000,
     allowExitOnIdle: false
   };
 } else {
@@ -41,8 +43,10 @@ if (process.env.DATABASE_URL) {
     password: process.env.PG_PASSWORD,
     database: process.env.PG_NAME || 'POSSystem',
     max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 5000,
+    idleTimeoutMillis: 10000,
+    connectionTimeoutMillis: 10000,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 5000,
     allowExitOnIdle: false
   };
 
@@ -183,8 +187,33 @@ async function dbQuery(clientOrPool, sql, values = []) {
   // Replace placeholders (? -> $1, $2...)
   const translatedSql = replacePlaceholders(cleanSql);
   
-  // Execute translated query
-  const res = await clientOrPool.query(translatedSql, values);
+  // Execute translated query with auto-retry on dropped connection
+  let res;
+  let attempts = 0;
+  const maxAttempts = 3;
+  while (attempts < maxAttempts) {
+    try {
+      res = await clientOrPool.query(translatedSql, values);
+      break;
+    } catch (err) {
+      attempts++;
+      const isConnErr = err.code === '57P01' || 
+                        err.code === 'ECONNRESET' || 
+                        err.code === 'ETIMEDOUT' ||
+                        (err.message && (
+                          err.message.includes('terminated unexpectedly') ||
+                          err.message.includes('Connection terminated') ||
+                          err.message.includes('closed') ||
+                          err.message.includes('Connection reset')
+                        ));
+      if (isConnErr && attempts < maxAttempts) {
+        console.warn(`[DB Query Retry] Connection dropped by PostgreSQL. Retrying query (attempt ${attempts}/${maxAttempts})...`);
+        await new Promise(r => setTimeout(r, 300 * attempts));
+        continue;
+      }
+      throw err;
+    }
+  }
   
   // If it was insert, wrap results to match mysql2 response
   if (isInsert) {
@@ -304,7 +333,22 @@ const db = {
   },
 
   async getConnection() {
-    const client = await pgPool.connect();
+    let client;
+    let attempts = 0;
+    while (attempts < 3) {
+      try {
+        client = await pgPool.connect();
+        break;
+      } catch (err) {
+        attempts++;
+        if (attempts < 3) {
+          console.warn(`[DB Connect Retry] Retrying pool connection (attempt ${attempts}/3)...`);
+          await new Promise(r => setTimeout(r, 300 * attempts));
+          continue;
+        }
+        throw err;
+      }
+    }
     return new PgConnectionWrapper(client);
   }
 };
