@@ -306,9 +306,9 @@ router.post('/cloudinary/upload-pdf', async (req, res) => {
       return res.status(400).json({ error: 'bill_no is required' });
     }
 
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'vanshee-pos';
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'xzhmg1ek';
+    const apiKey = process.env.CLOUDINARY_API_KEY || '629518777443581';
+    const apiSecret = process.env.CLOUDINARY_API_SECRET || 'XY7YwH2VKmqXQjBsBdO8BWynx0s';
 
     const protocol = req.protocol || 'http';
     const host = req.get('host') || 'localhost:3000';
@@ -321,13 +321,14 @@ router.post('/cloudinary/upload-pdf', async (req, res) => {
         cloudinary.config({
           cloud_name: cloudName,
           api_key: apiKey,
-          api_secret: apiSecret
+          api_secret: apiSecret,
+          secure: true
         });
 
         const uploadRes = await cloudinary.uploader.upload(pdf_base64, {
+          public_id: `Invoice_${bill_no.replace(/[^a-zA-Z0-9_-]/g, '_')}.pdf`,
+          folder: 'pos_invoices',
           resource_type: 'raw',
-          public_id: `invoices/${bill_no}`,
-          format: 'pdf',
           overwrite: true
         });
 
