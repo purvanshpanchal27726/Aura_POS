@@ -4061,7 +4061,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    document.getElementById('btnInvoiceClear').addEventListener('click', fetchInvoiceSetup);
+    const btnInvoiceClear = document.getElementById('btnInvoiceClear');
+    if (btnInvoiceClear) btnInvoiceClear.addEventListener('click', fetchInvoiceSetup);
+    
+    const btnNewBillHeader = document.getElementById('btnNewBillHeader');
+    if (btnNewBillHeader) btnNewBillHeader.addEventListener('click', fetchInvoiceSetup);
   }
 
   // --- Offline Invoices Queue & Auto-Sync Engine ---
@@ -4171,14 +4175,62 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnReceiptWhatsApp = document.getElementById('btnReceiptWhatsApp');
   const btnReceiptEmail = document.getElementById('btnReceiptEmail');
 
+  const generateCloudinaryBillLink = async (invoice) => {
+    try {
+      const receiptElement = document.getElementById('printReceiptContent');
+      if (window.html2pdf && receiptElement) {
+        const opt = {
+          margin: 0.2,
+          filename: `Invoice_${invoice.sales_bill_no || 'Bill'}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        const pdfBase64 = await html2pdf().set(opt).from(receiptElement).outputPdf('datauristring');
+        
+        const uploadRes = await authFetch(getApiUrl('/api/sales/cloudinary/upload-pdf'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            bill_no: invoice.sales_bill_no,
+            pdf_base64: pdfBase64
+          })
+        });
+
+        if (uploadRes.ok) {
+          const resData = await uploadRes.json();
+          return {
+            pdfUrl: resData.cloudinary_url,
+            billUrl: resData.bill_url || resData.cloudinary_url
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('Cloudinary PDF upload warning:', e);
+    }
+    
+    const baseUrl = window.location.origin;
+    return {
+      pdfUrl: getApiUrl(`/api/sales/pdf/${encodeURIComponent(invoice.sales_bill_no)}`),
+      billUrl: `${baseUrl}/new_user_web/index.html?bill=${encodeURIComponent(invoice.sales_bill_no)}`
+    };
+  };
+
   if (btnReceiptWhatsApp) {
-    btnReceiptWhatsApp.addEventListener('click', () => {
+    btnReceiptWhatsApp.addEventListener('click', async () => {
       if (!currentReceiptInvoice) return;
-      const custName = currentReceiptInvoice.customer_name || 'Customer';
+      const custName = currentReceiptInvoice.customer_name || 'Valued Customer';
       const billNo = currentReceiptInvoice.sales_bill_no || '--';
       const total = parseFloat(currentReceiptInvoice.total || 0).toFixed(2);
-      const text = encodeURIComponent(`Hello ${custName},\nThank you for shopping with Vanshee POS!\nYour Sales Invoice #${billNo} for ₹${total} has been generated.\nHave a great day!`);
       
+      if (typeof showToast === 'function') {
+        showToast('Cloudinary Invoice Link', 'Preparing PDF & Bill Link...', 'info');
+      }
+
+      const links = await generateCloudinaryBillLink(currentReceiptInvoice);
+      const message = `Hello ${custName},\n\nThank you for shopping with Vanshee POS! 🛍️\nYour Invoice #${billNo} of ₹${total} has been generated.\n\n📄 Download PDF Bill: ${links.pdfUrl}\n🔗 View Digital Bill: ${links.billUrl}\n\nThank you for your business! Have a wonderful day!`;
+      
+      const text = encodeURIComponent(message);
       const phone = (currentReceiptInvoice.customer_phone || '').replace(/\D/g, '');
       const waUrl = phone ? `https://wa.me/91${phone}?text=${text}` : `https://wa.me/?text=${text}`;
       window.open(waUrl, '_blank');
@@ -4186,13 +4238,19 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (btnReceiptEmail) {
-    btnReceiptEmail.addEventListener('click', () => {
+    btnReceiptEmail.addEventListener('click', async () => {
       if (!currentReceiptInvoice) return;
-      const custName = currentReceiptInvoice.customer_name || 'Customer';
+      const custName = currentReceiptInvoice.customer_name || 'Valued Customer';
       const billNo = currentReceiptInvoice.sales_bill_no || '--';
       const total = parseFloat(currentReceiptInvoice.total || 0).toFixed(2);
-      const subject = encodeURIComponent(`Invoice #${billNo} - Vanshee POS`);
-      const body = encodeURIComponent(`Dear ${custName},\n\nThank you for your transaction with Vanshee POS System.\nInvoice Number: ${billNo}\nTotal Amount Paid: ₹${total}\n\nThank you for your business!`);
+
+      if (typeof showToast === 'function') {
+        showToast('Cloudinary Invoice Link', 'Preparing Email with PDF & Bill Link...', 'info');
+      }
+
+      const links = await generateCloudinaryBillLink(currentReceiptInvoice);
+      const subject = encodeURIComponent(`Invoice #${billNo} - Thank You for Shopping with Vanshee POS`);
+      const body = encodeURIComponent(`Dear ${custName},\n\nThank you for your transaction with Vanshee POS System.\n\nInvoice Number: ${billNo}\nTotal Amount Paid: ₹${total}\n\n📄 Download PDF Invoice: ${links.pdfUrl}\n🔗 View Online Digital Bill: ${links.billUrl}\n\nThank you for your business!\n\nBest regards,\nVanshee POS Team`);
       const email = currentReceiptInvoice.customer_email || '';
       window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
     });
@@ -6168,10 +6226,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <label for="filterRole">Role</label>
           <select id="filterRole">
             <option value="">All Roles</option>
-            <option value="1">Admin</option>
-            <option value="2">Manager</option>
-            <option value="3">User</option>
-            <option value="4">Viewer</option>
+            <option value="Admin">Admin</option>
+            <option value="Super Admin">Super Admin</option>
+            <option value="Manager">Manager</option>
+            <option value="User">User</option>
+            <option value="Viewer">Viewer</option>
           </select>
         </div>
       `;
@@ -6669,14 +6728,27 @@ document.addEventListener('DOMContentLoaded', () => {
         reportsChartsPanel.style.display = 'none';
         reportsTableTitle.textContent = 'Registered Users Listing';
         
-        const roleId = document.getElementById('filterRole')?.value;
+        const selectedRole = document.getElementById('filterRole')?.value || '';
         
         const res = await authFetch(getApiUrl('/api/users'));
         if (!res.ok) throw new Error('Failed to load users.');
         const users = await res.json();
         
         const filtered = users.filter(u => {
-          if (roleId && u.role_id != roleId) return false;
+          const roleName = (u.role_name || u.role || '').toString().trim();
+          const isSuper = u.is_superadmin === 1 || u.is_superadmin === true || roleName.toLowerCase().includes('super');
+
+          if (selectedRole) {
+            if (selectedRole.toLowerCase() === 'admin') {
+              // Super Admin Users MUST NOT be included when Admin role is selected
+              if (isSuper) return false;
+              return roleName.toLowerCase() === 'admin' || u.role_id == 2 || u.role_id == 1;
+            } else if (selectedRole.toLowerCase() === 'super admin') {
+              return isSuper;
+            } else {
+              return roleName.toLowerCase() === selectedRole.toLowerCase() || u.role_id == selectedRole;
+            }
+          }
           return true;
         });
         

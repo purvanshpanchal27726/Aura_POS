@@ -295,4 +295,138 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/sales/cloudinary/upload-pdf
+ * Accepts { bill_no, pdf_base64 } and uploads to Cloudinary or generates hosted PDF link.
+ */
+router.post('/cloudinary/upload-pdf', async (req, res) => {
+  try {
+    const { bill_no, pdf_base64 } = req.body || {};
+    if (!bill_no) {
+      return res.status(400).json({ error: 'bill_no is required' });
+    }
+
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || 'vanshee-pos';
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    const protocol = req.protocol || 'http';
+    const host = req.get('host') || 'localhost:3000';
+    const localPdfUrl = `${protocol}://${host}/api/sales/pdf/${encodeURIComponent(bill_no)}`;
+    const localBillUrl = `${protocol}://${host}/new_user_web/index.html?bill=${encodeURIComponent(bill_no)}`;
+
+    if (apiKey && apiSecret) {
+      try {
+        const cloudinary = require('cloudinary').v2;
+        cloudinary.config({
+          cloud_name: cloudName,
+          api_key: apiKey,
+          api_secret: apiSecret
+        });
+
+        const uploadRes = await cloudinary.uploader.upload(pdf_base64, {
+          resource_type: 'raw',
+          public_id: `invoices/${bill_no}`,
+          format: 'pdf',
+          overwrite: true
+        });
+
+        return res.json({
+          success: true,
+          cloudinary_url: uploadRes.secure_url || uploadRes.url,
+          bill_url: localBillUrl,
+          provider: 'cloudinary'
+        });
+      } catch (cErr) {
+        console.warn('Cloudinary SDK upload warning:', cErr.message);
+      }
+    }
+
+    return res.json({
+      success: true,
+      cloudinary_url: localPdfUrl,
+      bill_url: localBillUrl,
+      provider: 'hosted'
+    });
+  } catch (err) {
+    console.error('Cloudinary PDF endpoint error:', err);
+    res.status(500).json({ error: 'Failed to process Cloudinary bill link.' });
+  }
+});
+
+/**
+ * GET /api/sales/pdf/:billNo
+ * Returns HTML invoice print view for the bill.
+ */
+router.get('/pdf/:billNo', async (req, res) => {
+  try {
+    const billNo = req.params.billNo;
+    const [rows] = await db.execute('SELECT * FROM sales_master WHERE sales_bill_no = $1', [billNo]);
+    if (rows.length === 0) {
+      return res.status(404).send('<h2>Invoice Not Found</h2>');
+    }
+    const sale = rows[0];
+    const [items] = await db.execute('SELECT * FROM sales_details WHERE sales_id = $1', [sale.sales_id]);
+    
+    let html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Invoice #${sale.sales_bill_no}</title>
+        <style>
+          body { font-family: sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; color: #1e293b; }
+          .header { text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 1rem; margin-bottom: 1rem; }
+          .bill-title { font-size: 1.5rem; font-weight: 800; color: #2563eb; margin: 0; }
+          .info-table, .items-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+          .items-table th, .items-table td { padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+          .items-table th { background: #f8fafc; font-size: 0.85rem; }
+          .total-row { font-weight: bold; font-size: 1.1rem; color: #10b981; }
+          .footer { text-align: center; margin-top: 2rem; color: #64748b; font-size: 0.85rem; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1 class="bill-title">VANSHEE POS</h1>
+          <p style="margin: 4px 0 0 0; color: #64748b;">Official Tax Invoice</p>
+        </div>
+        <table class="info-table">
+          <tr><td><strong>Bill No:</strong> ${sale.sales_bill_no}</td><td style="text-align:right;"><strong>Date:</strong> ${new Date(sale.sales_date).toLocaleDateString('en-IN')}</td></tr>
+          <tr><td><strong>Customer ID:</strong> ${sale.customer_id || 'Walk-in'}</td><td style="text-align:right;"><strong>Payment:</strong> ${sale.payment_method || 'Cash'}</td></tr>
+        </table>
+        <table class="items-table">
+          <thead>
+            <tr><th>Item Name</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr>
+          </thead>
+          <tbody>
+            ${items.map(it => `
+              <tr>
+                <td>${it.item_name}</td>
+                <td style="text-align:right;">${parseFloat(it.quantity).toFixed(2)}</td>
+                <td style="text-align:right;">₹${parseFloat(it.rate).toFixed(2)}</td>
+                <td style="text-align:right;">₹${parseFloat(it.item_amount).toFixed(2)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div style="text-align: right; border-top: 2px solid #cbd5e1; padding-top: 8px;">
+          <div>Gross: ₹${parseFloat(sale.gross).toFixed(2)}</div>
+          <div>Tax: ₹${parseFloat(sale.tax).toFixed(2)}</div>
+          <div class="total-row">Grand Total: ₹${parseFloat(sale.total).toFixed(2)}</div>
+        </div>
+        <div class="footer">
+          <p>Thank you for your business!</p>
+          <p>Powered by Vanshee POS System</p>
+        </div>
+        <script>window.onload = function() { window.print(); };</script>
+      </body>
+      </html>
+    `;
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (err) {
+    res.status(500).send('<h2>Server Error</h2>');
+  }
+});
+
 module.exports = router;
