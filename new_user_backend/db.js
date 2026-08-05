@@ -606,16 +606,42 @@ db.initDb = async function() {
             `);
             await client.query(`SELECT setval(pg_get_serial_sequence('categories','category_id'), COALESCE((SELECT MAX(category_id) FROM categories), 4));`);
 
-            // Seed Items
+            // Seed Items (POS & Restaurant)
             await client.query(`
-              INSERT INTO items (item_id, client_id, code, name, category_id, unit_id, tax_id, purchase_price, sales_price, pos_item, active, created_by) VALUES
-              (1, 1, '8901262010015', 'Amul Taaza Milk 500ml', 1, 1, 4, 28.00, 34.00, 1, 1, 'Parshav'),
-              (2, 1, '8901262010016', 'Pepsi 500ml', 1, 1, 4, 30.00, 40.00, 1, 1, 'Parshav'),
-              (3, 1, '8901262010017', 'Amul Butter 100g', 1, 1, 4, 50.00, 56.00, 1, 1, 'Parshav'),
-              (4, 1, '8901262010018', 'Britannia Sandwich Bread 400g', 3, 1, 2, 38.00, 45.00, 1, 1, 'Parshav')
-              ON CONFLICT (item_id) DO NOTHING;
+              INSERT INTO items (item_id, client_id, code, name, category_id, unit_id, tax_id, purchase_price, sales_price, pos_item, show_in_restaurant, visible, active, created_by) VALUES
+              (1, 1, '8901262010015', 'Amul Taaza Milk 500ml', 1, 1, 4, 28.00, 34.00, 1, 1, 1, 1, 'Parshav'),
+              (2, 1, '8901262010016', 'Pepsi 500ml', 1, 1, 4, 30.00, 40.00, 1, 1, 1, 1, 'Parshav'),
+              (3, 1, '8901262010017', 'Amul Butter 100g', 1, 1, 4, 50.00, 56.00, 1, 1, 1, 1, 'Parshav'),
+              (4, 1, '8901262010018', 'Britannia Sandwich Bread 400g', 3, 1, 2, 38.00, 45.00, 1, 1, 1, 1, 'Parshav'),
+              (5, 1, '8901262010019', 'Paneer Butter Masala', 1, 4, 2, 180.00, 280.00, 1, 1, 1, 1, 'Parshav'),
+              (6, 1, '8901262010020', 'Veg Cheese Pizza 8-inch', 2, 4, 2, 120.00, 220.00, 1, 1, 1, 1, 'Parshav')
+              ON CONFLICT (item_id) DO UPDATE SET
+                pos_item = EXCLUDED.pos_item,
+                show_in_restaurant = EXCLUDED.show_in_restaurant,
+                visible = EXCLUDED.visible;
             `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('items','item_id'), COALESCE((SELECT MAX(item_id) FROM items), 4));`);
+            await client.query(`SELECT setval(pg_get_serial_sequence('items','item_id'), COALESCE((SELECT MAX(item_id) FROM items), 6));`);
+
+            // Seed Restaurant Menu Categories & Items
+            await client.query(`
+              INSERT INTO menu_categories (category_id, client_id, name, active) VALUES
+              (1, 1, 'Main Course', 1),
+              (2, 1, 'Starters & Drinks', 1),
+              (3, 1, 'Breads & Rice', 1)
+              ON CONFLICT (category_id) DO NOTHING;
+            `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('menu_categories','category_id'), COALESCE((SELECT MAX(category_id) FROM menu_categories), 3));`);
+
+            await client.query(`
+              INSERT INTO menu_items (menu_item_id, client_id, category_id, name, price, active) VALUES
+              (1, 1, 1, 'Paneer Butter Masala', 280.00, 1),
+              (2, 1, 1, 'Dal Makhani Special', 220.00, 1),
+              (3, 1, 2, 'Cold Coffee with Ice Cream', 120.00, 1),
+              (4, 1, 2, 'Crispy French Fries', 110.00, 1),
+              (5, 1, 3, 'Butter Garlic Naan', 60.00, 1)
+              ON CONFLICT (menu_item_id) DO NOTHING;
+            `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('menu_items','menu_item_id'), COALESCE((SELECT MAX(menu_item_id) FROM menu_items), 5));`);
 
             // Seed Customers & Vendors
             await client.query(`
@@ -710,7 +736,7 @@ db.initDb = async function() {
             `);
             await client.query(`SELECT setval(pg_get_serial_sequence('hotel_bookings','booking_id'), COALESCE((SELECT MAX(booking_id) FROM hotel_bookings), 1));`);
 
-            // Seed Restaurant Tables, Menu Categories, Menu Items
+            // Seed Restaurant Tables
             await client.query(`
               INSERT INTO restaurant_tables (table_id, client_id, table_no, capacity, status) VALUES
               (1, 1, 'Table 01', 4, 'available'),
@@ -718,22 +744,6 @@ db.initDb = async function() {
               ON CONFLICT (table_id) DO NOTHING;
             `);
             await client.query(`SELECT setval(pg_get_serial_sequence('restaurant_tables','table_id'), COALESCE((SELECT MAX(table_id) FROM restaurant_tables), 2));`);
-
-            await client.query(`
-              INSERT INTO menu_categories (category_id, client_id, name, active) VALUES
-              (1, 1, 'Main Course', 1),
-              (2, 1, 'Starters & Beverages', 1)
-              ON CONFLICT (category_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('menu_categories','category_id'), COALESCE((SELECT MAX(category_id) FROM menu_categories), 2));`);
-
-            await client.query(`
-              INSERT INTO menu_items (menu_item_id, client_id, category_id, name, price, active) VALUES
-              (1, 1, 1, 'Paneer Butter Masala', 280.00, 1),
-              (2, 1, 2, 'Cold Coffee with Ice Cream', 120.00, 1)
-              ON CONFLICT (menu_item_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('menu_items','menu_item_id'), COALESCE((SELECT MAX(menu_item_id) FROM menu_items), 2));`);
 
             console.log('[DB Seed] 🎉 Successfully auto-populated full POS dataset across ALL 10 modules!');
           } finally {
