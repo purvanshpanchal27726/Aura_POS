@@ -399,36 +399,128 @@ db.initDb = async function() {
         }
         console.log('[DB] Database initialization completed successfully!');
         
-        // Check if an auto-backup snapshot exists to restore automatically
+        // Seed full initial POS dataset directly from backend code
         try {
-          const autoBackupPath = path.join(__dirname, 'backups', 'latest_auto_backup.json');
-          if (fs.existsSync(autoBackupPath)) {
-            console.log('[DB Auto-Restore] Found auto-backup snapshot! Restoring all records automatically...');
-            const backupText = fs.readFileSync(autoBackupPath, 'utf8');
-            const backupJson = JSON.parse(backupText);
-            const { restoreDatabaseFromJson } = require('./BackupAPI');
-            await restoreDatabaseFromJson(backupJson.tables || backupJson);
-            console.log('[DB Auto-Restore] ✅ Automatic Database Restoration Finished!');
-          } else {
-            // Seed default Super-Admin (Parshav) and Admin (admin)
-            const bcrypt = require('bcryptjs');
-            const hashPassword = await bcrypt.hash('Parshav@123', 10);
-            await client.query(`
-              INSERT INTO users (username, password, first_name, last_name, address_1, city, country, phone_1, email_1, role_id, client_id, is_superadmin)
-              VALUES ('Parshav', $1, 'Parshav', 'Shah', 'Vanshee Infotech', 'Ahmedabad', 'India', '9876543210', 'parshav@vanshee.com', 1, 1, 1)
-              ON CONFLICT (username) DO NOTHING;
-            `, [hashPassword]);
+          const bcrypt = require('bcryptjs');
 
-            const adminHash = await bcrypt.hash('Admin@123', 10);
-            await client.query(`
-              INSERT INTO users (username, password, first_name, last_name, address_1, city, country, phone_1, email_1, role_id, client_id, is_superadmin)
-              VALUES ('admin', $1, 'System', 'Admin', 'Vanshee POS HQ', 'Ahmedabad', 'India', '9876543211', 'admin@vanshee.com', 2, 1, 0)
-              ON CONFLICT (username) DO NOTHING;
-            `, [adminHash]);
-            console.log('[DB Seed] Seeded default Super-Admin (Parshav) & Admin (admin) users.');
-          }
-        } catch (autoErr) {
-          console.warn('[DB Auto-Restore Warning]', autoErr.message);
+          // 1. Client #1
+          await client.query(`
+            INSERT INTO clients (client_id, name, email, phone, address, gst_no, active)
+            VALUES (1, 'Vanshee POS Enterprise', 'support@vanshee.com', '9876543210', 'Ahmedabad, Gujarat, India', '24AAACV1234F1Z5', 1)
+            ON CONFLICT (client_id) DO NOTHING;
+          `);
+          await client.query(`SELECT setval(pg_get_serial_sequence('clients','client_id'), COALESCE((SELECT MAX(client_id) FROM clients), 1));`);
+
+          // 2. Roles
+          await client.query(`
+            INSERT INTO roles (role_id, client_id, name, active, created_by) VALUES
+            (1, 1, 'Super Admin', 1, 'System'),
+            (2, 1, 'Admin', 1, 'System'),
+            (3, 1, 'Staff', 1, 'System')
+            ON CONFLICT (role_id) DO NOTHING;
+          `);
+          await client.query(`SELECT setval(pg_get_serial_sequence('roles','role_id'), COALESCE((SELECT MAX(role_id) FROM roles), 3));`);
+
+          // 3. Super Admin & Admin Users
+          const hashPassword = await bcrypt.hash('Parshav@123', 10);
+          await client.query(`
+            INSERT INTO users (user_id, username, password, first_name, last_name, address_1, city, country, phone_1, email_1, role_id, client_id, is_superadmin)
+            VALUES (1, 'Parshav', $1, 'Parshav', 'Shah', 'Vanshee Infotech', 'Ahmedabad', 'India', '9876543210', 'parshav@vanshee.com', 1, 1, 1)
+            ON CONFLICT (username) DO NOTHING;
+          `, [hashPassword]);
+
+          const adminHash = await bcrypt.hash('Admin@123', 10);
+          await client.query(`
+            INSERT INTO users (user_id, username, password, first_name, last_name, address_1, city, country, phone_1, email_1, role_id, client_id, is_superadmin)
+            VALUES (2, 'admin', $1, 'System', 'Admin', 'Vanshee POS HQ', 'Ahmedabad', 'India', '9876543211', 'admin@vanshee.com', 2, 1, 0)
+            ON CONFLICT (username) DO NOTHING;
+          `, [adminHash]);
+          await client.query(`SELECT setval(pg_get_serial_sequence('users','user_id'), COALESCE((SELECT MAX(user_id) FROM users), 2));`);
+
+          // 4. Units
+          await client.query(`
+            INSERT INTO units (unit_id, client_id, name, short_code) VALUES
+            (1, 1, 'Pieces', 'Pcs'),
+            (2, 1, 'Kilograms', 'Kg'),
+            (3, 1, 'Liters', 'Ltr'),
+            (4, 1, 'Packet', 'Pkt'),
+            (5, 1, 'Box', 'Box')
+            ON CONFLICT (unit_id) DO NOTHING;
+          `);
+          await client.query(`SELECT setval(pg_get_serial_sequence('units','unit_id'), COALESCE((SELECT MAX(unit_id) FROM units), 5));`);
+
+          // 5. Taxes
+          await client.query(`
+            INSERT INTO taxes (tax_id, client_id, tax_name, rate) VALUES
+            (1, 1, 'GST 0%', 0.00),
+            (2, 1, 'GST 5%', 5.00),
+            (3, 1, 'GST 12%', 12.00),
+            (4, 1, 'GST 18%', 18.00)
+            ON CONFLICT (tax_id) DO NOTHING;
+          `);
+          await client.query(`SELECT setval(pg_get_serial_sequence('taxes','tax_id'), COALESCE((SELECT MAX(tax_id) FROM taxes), 4));`);
+
+          // 6. Categories
+          await client.query(`
+            INSERT INTO categories (category_id, client_id, category_name, description) VALUES
+            (1, 1, 'Dairy Products', 'Fresh milk, butter, cheese, paneer'),
+            (2, 1, 'Beverages', 'Soft drinks, juices, mineral water'),
+            (3, 1, 'Snacks & Wafers', 'Chips, biscuits, namkeen'),
+            (4, 1, 'Grocery & Staples', 'Rice, flour, sugar, oil'),
+            (5, 1, 'Bakery', 'Fresh bread, cakes, buns')
+            ON CONFLICT (category_id) DO NOTHING;
+          `);
+          await client.query(`SELECT setval(pg_get_serial_sequence('categories','category_id'), COALESCE((SELECT MAX(category_id) FROM categories), 5));`);
+
+          // 7. Items
+          await client.query(`
+            INSERT INTO items (item_id, client_id, item_code, barcode, item_name, category_id, unit_id, cost_price, sales_price, stock_quantity, min_stock, active, pos_item) VALUES
+            (1, 1, 'ITM-001', '890123400001', 'Amul Taaza Milk 500ml', 1, 3, 31.00, 34.00, 100.00, 10.00, 1, 1),
+            (2, 1, 'ITM-002', '890123400002', 'Amul Gold Milk 500ml', 1, 3, 32.50, 35.00, 80.00, 10.00, 1, 1),
+            (3, 1, 'ITM-003', '890123400003', 'Amul Butter 100g', 1, 4, 50.00, 56.00, 50.00, 5.00, 1, 1),
+            (4, 1, 'ITM-004', '890123400004', 'Coca Cola 750ml', 2, 1, 32.00, 40.00, 60.00, 10.00, 1, 1),
+            (5, 1, 'ITM-005', '890123400005', 'Bisleri Mineral Water 1L', 2, 1, 12.00, 20.00, 150.00, 20.00, 1, 1),
+            (6, 1, 'ITM-006', '890123400006', 'Lays Classic Salted 50g', 3, 4, 16.00, 20.00, 120.00, 15.00, 1, 1),
+            (7, 1, 'ITM-007', '890123400007', 'Britannia Sandwich Bread 400g', 5, 4, 38.00, 45.00, 30.00, 5.00, 1, 1)
+            ON CONFLICT (item_id) DO NOTHING;
+          `);
+          await client.query(`SELECT setval(pg_get_serial_sequence('items','item_id'), COALESCE((SELECT MAX(item_id) FROM items), 7));`);
+
+          // 8. Customers
+          await client.query(`
+            INSERT INTO customers (customer_id, client_id, first_name, last_name, address_1, city, country, phone_1, email_1) VALUES
+            (1, 1, 'Walk-in', 'Customer', 'Counter Sale', 'Ahmedabad', 'India', '9999999999', 'cash@store.com'),
+            (2, 1, 'Rahul', 'Sharma', 'Satellite', 'Ahmedabad', 'India', '9876543210', 'rahul@gmail.com')
+            ON CONFLICT (customer_id) DO NOTHING;
+          `);
+          await client.query(`SELECT setval(pg_get_serial_sequence('customers','customer_id'), COALESCE((SELECT MAX(customer_id) FROM customers), 2));`);
+
+          // 9. Vendors
+          await client.query(`
+            INSERT INTO vendors (vendor_id, client_id, company_name, contact_person, phone_1, email_1, address_1, city, country) VALUES
+            (1, 1, 'Vanshee Wholesale Distributors', 'Anand Shah', '9898989898', 'supply@vanshee.com', 'CG Road', 'Ahmedabad', 'India'),
+            (2, 1, 'Amul Dairy Co-op', 'Rajesh Patel', '9797979797', 'orders@amul.com', 'Anand', 'Anand', 'India')
+            ON CONFLICT (vendor_id) DO NOTHING;
+          `);
+          await client.query(`SELECT setval(pg_get_serial_sequence('vendors','vendor_id'), COALESCE((SELECT MAX(vendor_id) FROM vendors), 2));`);
+
+          // 10. Printer Settings
+          await client.query(`
+            INSERT INTO printer_settings (client_id, printer_name, printer_type, paper_size, connection, copies)
+            VALUES (1, 'POS Thermal Receipt Printer', 'thermal', 'medium', 'usb', 1)
+            ON CONFLICT DO NOTHING;
+          `);
+
+          // 11. License
+          await client.query(`
+            INSERT INTO license_info (client_id, license_key, valid_from, valid_to, amc_start_date, amc_end_date, status)
+            VALUES (1, 'VANSHEE-POS-LICENSE-KEY-2026', '2026-01-01', '2030-12-31', '2026-01-01', '2030-12-31', 'Active')
+            ON CONFLICT DO NOTHING;
+          `);
+
+          console.log('[DB Seed] 🎉 Successfully seeded complete initial POS dataset into PostgreSQL database!');
+        } catch (seedErr) {
+          console.warn('[DB Seed Warning]', seedErr.message);
         }
       } finally {
         client.release();
