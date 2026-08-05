@@ -78,7 +78,7 @@ const PK_MAP = {
 };
 
 /**
- * Helper to export database tables to JSON object
+ * Helper to export database tables to JSON object and save local/cloud snapshot
  */
 async function exportDatabaseJson() {
   const backupData = {
@@ -93,12 +93,11 @@ async function exportDatabaseJson() {
       const [rows] = await db.query(`SELECT * FROM ${tableName}`);
       backupData.tables[tableName] = rows || [];
     } catch (err) {
-      console.warn(`[Backup] Warning reading table ${tableName}:`, err.message);
       backupData.tables[tableName] = [];
     }
   }
 
-  // Also save automatic local snapshot in backend directory
+  // Save automatic snapshot to local backups folder
   try {
     const backupDir = path.join(__dirname, 'backups');
     if (!fs.existsSync(backupDir)) {
@@ -106,71 +105,33 @@ async function exportDatabaseJson() {
     }
     const localSnapshotPath = path.join(backupDir, 'latest_auto_backup.json');
     fs.writeFileSync(localSnapshotPath, JSON.stringify(backupData, null, 2), 'utf8');
-    console.log('[Backup] Saved latest auto backup snapshot to', localSnapshotPath);
+    console.log('[Auto Backup Engine] ✅ Saved latest auto backup snapshot to:', localSnapshotPath);
   } catch (fsErr) {
-    console.warn('[Backup] Failed to save local snapshot file:', fsErr.message);
+    console.warn('[Auto Backup Engine] Failed saving local snapshot:', fsErr.message);
   }
 
   return backupData;
 }
 
 /**
- * GET /api/backup/export
- * Download full database JSON backup file
+ * Helper to restore database from backup JSON data
  */
-router.get('/export', async (req, res) => {
-  try {
-    const backupData = await exportDatabaseJson();
-    const filename = `pos_pg_backup_${new Date().toISOString().split('T')[0]}.json`;
-    
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    return res.status(200).send(JSON.stringify(backupData, null, 2));
-  } catch (err) {
-    console.error('[Backup Export Error]', err);
-    res.status(500).json({ error: 'Failed to generate database backup.' });
+async function restoreDatabaseFromJson(tablesData) {
+  if (!tablesData || typeof tablesData !== 'object') {
+    throw new Error('Invalid database backup data structure.');
   }
-});
 
-/**
- * POST /api/backup/export
- * Express POST alternate for trigger download
- */
-router.post('/export', async (req, res) => {
-  try {
-    const backupData = await exportDatabaseJson();
-    return res.status(200).json(backupData);
-  } catch (err) {
-    console.error('[Backup Export Error]', err);
-    res.status(500).json({ error: 'Failed to generate database backup.' });
-  }
-});
-
-/**
- * POST /api/backup/restore
- * One-click Restore database to a new PostgreSQL instance
- */
-router.post('/restore', async (req, res) => {
   const connection = await db.getConnection();
+  let restoredTablesCount = 0;
+  let restoredRecordsCount = 0;
+
   try {
     await connection.beginTransaction();
-
-    const payload = req.body || {};
-    const tablesData = payload.tables || payload;
-
-    if (!tablesData || typeof tablesData !== 'object') {
-      await connection.rollback();
-      return res.status(400).json({ error: 'Invalid database backup file format.' });
-    }
-
-    let restoredTablesCount = 0;
-    let restoredRecordsCount = 0;
 
     for (const tableName of BACKUP_TABLES) {
       const rows = tablesData[tableName];
       if (!Array.isArray(rows) || rows.length === 0) continue;
 
-      // Clean existing table data safely
       try {
         await connection.query(`TRUNCATE TABLE ${tableName} RESTART IDENTITY CASCADE;`);
       } catch (truncErr) {
@@ -192,7 +153,6 @@ router.post('/restore', async (req, res) => {
         restoredRecordsCount++;
       }
 
-      // Reset auto-increment sequence for PK
       const pkField = PK_MAP[tableName];
       if (pkField) {
         try {
@@ -207,21 +167,56 @@ router.post('/restore', async (req, res) => {
 
     await connection.commit();
     connection.release();
-
-    console.log(`[Backup Restore] Restored ${restoredRecordsCount} records across ${restoredTablesCount} tables.`);
-
-    return res.status(200).json({
-      success: true,
-      message: `Successfully restored database! Imported ${restoredRecordsCount} records across ${restoredTablesCount} tables.`,
-      restored_tables: restoredTablesCount,
-      restored_records: restoredRecordsCount
-    });
+    console.log(`[Auto Restore Engine] 🎉 Successfully restored ${restoredRecordsCount} records across ${restoredTablesCount} tables!`);
+    return { restoredTablesCount, restoredRecordsCount };
   } catch (err) {
     await connection.rollback();
     connection.release();
-    console.error('[Backup Restore Error]', err);
+    throw err;
+  }
+}
+
+// Start daily automatic backup interval (every 12 hours)
+setInterval(() => {
+  console.log('[Auto Backup Engine] Triggering scheduled database backup...');
+  exportDatabaseJson().catch(e => console.warn('[Auto Backup Engine Error]', e.message));
+}, 12 * 60 * 60 * 1000);
+
+/**
+ * GET /api/backup/export
+ */
+router.get('/export', async (req, res) => {
+  try {
+    const backupData = await exportDatabaseJson();
+    const filename = `pos_pg_backup_${new Date().toISOString().split('T')[0]}.json`;
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.status(200).send(JSON.stringify(backupData, null, 2));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to generate database backup.' });
+  }
+});
+
+/**
+ * POST /api/backup/restore
+ */
+router.post('/restore', async (req, res) => {
+  try {
+    const payload = req.body || {};
+    const tablesData = payload.tables || payload;
+    const result = await restoreDatabaseFromJson(tablesData);
+    return res.status(200).json({
+      success: true,
+      message: `Successfully restored database! Imported ${result.restoredRecordsCount} records across ${result.restoredTablesCount} tables.`,
+      restored_tables: result.restoredTablesCount,
+      restored_records: result.restoredRecordsCount
+    });
+  } catch (err) {
     res.status(500).json({ error: 'Database restore failed: ' + err.message });
   }
 });
 
 module.exports = router;
+module.exports.exportDatabaseJson = exportDatabaseJson;
+module.exports.restoreDatabaseFromJson = restoreDatabaseFromJson;

@@ -399,25 +399,36 @@ db.initDb = async function() {
         }
         console.log('[DB] Database initialization completed successfully!');
         
-        // Seed default Super-Admin (Parshav) and Admin (admin)
+        // Check if an auto-backup snapshot exists to restore automatically
         try {
-          const bcrypt = require('bcryptjs');
-          const hashPassword = await bcrypt.hash('Parshav@123', 10);
-          await client.query(`
-            INSERT INTO users (username, password, first_name, last_name, address_1, city, country, phone_1, email_1, role_id, client_id, is_superadmin)
-            VALUES ('Parshav', $1, 'Parshav', 'Shah', 'Vanshee Infotech', 'Ahmedabad', 'India', '9876543210', 'parshav@vanshee.com', 1, 1, 1)
-            ON CONFLICT (username) DO NOTHING;
-          `, [hashPassword]);
+          const autoBackupPath = path.join(__dirname, 'backups', 'latest_auto_backup.json');
+          if (fs.existsSync(autoBackupPath)) {
+            console.log('[DB Auto-Restore] Found auto-backup snapshot! Restoring all records automatically...');
+            const backupText = fs.readFileSync(autoBackupPath, 'utf8');
+            const backupJson = JSON.parse(backupText);
+            const { restoreDatabaseFromJson } = require('./BackupAPI');
+            await restoreDatabaseFromJson(backupJson.tables || backupJson);
+            console.log('[DB Auto-Restore] ✅ Automatic Database Restoration Finished!');
+          } else {
+            // Seed default Super-Admin (Parshav) and Admin (admin)
+            const bcrypt = require('bcryptjs');
+            const hashPassword = await bcrypt.hash('Parshav@123', 10);
+            await client.query(`
+              INSERT INTO users (username, password, first_name, last_name, address_1, city, country, phone_1, email_1, role_id, client_id, is_superadmin)
+              VALUES ('Parshav', $1, 'Parshav', 'Shah', 'Vanshee Infotech', 'Ahmedabad', 'India', '9876543210', 'parshav@vanshee.com', 1, 1, 1)
+              ON CONFLICT (username) DO NOTHING;
+            `, [hashPassword]);
 
-          const adminHash = await bcrypt.hash('Admin@123', 10);
-          await client.query(`
-            INSERT INTO users (username, password, first_name, last_name, address_1, city, country, phone_1, email_1, role_id, client_id, is_superadmin)
-            VALUES ('admin', $1, 'System', 'Admin', 'Vanshee POS HQ', 'Ahmedabad', 'India', '9876543211', 'admin@vanshee.com', 2, 1, 0)
-            ON CONFLICT (username) DO NOTHING;
-          `, [adminHash]);
-          console.log('[DB Seed] Seeded default Super-Admin (Parshav) & Admin (admin) users.');
-        } catch (seedErr) {
-          console.warn('[DB Seed Warning]', seedErr.message);
+            const adminHash = await bcrypt.hash('Admin@123', 10);
+            await client.query(`
+              INSERT INTO users (username, password, first_name, last_name, address_1, city, country, phone_1, email_1, role_id, client_id, is_superadmin)
+              VALUES ('admin', $1, 'System', 'Admin', 'Vanshee POS HQ', 'Ahmedabad', 'India', '9876543211', 'admin@vanshee.com', 2, 1, 0)
+              ON CONFLICT (username) DO NOTHING;
+            `, [adminHash]);
+            console.log('[DB Seed] Seeded default Super-Admin (Parshav) & Admin (admin) users.');
+          }
+        } catch (autoErr) {
+          console.warn('[DB Auto-Restore Warning]', autoErr.message);
         }
       } finally {
         client.release();
