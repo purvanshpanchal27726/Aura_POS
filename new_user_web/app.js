@@ -477,85 +477,85 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // List of all screen views
+  // List of all screen views with explicit DOM element IDs
   const screens = {
     'dashboard': {
-      menu: document.getElementById('menuDashboard'),
-      view: document.getElementById('screenDashboard'),
+      viewId: 'screenDashboard',
+      menuId: 'menuDashboard',
       title: 'Dashboard',
       onTransition: () => fetchDashboardStats()
     },
     'user_listing': {
-      menu: document.getElementById('menuUserListing'),
-      view: document.getElementById('screenUserListing'),
+      viewId: 'screenUserListing',
+      menuId: 'menuUserListing',
       title: 'User Master'
     },
     'item': {
-      menu: document.getElementById('menuItem'),
-      view: document.getElementById('screenItem'),
+      viewId: 'screenItem',
+      menuId: 'menuItem',
       title: 'Item Master',
       onTransition: () => fetchItems()
     },
     'category': {
-      menu: document.getElementById('menuCategory'),
-      view: document.getElementById('screenCategory'),
+      viewId: 'screenCategory',
+      menuId: 'menuCategory',
       title: 'Category Master',
       onTransition: () => fetchCategories()
     },
     'unit': {
-      menu: document.getElementById('menuUnit'),
-      view: document.getElementById('screenUnit'),
+      viewId: 'screenUnit',
+      menuId: 'menuUnit',
       title: 'Base Unit Master',
       onTransition: () => fetchUnits()
     },
     'tax': {
-      menu: document.getElementById('menuTax'),
-      view: document.getElementById('screenTax'),
+      viewId: 'screenTax',
+      menuId: 'menuTax',
       title: 'Tax Master',
       onTransition: () => fetchTaxes()
     },
     'customer_listing': {
-      menu: document.getElementById('menuCustomerListing'),
-      view: document.getElementById('screenCustomerListing'),
+      viewId: 'screenCustomerListing',
+      menuId: 'menuCustomerListing',
       title: 'Customer Master',
       onTransition: () => fetchCustomers()
     },
     'vendor_listing': {
-      menu: document.getElementById('menuVendorListing'),
-      view: document.getElementById('screenVendorListing'),
+      viewId: 'screenVendorListing',
+      menuId: 'menuVendorListing',
       title: 'Vendor Master',
       onTransition: () => fetchVendors()
     },
     'company': {
-      menu: document.getElementById('menuCompany'),
-      view: document.getElementById('screenCompany'),
+      viewId: 'screenCompany',
+      menuId: 'menuCompany',
       title: 'Company Master'
     },
     'sales': {
-      menu: document.getElementById('menuSales'),
-      view: document.getElementById('screenSales'),
+      viewId: 'screenSales',
+      menuId: 'menuSales',
       title: 'Sales Billing',
       onTransition: () => fetchInvoiceSetup()
     },
     'purchase': {
-      menu: document.getElementById('menuPurchase'),
-      view: document.getElementById('screenPurchase'),
+      viewId: 'screenPurchase',
+      menuId: 'menuPurchase',
       title: 'Purchase Management'
     },
     'receipt': {
-      menu: document.getElementById('menuReceipt'),
-      view: document.getElementById('screenReceipt'),
+      viewId: 'screenReceipt',
+      menuId: 'menuReceipt',
       title: 'Receipts',
       onTransition: () => fetchReceipts()
     },
     'reports': {
-      menu: document.getElementById('menuReports'),
-      view: document.getElementById('screenReports'),
+      viewId: 'screenReports',
+      menuId: 'menuReports',
       title: 'Reports'
     },
     'settings': {
-      menu: document.getElementById('menuSettings'),
-      view: document.getElementById('screenSettings'),
+      viewId: 'screenSettings',
+      menuId: 'menuSettings',
       title: 'Setting',
       onTransition: () => {
         fetchPermissionMatrix();
@@ -563,97 +563,97 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     },
     'clients': {
-      menu: document.getElementById('menuClients'),
-      view: document.getElementById('screenClients'),
+      viewId: 'screenClients',
+      menuId: 'menuClients',
       title: 'Client Management',
       onTransition: () => fetchClients()
     },
     'rest_tables': {
-      menu: document.getElementById('menuRestTables'),
-      view: document.getElementById('screenRestTables'),
+      viewId: 'screenRestTables',
+      menuId: 'menuRestTables',
       title: 'Dine-in Tables',
       onTransition: () => fetchRestTables()
     },
     'rest_menu': {
-      menu: document.getElementById('menuRestMenu'),
-      view: document.getElementById('screenRestMenu'),
+      viewId: 'screenRestMenu',
+      menuId: 'menuRestMenu',
       title: 'Restaurant Menu',
       onTransition: () => loadRestMenuTab()
     },
     'rest_orders': {
-      menu: document.getElementById('menuRestOrders'),
-      view: document.getElementById('screenRestOrders'),
+      viewId: 'screenRestOrders',
+      menuId: 'menuRestOrders',
       title: 'Rest. Orders & KOT',
       onTransition: () => fetchRestOrders()
     },
     'rest_kds': {
-      menu: document.getElementById('menuRestKds'),
-      view: document.getElementById('screenRestKds'),
+      viewId: 'screenRestKds',
+      menuId: 'menuRestKds',
       title: 'Kitchen Queue (KDS)',
       onTransition: () => fetchKdsQueue()
     },
     'hotel_rooms': {
-      menu: document.getElementById('menuHotelRooms'),
-      view: document.getElementById('screenHotelRooms'),
+      viewId: 'screenHotelRooms',
+      menuId: 'menuHotelRooms',
       title: 'Hotel Rooms',
       onTransition: () => fetchHotelRooms()
     },
     'hotel_guests': {
-      menu: document.getElementById('menuHotelGuests'),
-      view: document.getElementById('screenHotelGuests'),
+      viewId: 'screenHotelGuests',
+      menuId: 'menuHotelGuests',
       title: 'Guest Registry',
       onTransition: () => fetchHotelGuests()
     },
     'hotel_bookings': {
-      menu: document.getElementById('menuHotelBookings'),
-      view: document.getElementById('screenHotelBookings'),
+      viewId: 'screenHotelBookings',
+      menuId: 'menuHotelBookings',
       title: 'Room Bookings & Check-in',
       onTransition: () => fetchHotelBookings()
     },
     'inventory': {
-      menu: document.getElementById('menuInventory'),
-      view: document.getElementById('screenInventory'),
+      viewId: 'screenInventory',
+      menuId: 'menuInventory',
       title: 'Stock Inventory',
       onTransition: () => fetchInventory()
     },
     'purchase_orders': {
-      menu: document.getElementById('menuPurchaseOrders'),
-      view: document.getElementById('screenPurchaseOrders'),
+      viewId: 'screenPurchaseOrders',
+      menuId: 'menuPurchaseOrders',
       title: 'Purchase Orders & GRN',
       onTransition: () => fetchPurchaseOrders()
     },
     'employees': {
-      menu: document.getElementById('menuEmployees'),
-      view: document.getElementById('screenEmployees'),
+      viewId: 'screenEmployees',
+      menuId: 'menuEmployees',
       title: 'Employee Directory',
       onTransition: () => fetchEmployees()
     },
     'attendance': {
-      menu: document.getElementById('menuAttendance'),
-      view: document.getElementById('screenAttendance'),
+      viewId: 'screenAttendance',
+      menuId: 'menuAttendance',
       title: 'Staff Attendance Sheet',
       onTransition: () => fetchAttendance()
     },
     'role_listing': {
-      menu: document.getElementById('menuRoleListing'),
-      view: document.getElementById('screenRoleListing'),
+      viewId: 'screenRoleListing',
+      menuId: 'menuRoleListing',
       title: 'Role Master',
       onTransition: () => fetchRoles()
     },
     'support': {
-      menu: document.getElementById('menuSupport'),
-      view: document.getElementById('screenSupport'),
+      viewId: 'screenSupport',
+      menuId: 'menuSupport',
       title: 'Support & Contact'
     },
     'license': {
-      menu: document.getElementById('menuLicense'),
-      view: document.getElementById('screenLicense'),
+      viewId: 'screenLicense',
+      menuId: 'menuLicense',
       title: 'License & AMC Management',
       onTransition: () => fetchLicenseDetails()
     },
     'barcode_studio': {
-      menu: document.getElementById('menuBarcodeStudio'),
-      view: document.getElementById('screenBarcodeStudio'),
+      viewId: 'screenBarcodeStudio',
+      menuId: 'menuBarcodeStudio',
       title: 'Barcode & Label Studio',
       onTransition: () => initBarcodeStudio()
     }
@@ -1009,6 +1009,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const targetConfig = screens[screenName];
+    if (!targetConfig) {
+      console.error('[switchScreen] Unknown screen name:', screenName);
+      return;
+    }
+
     // Toggle Back / Menu button visibility based on active page
     const btnBack = document.getElementById('btnBack');
     const btnMenu = document.getElementById('btnMenu');
@@ -1022,31 +1028,43 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    Object.keys(screens).forEach(key => {
-      const screen = screens[key];
-      // Resolve view and menu elements dynamically if initially uncached
-      const viewElem = screen.view || (screen.viewId ? document.getElementById(screen.viewId) : null);
-      const menuElem = screen.menu || (screen.menuId ? document.getElementById(screen.menuId) : null);
+    // 1. Hide ALL screen views across the entire DOM
+    const allViews = document.querySelectorAll('.screen-view');
+    allViews.forEach(v => {
+      v.style.display = 'none';
+    });
 
-      if (key === screenName) {
-        if (viewElem) {
-          viewElem.style.display = 'block';
-          activeScreen = viewElem.id;
-        }
-        if (menuElem) menuElem.classList.add('active');
-        if (appBarTitle) appBarTitle.textContent = screen.title;
-        if (screen.onTransition) {
-          try {
-            screen.onTransition();
-          } catch (trErr) {
-            console.warn('[Screen Transition Warning]', trErr);
-          }
-        }
-      } else {
-        if (viewElem) viewElem.style.display = 'none';
-        if (menuElem) menuElem.classList.remove('active');
+    // 2. Display ONLY the target screen view dynamically fetched from DOM
+    const targetView = document.getElementById(targetConfig.viewId);
+    if (targetView) {
+      targetView.style.display = 'block';
+      activeScreen = targetView.id;
+    } else {
+      console.error('[switchScreen] Target view element not found for ID:', targetConfig.viewId);
+    }
+
+    // 3. Highlight active menu option in drawer
+    Object.keys(screens).forEach(key => {
+      const s = screens[key];
+      const menuEl = document.getElementById(s.menuId);
+      if (menuEl) {
+        if (key === screenName) menuEl.classList.add('active');
+        else menuEl.classList.remove('active');
       }
     });
+
+    if (appBarTitle && targetConfig.title) {
+      appBarTitle.textContent = targetConfig.title;
+    }
+
+    // 4. Run screen transition fetch callback
+    if (targetConfig.onTransition) {
+      try {
+        targetConfig.onTransition();
+      } catch (trErr) {
+        console.warn('[Screen Transition Warning]', trErr);
+      }
+    }
 
     // Highlight Mobile Bottom Navbar active tab
     const mobileNavItems = document.querySelectorAll('#mobileBottomNav .mobile-nav-item');
@@ -1524,9 +1542,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Bind click event listeners to all navigation options
   Object.keys(screens).forEach(key => {
-    const screen = screens[key];
-    if (screen.menu) {
-      screen.menu.addEventListener('click', () => switchScreen(key));
+    const s = screens[key];
+    const menuEl = document.getElementById(s.menuId);
+    if (menuEl) {
+      menuEl.addEventListener('click', () => switchScreen(key));
     }
   });
 
