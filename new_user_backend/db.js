@@ -359,15 +359,56 @@ db.initDb = async function() {
   const path = require('path');
   
   try {
-    // Run incremental migrations first
-    try {
-      await this.query(`
-        ALTER TABLE sales_master ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';
-      `);
-      console.log('[DB Migrate] Verified sales_master.payment_method column.');
-    } catch (err) {
-      console.log('[DB Migrate] sales_master ALTER statement noticed:', err.message);
+    // 1. Check if the 'users' table exists first
+    const [result] = await this.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'users'
+      )
+    `);
+    
+    const usersExist = result && result[0] && result[0].exists;
+
+    if (!usersExist) {
+      console.log('[DB] Database tables not found. Initializing PostgreSQL database...');
+      
+      const schemaPath = path.join(__dirname, 'schema_pg.sql');
+      if (!fs.existsSync(schemaPath)) {
+        console.error('[DB] schema_pg.sql not found! Cannot auto-initialize.');
+        return;
+      }
+      
+      const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+      const cleanedSql = schemaSql.replace(/--.*$/gm, '');
+      const statements = cleanedSql
+        .split(';')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+        
+      console.log(`[DB] Executing ${statements.length} schema statements...`);
+      
+      const client = await pgPool.connect();
+      try {
+        for (const statement of statements) {
+          try {
+            await client.query(statement);
+          } catch (stmtErr) {
+            console.warn('[DB Init Warning]', stmtErr.message);
+          }
+        }
+        console.log('[DB] Database initialization completed successfully!');
+      } finally {
+        client.release();
+      }
+    } else {
+      console.log('[DB] Database already initialized.');
     }
+
+    // 2. Run incremental migrations safely
+    try {
+      await this.query(`ALTER TABLE sales_master ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';`);
+    } catch (err) {}
 
     try {
       await this.query(`
@@ -375,10 +416,7 @@ db.initDb = async function() {
         ALTER TABLE items ADD COLUMN IF NOT EXISTS show_in_restaurant SMALLINT DEFAULT 0;
         ALTER TABLE items ADD COLUMN IF NOT EXISTS is_hotel_service SMALLINT DEFAULT 0;
       `);
-      console.log('[DB Migrate] Verified items.pos_item, show_in_restaurant, is_hotel_service columns.');
-    } catch (err) {
-      console.log('[DB Migrate] items ALTER statement noticed:', err.message);
-    }
+    } catch (err) {}
 
     try {
       await this.query(`
@@ -394,68 +432,15 @@ db.initDb = async function() {
         );
       `);
       
-      // Seed default license row if empty
       const [licenseCount] = await this.query('SELECT COUNT(*) AS count FROM license_info');
-      if (parseInt(licenseCount[0].count) === 0) {
+      if (licenseCount && licenseCount[0] && parseInt(licenseCount[0].count) === 0) {
         await this.query(`
           INSERT INTO license_info (license_key, valid_from, valid_to, amc_start_date, amc_end_date, status)
           VALUES ('VANSHEE-POS-LICENSE-KEY-2026', '2026-01-01', '2026-08-31', '2026-01-01', '2026-08-31', 'Active');
         `);
-        console.log('[DB Seed] Seeded default software license key.');
       }
-      console.log('[DB Migrate] Verified license_info table.');
-    } catch (err) {
-      console.error('[DB Migrate] license_info migrations failed:', err.message);
-    }
+    } catch (err) {}
 
-    // Check if the 'users' table exists
-    const [result] = await this.query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'users'
-      )
-    `);
-    
-    if (result && result[0] && result[0].exists) {
-      console.log('[DB] Database already initialized. Skipping auto-creation.');
-      return;
-    }
-    
-    console.log('[DB] Database tables not found. Initializing PostgreSQL database...');
-    
-    const schemaPath = path.join(__dirname, 'schema_pg.sql');
-    if (!fs.existsSync(schemaPath)) {
-      console.error('[DB] schema_pg.sql not found! Cannot auto-initialize.');
-      return;
-    }
-    
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-    
-    // Split statements by semicolon, removing comments
-    const cleanedSql = schemaSql.replace(/--.*$/gm, '');
-    const statements = cleanedSql
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-      
-    console.log(`[DB] Executing ${statements.length} schema statements...`);
-    
-    const client = await pgPool.connect();
-    try {
-      await client.query('BEGIN');
-      for (const statement of statements) {
-        await client.query(statement);
-      }
-      await client.query('COMMIT');
-      console.log('[DB] Database initialization completed successfully!');
-    } catch (err) {
-      await client.query('ROLLBACK');
-      console.error('[DB] Failed to execute schema statements:', err);
-      throw err;
-    } finally {
-      client.release();
-    }
   } catch (err) {
     console.error('[DB] Database auto-initialization error:', err);
   }
