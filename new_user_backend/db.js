@@ -398,6 +398,27 @@ db.initDb = async function() {
           }
         }
         console.log('[DB] Database initialization completed successfully!');
+        
+        // Seed default Super-Admin (Parshav) and Admin (admin)
+        try {
+          const bcrypt = require('bcryptjs');
+          const hashPassword = await bcrypt.hash('Parshav@123', 10);
+          await client.query(`
+            INSERT INTO users (username, password, first_name, last_name, address_1, city, country, phone_1, email_1, role_id, client_id, is_superadmin)
+            VALUES ('Parshav', $1, 'Parshav', 'Shah', 'Vanshee Infotech', 'Ahmedabad', 'India', '9876543210', 'parshav@vanshee.com', 1, 1, 1)
+            ON CONFLICT (username) DO NOTHING;
+          `, [hashPassword]);
+
+          const adminHash = await bcrypt.hash('Admin@123', 10);
+          await client.query(`
+            INSERT INTO users (username, password, first_name, last_name, address_1, city, country, phone_1, email_1, role_id, client_id, is_superadmin)
+            VALUES ('admin', $1, 'System', 'Admin', 'Vanshee POS HQ', 'Ahmedabad', 'India', '9876543211', 'admin@vanshee.com', 2, 1, 0)
+            ON CONFLICT (username) DO NOTHING;
+          `, [adminHash]);
+          console.log('[DB Seed] Seeded default Super-Admin (Parshav) & Admin (admin) users.');
+        } catch (seedErr) {
+          console.warn('[DB Seed Warning]', seedErr.message);
+        }
       } finally {
         client.release();
       }

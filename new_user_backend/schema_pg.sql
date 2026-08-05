@@ -44,33 +44,7 @@ DROP TABLE IF EXISTS roles CASCADE;
 DROP TABLE IF EXISTS license_info CASCADE;
 
 
--- 1. Roles
-CREATE TABLE IF NOT EXISTS roles (
-    role_id SERIAL PRIMARY KEY,
-    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
-    name VARCHAR(50) NOT NULL,
-    active SMALLINT DEFAULT 1,
-    created_by VARCHAR(255) DEFAULT 'System',
-    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 2. Modules
-CREATE TABLE IF NOT EXISTS modules (
-    module_id SERIAL PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE
-);
-
--- 3. Role Permissions
-CREATE TABLE IF NOT EXISTS role_permissions (
-    role_id INT,
-    module_id INT,
-    allowed SMALLINT DEFAULT 0,
-    PRIMARY KEY (role_id, module_id),
-    FOREIGN KEY (role_id) REFERENCES roles(role_id) ON DELETE CASCADE ON UPDATE CASCADE,
-    FOREIGN KEY (module_id) REFERENCES modules(module_id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
--- A. Clients
+-- 1. Clients
 CREATE TABLE IF NOT EXISTS clients (
     client_id    SERIAL PRIMARY KEY,
     name         VARCHAR(255) NOT NULL,
@@ -81,6 +55,32 @@ CREATE TABLE IF NOT EXISTS clients (
     logo_url     TEXT,
     active       SMALLINT DEFAULT 1,
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 2. Roles
+CREATE TABLE IF NOT EXISTS roles (
+    role_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
+    name VARCHAR(50) NOT NULL,
+    active SMALLINT DEFAULT 1,
+    created_by VARCHAR(255) DEFAULT 'System',
+    created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 3. Modules
+CREATE TABLE IF NOT EXISTS modules (
+    module_id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE
+);
+
+-- 4. Role Permissions
+CREATE TABLE IF NOT EXISTS role_permissions (
+    role_id INT,
+    module_id INT,
+    allowed SMALLINT DEFAULT 0,
+    PRIMARY KEY (role_id, module_id),
+    FOREIGN KEY (role_id) REFERENCES roles(role_id) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY (module_id) REFERENCES modules(module_id) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- 4. Users
