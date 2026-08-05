@@ -1028,16 +1028,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // 1. Hide ALL screen views across the entire DOM
+    // 1. Hide ALL screen views across the entire DOM cleanly
     const allViews = document.querySelectorAll('.screen-view');
     allViews.forEach(v => {
-      v.style.display = 'none';
+      v.classList.remove('active-screen');
+      v.style.setProperty('display', 'none', 'important');
     });
 
     // 2. Display ONLY the target screen view dynamically fetched from DOM
     const targetView = document.getElementById(targetConfig.viewId);
     if (targetView) {
-      targetView.style.display = 'block';
+      targetView.classList.add('active-screen');
+      targetView.style.setProperty('display', 'block', 'important');
       activeScreen = targetView.id;
     } else {
       console.error('[switchScreen] Target view element not found for ID:', targetConfig.viewId);

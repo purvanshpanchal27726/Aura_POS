@@ -327,6 +327,16 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.9rem;
 }
 
+/* Screen View Display Engine */
+.screen-view {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.screen-view.active-screen {
+  display: block !important;
+}
+
 /* Modern Card Layouts */
 .card {
   background: var(--card-bg);
