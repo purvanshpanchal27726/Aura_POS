@@ -579,56 +579,69 @@ db.initDb = async function() {
               (2, 'ABC Retail & Hospitality', 'abc@vanshee.com', '9876543214', 'Company Office, Ahmedabad, India', 1)
               ON CONFLICT (client_id) DO NOTHING;
             `);
-            // Seed Units & Taxes & Categories
+            await client.query(`SELECT setval(pg_get_serial_sequence('clients','client_id'), COALESCE((SELECT MAX(client_id) FROM clients), 2));`);
+
+            // Seed Units, Taxes & Categories
             await client.query(`
-              INSERT INTO units (unit_id, client_id, name, short_code) VALUES
-              (1, 1, 'Packet / Unit', 'Pkt'), (2, 1, 'Kilograms', 'Kg'), (3, 1, 'Liters', 'Ltr'), (4, 1, 'Pieces', 'Pcs')
+              INSERT INTO units (unit_id, client_id, name, active) VALUES
+              (1, 1, 'Packet / Unit', 1), (2, 1, 'Kilograms', 1), (3, 1, 'Liters', 1), (4, 1, 'Pieces', 1)
               ON CONFLICT (unit_id) DO NOTHING;
             `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('units','unit_id'), COALESCE((SELECT MAX(unit_id) FROM units), 4));`);
+
             await client.query(`
-              INSERT INTO taxes (tax_id, client_id, tax_name, rate) VALUES
-              (1, 1, 'GST 0%', 0.00), (2, 1, 'GST 5%', 5.00), (3, 1, 'GST 12%', 12.00), (4, 1, 'GST 18%', 18.00)
+              INSERT INTO taxes (tax_id, client_id, name, percentage, active) VALUES
+              (1, 1, 'GST 0%', 0.00, 1), (2, 1, 'GST 5%', 5.00, 1), (3, 1, 'GST 12%', 12.00, 1), (4, 1, 'GST 18%', 18.00, 1)
               ON CONFLICT (tax_id) DO NOTHING;
             `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('taxes','tax_id'), COALESCE((SELECT MAX(tax_id) FROM taxes), 4));`);
+
             await client.query(`
-              INSERT INTO categories (category_id, client_id, category_name, description) VALUES
-              (1, 1, 'Dairy & Beverages', 'Fresh milk, butter, soft drinks, water'),
-              (2, 1, 'Snacks & Wafers', 'Chips, biscuits, namkeen'),
-              (3, 1, 'Bakery & Confectionery', 'Fresh bread, cakes, buns'),
-              (4, 1, 'Grocery & Staples', 'Rice, flour, sugar, oil')
+              INSERT INTO categories (category_id, client_id, name, active) VALUES
+              (1, 1, 'Dairy & Beverages', 1),
+              (2, 1, 'Snacks & Wafers', 1),
+              (3, 1, 'Bakery & Confectionery', 1),
+              (4, 1, 'Grocery & Staples', 1)
               ON CONFLICT (category_id) DO NOTHING;
             `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('categories','category_id'), COALESCE((SELECT MAX(category_id) FROM categories), 4));`);
+
             // Seed Items
             await client.query(`
-              INSERT INTO items (item_id, client_id, item_code, barcode, item_name, category_id, unit_id, cost_price, sales_price, stock_quantity, min_stock, active, pos_item) VALUES
-              (1, 1, '8901262010015', '8901262010015', 'Amul Taaza Milk 500ml', 1, 1, 28.00, 34.00, 100.00, 10.00, 1, 1),
-              (2, 1, '8901262010016', '8901262010016', 'Pepsi 500ml', 1, 1, 30.00, 40.00, 75.00, 10.00, 1, 1),
-              (3, 1, '8901262010017', '8901262010017', 'Amul Butter 100g', 1, 1, 50.00, 56.00, 50.00, 5.00, 1, 1),
-              (4, 1, '8901262010018', '8901262010018', 'Britannia Sandwich Bread 400g', 3, 1, 38.00, 45.00, 40.00, 5.00, 1, 1)
+              INSERT INTO items (item_id, client_id, code, name, category_id, unit_id, tax_id, purchase_price, sales_price, pos_item, active, created_by) VALUES
+              (1, 1, '8901262010015', 'Amul Taaza Milk 500ml', 1, 1, 4, 28.00, 34.00, 1, 1, 'Parshav'),
+              (2, 1, '8901262010016', 'Pepsi 500ml', 1, 1, 4, 30.00, 40.00, 1, 1, 'Parshav'),
+              (3, 1, '8901262010017', 'Amul Butter 100g', 1, 1, 4, 50.00, 56.00, 1, 1, 'Parshav'),
+              (4, 1, '8901262010018', 'Britannia Sandwich Bread 400g', 3, 1, 2, 38.00, 45.00, 1, 1, 'Parshav')
               ON CONFLICT (item_id) DO NOTHING;
             `);
             await client.query(`SELECT setval(pg_get_serial_sequence('items','item_id'), COALESCE((SELECT MAX(item_id) FROM items), 4));`);
 
             // Seed Customers & Vendors
             await client.query(`
-              INSERT INTO customers (customer_id, client_id, first_name, last_name, phone_1, email_1, address_1, city, country) VALUES
+              INSERT INTO customers (customer_id, client_id, first_name, last_name, phone_1, email, address_1, city, country) VALUES
               (1, 1, 'Walk-in', 'Customer', '9999999999', 'cash@store.com', 'Counter Sale', 'Ahmedabad', 'India'),
               (2, 1, 'Rajesh', 'Sharma', '9876543210', 'rajesh.sharma@example.com', 'A-102 Swastik Complex, SG Highway', 'Ahmedabad', 'India')
               ON CONFLICT (customer_id) DO NOTHING;
             `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('customers','customer_id'), COALESCE((SELECT MAX(customer_id) FROM customers), 2));`);
+
             await client.query(`
-              INSERT INTO vendors (vendor_id, client_id, company_name, contact_person, phone_1, email_1, address_1, city, country) VALUES
-              (1, 1, 'Amul Dairy Distributors', 'Sanjay Patel', '9825012345', 'distributor@amul.coop', 'GIDC Industrial Estate', 'Anand', 'India')
+              INSERT INTO vendors (vendor_id, client_id, first_name, last_name, company, phone_1, email, address_1, city, country) VALUES
+              (1, 1, 'Sanjay', 'Patel', 'Amul Dairy Distributors', '9825012345', 'distributor@amul.coop', 'GIDC Industrial Estate', 'Anand', 'India')
               ON CONFLICT (vendor_id) DO NOTHING;
             `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('vendors','vendor_id'), COALESCE((SELECT MAX(vendor_id) FROM vendors), 1));`);
 
-            // Seed Sales
+            // Seed Sales Invoices
             await client.query(`
               INSERT INTO sales_master (sales_id, sales_bill_no, customer_id, sales_date, gross, tax, total, payment_method, client_id) VALUES
-              (1, 'INV-1001', 2, CURRENT_TIMESTAMP - INTERVAL '1 day', 34.00, 6.12, 40.12, 'Cash', 1),
-              (2, 'INV-1002', 1, CURRENT_TIMESTAMP, 74.00, 13.32, 87.32, 'UPI', 1)
+              (1, 'INV-1001', 2, CURRENT_DATE - INTERVAL '1 day', 34.00, 6.12, 40.12, 'Cash', 1),
+              (2, 'INV-1002', 1, CURRENT_DATE, 74.00, 13.32, 87.32, 'UPI', 1)
               ON CONFLICT (sales_id) DO NOTHING;
             `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('sales_master','sales_id'), COALESCE((SELECT MAX(sales_id) FROM sales_master), 2));`);
+
             await client.query(`
               INSERT INTO sales_details (sales_detail_id, sales_id, item_id, item_name, quantity, rate, item_amount, client_id) VALUES
               (1, 1, 1, 'Amul Taaza Milk 500ml', 1.00, 34.00, 34.00, 1),
@@ -636,7 +649,9 @@ db.initDb = async function() {
               (3, 2, 2, 'Pepsi 500ml', 1.00, 40.00, 40.00, 1)
               ON CONFLICT (sales_detail_id) DO NOTHING;
             `);
-            console.log('[DB Seed] ✅ Auto-populated POS items and sales records!');
+            await client.query(`SELECT setval(pg_get_serial_sequence('sales_details','sales_detail_id'), COALESCE((SELECT MAX(sales_detail_id) FROM sales_details), 3));`);
+
+            console.log('[DB Seed] 🎉 Successfully auto-populated full POS dataset into PostgreSQL database!');
           } finally {
             client.release();
           }
