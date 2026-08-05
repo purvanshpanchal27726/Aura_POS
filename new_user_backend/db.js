@@ -572,7 +572,7 @@ db.initDb = async function() {
           const bcrypt = require('bcryptjs');
           const client = await pgPool.connect();
           try {
-            // Seed Clients
+            // Seed Clients & Client Modules
             await client.query(`
               INSERT INTO clients (client_id, name, email, phone, address, active) VALUES 
               (1, 'Vanshee POS Enterprise', 'admin@vanshee.com', '9876543210', 'SG Highway, Ahmedabad, India', 1),
@@ -580,6 +580,13 @@ db.initDb = async function() {
               ON CONFLICT (client_id) DO NOTHING;
             `);
             await client.query(`SELECT setval(pg_get_serial_sequence('clients','client_id'), COALESCE((SELECT MAX(client_id) FROM clients), 2));`);
+
+            await client.query(`
+              INSERT INTO client_modules (client_id, group_id, enabled) VALUES
+              (1, 1, 1), (1, 2, 1), (1, 3, 1),
+              (2, 1, 1), (2, 2, 1), (2, 3, 1)
+              ON CONFLICT (client_id, group_id) DO NOTHING;
+            `);
 
             // Seed Units, Taxes & Categories
             await client.query(`

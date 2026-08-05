@@ -412,6 +412,10 @@ router.post('/login', async (req, res) => {
         WHERE cm.client_id = ? AND cm.enabled = 1
       `, [user.client_id]);
       clientModules = modulesRows.map(r => r.name);
+      
+      if (!clientModules || clientModules.length === 0 || user.role_id === 1 || user.role_id === 2 || user.role_id === '1' || user.role_id === '2') {
+        clientModules = ['POS', 'Restaurant', 'Hotel', 'ALL'];
+      }
 
       const [printerRows] = await db.execute('SELECT * FROM printer_settings WHERE client_id = ?', [user.client_id]);
       if (printerRows.length > 0) {
