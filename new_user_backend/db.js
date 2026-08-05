@@ -651,7 +651,91 @@ db.initDb = async function() {
             `);
             await client.query(`SELECT setval(pg_get_serial_sequence('sales_details','sales_detail_id'), COALESCE((SELECT MAX(sales_detail_id) FROM sales_details), 3));`);
 
-            console.log('[DB Seed] 🎉 Successfully auto-populated full POS dataset into PostgreSQL database!');
+            // Seed Stock Inventory
+            await client.query(`
+              INSERT INTO inventory (inventory_id, client_id, item_name, sku, barcode, unit, current_stock, min_stock) VALUES
+              (1, 1, 'Amul Taaza Milk 500ml', '8901262010015', '8901262010015', 'Pkt', 100.00, 10.00),
+              (2, 1, 'Pepsi 500ml', '8901262010016', '8901262010016', 'Pcs', 75.00, 10.00),
+              (3, 1, 'Amul Butter 100g', '8901262010017', '8901262010017', 'Pkt', 50.00, 5.00),
+              (4, 1, 'Britannia Sandwich Bread 400g', '8901262010018', '8901262010018', 'Pkt', 40.00, 5.00)
+              ON CONFLICT (inventory_id) DO NOTHING;
+            `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('inventory','inventory_id'), COALESCE((SELECT MAX(inventory_id) FROM inventory), 4));`);
+
+            // Seed Employees & Attendance
+            await client.query(`
+              INSERT INTO employees (employee_id, client_id, user_id, designation, department, salary, active) VALUES
+              (1, 1, 1, 'Store Manager', 'Management', 45000.00, 1),
+              (2, 1, 6, 'Head Cashier', 'Sales', 25000.00, 1)
+              ON CONFLICT (employee_id) DO NOTHING;
+            `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('employees','employee_id'), COALESCE((SELECT MAX(employee_id) FROM employees), 2));`);
+
+            await client.query(`
+              INSERT INTO attendance (id, client_id, employee_id, date, check_in, check_out, status) VALUES
+              (1, 1, 1, CURRENT_DATE, '09:00:00', '18:00:00', 'present'),
+              (2, 1, 2, CURRENT_DATE, '09:15:00', '18:00:00', 'present')
+              ON CONFLICT (id) DO NOTHING;
+            `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('attendance','id'), COALESCE((SELECT MAX(id) FROM attendance), 2));`);
+
+            // Seed Purchase Orders
+            await client.query(`
+              INSERT INTO purchase_orders (po_id, client_id, po_number, vendor_id, order_date, total_amount, status) VALUES
+              (1, 1, 'PO-2026-001', 1, CURRENT_DATE - INTERVAL '2 days', 5600.00, 'Approved')
+              ON CONFLICT (po_id) DO NOTHING;
+            `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('purchase_orders','po_id'), COALESCE((SELECT MAX(po_id) FROM purchase_orders), 1));`);
+
+            // Seed Hotel Rooms, Guests, Bookings
+            await client.query(`
+              INSERT INTO hotel_rooms (room_id, client_id, room_no, type, price_per_night, status) VALUES
+              (1, 1, 'Room 101', 'Deluxe AC Double', 2500.00, 'available'),
+              (2, 1, 'Room 102', 'Executive Suite', 4500.00, 'available')
+              ON CONFLICT (room_id) DO NOTHING;
+            `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('hotel_rooms','room_id'), COALESCE((SELECT MAX(room_id) FROM hotel_rooms), 2));`);
+
+            await client.query(`
+              INSERT INTO hotel_guests (guest_id, client_id, first_name, last_name, phone, email) VALUES
+              (1, 1, 'Anand', 'Verma', '9811223344', 'anand@gmail.com')
+              ON CONFLICT (guest_id) DO NOTHING;
+            `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('hotel_guests','guest_id'), COALESCE((SELECT MAX(guest_id) FROM hotel_guests), 1));`);
+
+            await client.query(`
+              INSERT INTO hotel_bookings (booking_id, client_id, room_id, guest_id, check_in, check_out, total_amount, status) VALUES
+              (1, 1, 1, 1, CURRENT_DATE, CURRENT_DATE + INTERVAL '2 days', 5000.00, 'confirmed')
+              ON CONFLICT (booking_id) DO NOTHING;
+            `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('hotel_bookings','booking_id'), COALESCE((SELECT MAX(booking_id) FROM hotel_bookings), 1));`);
+
+            // Seed Restaurant Tables, Menu Categories, Menu Items
+            await client.query(`
+              INSERT INTO restaurant_tables (table_id, client_id, table_no, capacity, status) VALUES
+              (1, 1, 'Table 01', 4, 'available'),
+              (2, 1, 'Table 02', 2, 'available')
+              ON CONFLICT (table_id) DO NOTHING;
+            `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('restaurant_tables','table_id'), COALESCE((SELECT MAX(table_id) FROM restaurant_tables), 2));`);
+
+            await client.query(`
+              INSERT INTO menu_categories (category_id, client_id, name, active) VALUES
+              (1, 1, 'Main Course', 1),
+              (2, 1, 'Starters & Beverages', 1)
+              ON CONFLICT (category_id) DO NOTHING;
+            `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('menu_categories','category_id'), COALESCE((SELECT MAX(category_id) FROM menu_categories), 2));`);
+
+            await client.query(`
+              INSERT INTO menu_items (menu_item_id, client_id, category_id, name, price, active) VALUES
+              (1, 1, 1, 'Paneer Butter Masala', 280.00, 1),
+              (2, 1, 2, 'Cold Coffee with Ice Cream', 120.00, 1)
+              ON CONFLICT (menu_item_id) DO NOTHING;
+            `);
+            await client.query(`SELECT setval(pg_get_serial_sequence('menu_items','menu_item_id'), COALESCE((SELECT MAX(menu_item_id) FROM menu_items), 2));`);
+
+            console.log('[DB Seed] 🎉 Successfully auto-populated full POS dataset across ALL 10 modules!');
           } finally {
             client.release();
           }
