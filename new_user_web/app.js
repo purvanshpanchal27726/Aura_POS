@@ -1041,6 +1041,7 @@ document.addEventListener('DOMContentLoaded', () => {
       targetView.classList.add('active-screen');
       targetView.style.display = 'block';
       activeScreen = targetView.id;
+      console.log(`[switchScreen] Screen switched to '${screenName}' (ID: ${targetConfig.viewId})`);
     } else {
       console.error('[switchScreen] Target view element not found for ID:', targetConfig.viewId);
     }

@@ -327,20 +327,30 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.9rem;
 }
 
-/* Screen View Display Engine */
-.main-content {
-  width: 100%;
-  min-height: 80vh;
-  position: relative;
-  box-sizing: border-box;
+/* Screen View & Main Layout Display Engine */
+.container, .main-content {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 80vh !important;
+  width: 100% !important;
+  position: relative !important;
+  box-sizing: border-box !important;
 }
 
 .screen-view {
-  width: 100%;
-  box-sizing: border-box;
+  width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .screen-view.active-screen {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 400px !important;
+}
+
+.list-section, .card, .form-section {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
