@@ -663,6 +663,7 @@ db.initDb = async function() {
       await this.query(`
         CREATE TABLE IF NOT EXISTS license_info (
           license_id SERIAL PRIMARY KEY,
+          client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
           license_key VARCHAR(255) NOT NULL,
           valid_from DATE NOT NULL,
           valid_to DATE NOT NULL,
@@ -671,13 +672,15 @@ db.initDb = async function() {
           status VARCHAR(50) DEFAULT 'Active',
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
+        ALTER TABLE license_info ADD COLUMN IF NOT EXISTS client_id INT REFERENCES clients(client_id) ON DELETE CASCADE;
+        UPDATE license_info SET client_id = 1 WHERE client_id IS NULL;
       `);
       
       const [licenseCount] = await this.query('SELECT COUNT(*) AS count FROM license_info');
       if (licenseCount && licenseCount[0] && parseInt(licenseCount[0].count) === 0) {
         await this.query(`
-          INSERT INTO license_info (license_key, valid_from, valid_to, amc_start_date, amc_end_date, status)
-          VALUES ('VANSHEE-POS-LICENSE-KEY-2026', '2026-01-01', '2026-08-31', '2026-01-01', '2026-08-31', 'Active');
+          INSERT INTO license_info (client_id, license_key, valid_from, valid_to, amc_start_date, amc_end_date, status)
+          VALUES (1, 'VANSHEE-POS-LICENSE-KEY-2026', '2026-01-01', '2030-12-31', '2026-01-01', '2030-12-31', 'Active');
         `);
       }
     } catch (err) {}

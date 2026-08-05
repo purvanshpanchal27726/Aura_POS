@@ -289,6 +289,7 @@ SELECT setval(pg_get_serial_sequence('users','user_id'), MAX(user_id)) FROM user
 -- 15. License Info Table
 CREATE TABLE IF NOT EXISTS license_info (
     license_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     license_key VARCHAR(255) NOT NULL,
     valid_from DATE NOT NULL,
     valid_to DATE NOT NULL,
@@ -299,8 +300,8 @@ CREATE TABLE IF NOT EXISTS license_info (
 );
 
 -- Seed default license row
-INSERT INTO license_info (license_key, valid_from, valid_to, amc_start_date, amc_end_date, status)
-VALUES ('VANSHEE-POS-LICENSE-KEY-2026', '2026-01-01', '2026-08-31', '2026-01-01', '2026-08-31', 'Active')
+INSERT INTO license_info (client_id, license_key, valid_from, valid_to, amc_start_date, amc_end_date, status)
+VALUES (1, 'VANSHEE-POS-LICENSE-KEY-2026', '2026-01-01', '2030-12-31', '2026-01-01', '2030-12-31', 'Active')
 ON CONFLICT DO NOTHING;
 
 SELECT setval(pg_get_serial_sequence('license_info','license_id'), COALESCE((SELECT MAX(license_id) FROM license_info), 1));
