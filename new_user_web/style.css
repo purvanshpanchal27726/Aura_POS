@@ -328,6 +328,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Screen View Display Engine */
+.main-content {
+  width: 100%;
+  min-height: 80vh;
+  position: relative;
+  box-sizing: border-box;
+}
+
 .screen-view {
   width: 100%;
   box-sizing: border-box;
@@ -335,6 +342,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .screen-view.active-screen {
   display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 /* Modern Card Layouts */

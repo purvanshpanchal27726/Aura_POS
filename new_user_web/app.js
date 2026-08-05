@@ -1032,14 +1032,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const allViews = document.querySelectorAll('.screen-view');
     allViews.forEach(v => {
       v.classList.remove('active-screen');
-      v.style.setProperty('display', 'none', 'important');
+      v.style.display = 'none';
     });
 
     // 2. Display ONLY the target screen view dynamically fetched from DOM
     const targetView = document.getElementById(targetConfig.viewId);
     if (targetView) {
       targetView.classList.add('active-screen');
-      targetView.style.setProperty('display', 'block', 'important');
+      targetView.style.display = 'block';
       activeScreen = targetView.id;
     } else {
       console.error('[switchScreen] Target view element not found for ID:', targetConfig.viewId);
