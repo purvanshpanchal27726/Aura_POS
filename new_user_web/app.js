@@ -1028,14 +1028,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // 1. Hide ALL screen views across the entire DOM cleanly
+    // 1. Remove active-screen class and reset inline display styles on ALL screen views
     const allViews = document.querySelectorAll('.screen-view');
     allViews.forEach(v => {
       v.classList.remove('active-screen');
-      v.style.display = 'none';
+      v.style.display = '';
     });
 
-    // 2. Display ONLY the target screen view dynamically fetched from DOM
+    // 2. Add active-screen class and set display block ONLY on target screen view
     const targetView = document.getElementById(targetConfig.viewId);
     if (targetView) {
       targetView.classList.add('active-screen');
