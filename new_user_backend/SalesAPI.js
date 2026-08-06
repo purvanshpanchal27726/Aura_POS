@@ -210,7 +210,7 @@ router.get('/:id', async (req, res) => {
       WHERE sm.sales_id = $1 AND 
     `;
     let masterParams = [salesId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       masterQuery += 'sm.client_id = $2';
       masterParams.push(clientId);
     } else {

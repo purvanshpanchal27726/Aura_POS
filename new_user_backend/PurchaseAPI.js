@@ -218,7 +218,7 @@ router.get('/:id', async (req, res) => {
       WHERE pm.purchase_id = ? AND 
     `;
     let masterParams = [purchaseId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       masterQuery += 'pm.client_id = ?';
       masterParams.push(clientId);
     } else {
@@ -263,7 +263,7 @@ router.delete('/:id', async (req, res) => {
 
     let query = 'SELECT * FROM purchase_master WHERE purchase_id = ? AND ';
     let params = [purchaseId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -277,7 +277,7 @@ router.delete('/:id', async (req, res) => {
 
     let deleteQuery = 'DELETE FROM purchase_master WHERE purchase_id = ? AND ';
     let deleteParams = [purchaseId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       deleteQuery += 'client_id = ?';
       deleteParams.push(clientId);
     } else {

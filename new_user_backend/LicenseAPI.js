@@ -31,7 +31,7 @@ router.get('/', async (req, res) => {
     
     let query = 'SELECT * FROM license_info WHERE ';
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -65,7 +65,7 @@ router.get('/', async (req, res) => {
       
       let refetchQuery = 'SELECT * FROM license_info WHERE ';
       let refetchParams = [];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         refetchQuery += 'client_id = ?';
         refetchParams.push(clientId);
       } else {
@@ -97,7 +97,7 @@ router.post('/renew', async (req, res) => {
     const clientId = getClientId(req);
     let query = 'SELECT * FROM license_info WHERE ';
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {

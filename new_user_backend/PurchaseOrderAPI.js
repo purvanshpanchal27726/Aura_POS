@@ -80,7 +80,7 @@ router.get('/:id', async (req, res) => {
       WHERE po.po_id = ? AND 
     `;
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'po.client_id = ?';
       params.push(clientId);
     } else {
@@ -159,7 +159,7 @@ router.put('/:id/status', async (req, res) => {
 
     let query = 'SELECT * FROM purchase_orders WHERE po_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -194,7 +194,7 @@ router.post('/:id/grn', async (req, res) => {
 
     let query = 'SELECT * FROM purchase_orders WHERE po_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -230,7 +230,7 @@ router.post('/:id/grn', async (req, res) => {
         // Find if this item name exists in client inventory
         let invQuery = 'SELECT * FROM inventory WHERE LOWER(item_name) = LOWER(?) AND ';
         let invParams = [item.item_name.trim()];
-        if (clientId !== null && clientId !== undefined) {
+        if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
           invQuery += 'client_id = ?';
           invParams.push(clientId);
         } else {
@@ -254,7 +254,7 @@ router.post('/:id/grn', async (req, res) => {
           const newStock = parseFloat(invRows[0].current_stock || 0) + qReceived;
           let updateInvQuery = 'UPDATE inventory SET current_stock = ? WHERE inventory_id = ? AND ';
           let updateInvParams = [newStock, invId];
-          if (clientId !== null && clientId !== undefined) {
+          if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
             updateInvQuery += 'client_id = ?';
             updateInvParams.push(clientId);
           } else {

@@ -78,7 +78,7 @@ router.post('/tables', async (req, res) => {
     // Check for duplicate table_no within the same client
     let dupQuery = 'SELECT table_id FROM restaurant_tables WHERE table_no = ? AND ';
     let dupParams = [table_no];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       dupQuery += 'client_id = ?';
       dupParams.push(clientId);
     } else {
@@ -113,7 +113,7 @@ router.put('/tables/:id', async (req, res) => {
 
     let query = 'SELECT * FROM restaurant_tables WHERE table_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -127,7 +127,7 @@ router.put('/tables/:id', async (req, res) => {
     if (table_no !== undefined) {
       let dupQuery = 'SELECT table_id FROM restaurant_tables WHERE table_no = ? AND table_id != ? AND ';
       let dupParams = [table_no, id];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         dupQuery += 'client_id = ?';
         dupParams.push(clientId);
       } else {
@@ -149,7 +149,7 @@ router.put('/tables/:id', async (req, res) => {
       status !== undefined ? status : rows[0].status,
       id
     ];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -174,7 +174,7 @@ router.delete('/tables/:id', async (req, res) => {
 
     let query = 'SELECT * FROM restaurant_tables WHERE table_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -186,7 +186,7 @@ router.delete('/tables/:id', async (req, res) => {
 
     let deleteQuery = 'UPDATE restaurant_tables SET active = 0 WHERE table_id = ? AND ';
     let deleteParams = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       deleteQuery += 'client_id = ?';
       deleteParams.push(clientId);
     } else {
@@ -212,7 +212,7 @@ router.get('/menu/categories', async (req, res) => {
 
     let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY category_id ASC)::integer AS display_id FROM menu_categories WHERE active = 1 AND ';
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
@@ -240,7 +240,7 @@ router.post('/menu/categories', async (req, res) => {
     const nameCheck = name.trim().toLowerCase();
     let dupQuery = 'SELECT category_id FROM menu_categories WHERE LOWER(name) = ? AND active = 1 AND ';
     let dupParams = [nameCheck];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       dupQuery += 'client_id = ?';
       dupParams.push(clientId);
     } else {
@@ -270,7 +270,7 @@ router.put('/menu/categories/:id', async (req, res) => {
 
     let query = 'SELECT * FROM menu_categories WHERE category_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -285,7 +285,7 @@ router.put('/menu/categories/:id', async (req, res) => {
       const nameCheck = name.trim().toLowerCase();
       let dupQuery = 'SELECT category_id FROM menu_categories WHERE LOWER(name) = ? AND category_id != ? AND active = 1 AND ';
       let dupParams = [nameCheck, id];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         dupQuery += 'client_id = ?';
         dupParams.push(clientId);
       } else {
@@ -297,7 +297,7 @@ router.put('/menu/categories/:id', async (req, res) => {
 
     let updateQuery = 'UPDATE menu_categories SET name = ?, image_url = ? WHERE category_id = ? AND ';
     let updateParams = [name !== undefined ? name : rows[0].name, image_url !== undefined ? image_url : rows[0].image_url, id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -321,7 +321,7 @@ router.delete('/menu/categories/:id', async (req, res) => {
 
     let query = 'UPDATE menu_categories SET active = 0 WHERE category_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -352,7 +352,7 @@ router.get('/menu/items', async (req, res) => {
       WHERE mi.active = 1 AND 
     `;
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'mi.client_id = $1';
       params.push(clientId);
     } else {
@@ -380,7 +380,7 @@ router.post('/menu/items', async (req, res) => {
     const nameCheck = name.trim().toLowerCase();
     let dupQuery = 'SELECT menu_item_id FROM menu_items WHERE LOWER(name) = ? AND active = 1 AND ';
     let dupParams = [nameCheck];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       dupQuery += 'client_id = ?';
       dupParams.push(clientId);
     } else {
@@ -424,7 +424,7 @@ router.put('/menu/items/:id', async (req, res) => {
 
     let query = 'SELECT * FROM menu_items WHERE menu_item_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -439,7 +439,7 @@ router.put('/menu/items/:id', async (req, res) => {
       const nameCheck = name.trim().toLowerCase();
       let dupQuery = 'SELECT menu_item_id FROM menu_items WHERE LOWER(name) = ? AND menu_item_id != ? AND active = 1 AND ';
       let dupParams = [nameCheck, id];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         dupQuery += 'client_id = ?';
         dupParams.push(clientId);
       } else {
@@ -468,7 +468,7 @@ router.put('/menu/items/:id', async (req, res) => {
       available !== undefined ? (available ? 1 : 0) : rows[0].available,
       id
     ];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -492,7 +492,7 @@ router.delete('/menu/items/:id', async (req, res) => {
 
     let query = 'UPDATE menu_items SET active = 0 WHERE menu_item_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -526,7 +526,7 @@ router.get('/orders', async (req, res) => {
       WHERE 
     `;
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'ro.client_id = ?';
       params.push(clientId);
     } else {
@@ -583,7 +583,7 @@ router.post('/orders', async (req, res) => {
       for (let item of items) {
         let menuQuery = 'SELECT price FROM menu_items WHERE menu_item_id = ? AND ';
         let menuParams = [item.menu_item_id];
-        if (clientId !== null && clientId !== undefined) {
+        if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
           menuQuery += 'client_id = ?';
           menuParams.push(clientId);
         } else {
@@ -629,7 +629,7 @@ router.post('/orders/:id/items', async (req, res) => {
 
     let query = 'SELECT * FROM restaurant_orders WHERE order_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -645,7 +645,7 @@ router.post('/orders/:id/items', async (req, res) => {
       for (let item of items) {
         let menuQuery = 'SELECT price FROM menu_items WHERE menu_item_id = ? AND ';
         let menuParams = [item.menu_item_id];
-        if (clientId !== null && clientId !== undefined) {
+        if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
           menuQuery += 'client_id = ?';
           menuParams.push(clientId);
         } else {
@@ -691,7 +691,7 @@ router.put('/orders/:id/status', async (req, res) => {
 
     let query = 'SELECT * FROM restaurant_orders WHERE order_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -832,7 +832,7 @@ router.get('/public/menu/:qr_token', async (req, res) => {
     // Fetch client metadata (Name and logo)
     let clientQuery = 'SELECT name, logo_url, address FROM clients WHERE ';
     let clientParams = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       clientQuery += 'client_id = ?';
       clientParams.push(clientId);
     } else {
@@ -845,7 +845,7 @@ router.get('/public/menu/:qr_token', async (req, res) => {
     // Fetch active menu categories
     let catQuery = 'SELECT * FROM menu_categories WHERE active = 1 AND ';
     let catParams = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       catQuery += 'client_id = ?';
       catParams.push(clientId);
     } else {
@@ -858,7 +858,7 @@ router.get('/public/menu/:qr_token', async (req, res) => {
     // Fetch active and available menu items
     let itemQuery = 'SELECT * FROM menu_items WHERE active = 1 AND available = 1 AND ';
     let itemParams = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       itemQuery += 'client_id = ?';
       itemParams.push(clientId);
     } else {
@@ -900,7 +900,7 @@ router.post('/public/order/:qr_token', async (req, res) => {
     if (customer_phone) {
       let custQuery = 'SELECT customer_id FROM customers WHERE phone = ? AND ';
       let custParams = [customer_phone];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         custQuery += 'client_id = ?';
         custParams.push(clientId);
       } else {
@@ -937,7 +937,7 @@ router.post('/public/order/:qr_token', async (req, res) => {
       for (let item of items) {
         let menuQuery = 'SELECT price FROM menu_items WHERE menu_item_id = ? AND ';
         let menuParams = [item.menu_item_id];
-        if (clientId !== null && clientId !== undefined) {
+        if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
           menuQuery += 'client_id = ?';
           menuParams.push(clientId);
         } else {

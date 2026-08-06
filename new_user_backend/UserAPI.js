@@ -224,7 +224,7 @@ router.get('/', async (req, res) => {
         query += '1=1';
       }
     } else {
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         query += 'u.client_id = $1';
         params.push(clientId);
       } else {

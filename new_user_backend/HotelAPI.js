@@ -80,7 +80,7 @@ router.post('/rooms', async (req, res) => {
     // Check for duplicate room_no
     let dupQuery = 'SELECT room_id FROM hotel_rooms WHERE room_no = ? AND ';
     let dupParams = [room_no];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       dupQuery += 'client_id = ?';
       dupParams.push(clientId);
     } else {
@@ -112,7 +112,7 @@ router.put('/rooms/:id', async (req, res) => {
 
     let query = 'SELECT * FROM hotel_rooms WHERE room_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -126,7 +126,7 @@ router.put('/rooms/:id', async (req, res) => {
     if (room_no !== undefined) {
       let dupQuery = 'SELECT room_id FROM hotel_rooms WHERE room_no = ? AND room_id != ? AND ';
       let dupParams = [room_no, id];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         dupQuery += 'client_id = ?';
         dupParams.push(clientId);
       } else {
@@ -148,7 +148,7 @@ router.put('/rooms/:id', async (req, res) => {
       status !== undefined ? status : rows[0].status,
       id
     ];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -173,7 +173,7 @@ router.delete('/rooms/:id', async (req, res) => {
     
     let query = 'UPDATE hotel_rooms SET active = 0 WHERE room_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -206,7 +206,7 @@ router.get('/guests', async (req, res) => {
       FROM hotel_guests WHERE 
     `;
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
@@ -234,7 +234,7 @@ router.post('/guests', async (req, res) => {
     // Check for duplicate phone number
     let dupQuery = 'SELECT guest_id FROM hotel_guests WHERE phone = ? AND ';
     let dupParams = [phone];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       dupQuery += 'client_id = ?';
       dupParams.push(clientId);
     } else {
@@ -271,7 +271,7 @@ router.put('/guests/:id', async (req, res) => {
 
     let query = 'SELECT * FROM hotel_guests WHERE guest_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -285,7 +285,7 @@ router.put('/guests/:id', async (req, res) => {
     if (phone !== undefined) {
       let dupQuery = 'SELECT guest_id FROM hotel_guests WHERE phone = ? AND guest_id != ? AND ';
       let dupParams = [phone, id];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         dupQuery += 'client_id = ?';
         dupParams.push(clientId);
       } else {
@@ -317,7 +317,7 @@ router.put('/guests/:id', async (req, res) => {
       id_proof_no !== undefined ? id_proof_no : rows[0].id_number,
       id
     ];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -354,7 +354,7 @@ router.get('/bookings', async (req, res) => {
       WHERE 
     `;
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'hb.client_id = ?';
       params.push(clientId);
     } else {
@@ -419,7 +419,7 @@ router.put('/bookings/:id/status', async (req, res) => {
 
     let query = 'SELECT * FROM hotel_bookings WHERE booking_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -431,7 +431,7 @@ router.put('/bookings/:id/status', async (req, res) => {
 
     let updateQuery = 'UPDATE hotel_bookings SET status = ?, total_amount = ? WHERE booking_id = ? AND ';
     let updateParams = [status, total_amount !== undefined ? total_amount : booking[0].total_amount, id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -491,7 +491,7 @@ router.post('/bookings/:id/services', async (req, res) => {
 
     let query = 'SELECT * FROM hotel_bookings WHERE booking_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {

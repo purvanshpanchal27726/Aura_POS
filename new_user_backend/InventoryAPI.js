@@ -74,7 +74,7 @@ router.post('/', async (req, res) => {
     const nameCheck = item_name.trim().toLowerCase();
     let dupQuery = 'SELECT inventory_id FROM inventory WHERE LOWER(item_name) = ? AND ';
     let dupParams = [nameCheck];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       dupQuery += 'client_id = ?';
       dupParams.push(clientId);
     } else {
@@ -116,7 +116,7 @@ router.put('/:id', async (req, res) => {
 
     let query = 'SELECT * FROM inventory WHERE inventory_id = ? AND ';
     let params = [id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -131,7 +131,7 @@ router.put('/:id', async (req, res) => {
       const nameCheck = item_name.trim().toLowerCase();
       let dupQuery = 'SELECT inventory_id FROM inventory WHERE LOWER(item_name) = ? AND inventory_id != ? AND ';
       let dupParams = [nameCheck, id];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         dupQuery += 'client_id = ?';
         dupParams.push(clientId);
       } else {
@@ -156,7 +156,7 @@ router.put('/:id', async (req, res) => {
       expiry_date !== undefined ? expiry_date : rows[0].expiry_date,
       id
     ];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -192,7 +192,7 @@ router.post('/movement', async (req, res) => {
     // 1. Check if inventory item exists
     let query = 'SELECT * FROM inventory WHERE inventory_id = ? AND ';
     let params = [inventory_id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -230,7 +230,7 @@ router.post('/movement', async (req, res) => {
     // 3. Update current_stock on inventory item
     let updateStockQuery = 'UPDATE inventory SET current_stock = ? WHERE inventory_id = ? AND ';
     let updateStockParams = [newStock, inventory_id];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       updateStockQuery += 'client_id = ?';
       updateStockParams.push(clientId);
     } else {
@@ -262,7 +262,7 @@ router.get('/movements', async (req, res) => {
       WHERE 
     `;
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'sm.client_id = ?';
       params.push(clientId);
     } else {

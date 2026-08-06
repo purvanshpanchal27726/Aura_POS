@@ -95,7 +95,7 @@ router.post('/', async (req, res) => {
     const nameCheck = name.trim().toLowerCase();
     let dupQuery = 'SELECT * FROM items WHERE LOWER(name) = ? AND ';
     let dupParams = [nameCheck];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       dupQuery += 'client_id = ?';
       dupParams.push(clientId);
     } else {
@@ -228,7 +228,7 @@ router.get('/:id', async (req, res) => {
       WHERE i.item_id = ? AND 
     `;
     let params = [itemId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'i.client_id = ?';
       params.push(clientId);
     } else {
@@ -292,7 +292,7 @@ router.put('/:id', async (req, res) => {
 
     let queryExist = 'SELECT * FROM items WHERE item_id = ? AND ';
     let paramsExist = [itemId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       queryExist += 'client_id = ?';
       paramsExist.push(clientId);
     } else {
@@ -331,7 +331,7 @@ router.put('/:id', async (req, res) => {
       const nameCheck = name.trim().toLowerCase();
       let dupQuery = 'SELECT * FROM items WHERE LOWER(name) = ? AND item_id != ? AND ';
       let dupParams = [nameCheck, itemId];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         dupQuery += 'client_id = ?';
         dupParams.push(clientId);
       } else {
@@ -358,7 +358,7 @@ router.put('/:id', async (req, res) => {
       finalShowInRestaurant, finalIsHotelService,
       itemId
     ];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -388,7 +388,7 @@ router.delete('/:id', async (req, res) => {
 
     let queryExist = 'SELECT * FROM items WHERE item_id = ? AND ';
     let paramsExist = [itemId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       queryExist += 'client_id = ?';
       paramsExist.push(clientId);
     } else {
@@ -404,7 +404,7 @@ router.delete('/:id', async (req, res) => {
 
     let deleteQuery = 'DELETE FROM items WHERE item_id = ? AND ';
     let deleteParams = [itemId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       deleteQuery += 'client_id = ?';
       deleteParams.push(clientId);
     } else {

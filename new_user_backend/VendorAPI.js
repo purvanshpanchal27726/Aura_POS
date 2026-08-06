@@ -78,7 +78,7 @@ router.post('/', async (req, res) => {
     const lastNameCheck = last_name.trim().toLowerCase();
     let nameQuery = 'SELECT * FROM vendors WHERE LOWER(first_name) = ? AND LOWER(last_name) = ? AND ';
     let nameParams = [firstNameCheck, lastNameCheck];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       nameQuery += 'client_id = ?';
       nameParams.push(clientId);
     } else {
@@ -93,7 +93,7 @@ router.post('/', async (req, res) => {
       const companyCheck = company.trim().toLowerCase();
       let companyQuery = 'SELECT * FROM vendors WHERE LOWER(company) = ? AND ';
       let companyParams = [companyCheck];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         companyQuery += 'client_id = ?';
         companyParams.push(clientId);
       } else {
@@ -108,7 +108,7 @@ router.post('/', async (req, res) => {
     const phoneCheck = phone_1.trim();
     let dupQuery = 'SELECT * FROM vendors WHERE phone_1 = ? AND ';
     let dupParams = [phoneCheck];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       dupQuery += 'client_id = ?';
       dupParams.push(clientId);
     } else {
@@ -196,7 +196,7 @@ router.get('/:id', async (req, res) => {
 
     let query = 'SELECT * FROM vendors WHERE vendor_id = ? AND ';
     let params = [vendorId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = ?';
       params.push(clientId);
     } else {
@@ -232,7 +232,7 @@ router.put('/:id', async (req, res) => {
 
     let queryExist = 'SELECT * FROM vendors WHERE vendor_id = ? AND ';
     let paramsExist = [vendorId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       queryExist += 'client_id = ?';
       paramsExist.push(clientId);
     } else {
@@ -265,7 +265,7 @@ router.put('/:id', async (req, res) => {
       const lastNameCheck = finalLN.trim().toLowerCase();
       let dupNameQuery = 'SELECT * FROM vendors WHERE LOWER(first_name) = ? AND LOWER(last_name) = ? AND vendor_id != ? AND ';
       let dupNameParams = [firstNameCheck, lastNameCheck, vendorId];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         dupNameQuery += 'client_id = ?';
         dupNameParams.push(clientId);
       } else {
@@ -281,7 +281,7 @@ router.put('/:id', async (req, res) => {
       const companyCheck = company.trim().toLowerCase();
       let dupCompanyQuery = 'SELECT * FROM vendors WHERE LOWER(company) = ? AND vendor_id != ? AND ';
       let dupCompanyParams = [companyCheck, vendorId];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         dupCompanyQuery += 'client_id = ?';
         dupCompanyParams.push(clientId);
       } else {
@@ -297,7 +297,7 @@ router.put('/:id', async (req, res) => {
       const phoneCheck = phone_1.trim();
       let dupQuery = 'SELECT * FROM vendors WHERE phone_1 = ? AND vendor_id != ? AND ';
       let dupParams = [phoneCheck, vendorId];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         dupQuery += 'client_id = ?';
         dupParams.push(clientId);
       } else {
@@ -320,7 +320,7 @@ router.put('/:id', async (req, res) => {
       finalCity, finalCountry, finalPhone1, finalPhone2, finalEmail,
       vendorId
     ];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       updateQuery += 'client_id = ?';
       updateParams.push(clientId);
     } else {
@@ -350,7 +350,7 @@ router.delete('/:id', async (req, res) => {
 
     let queryExist = 'SELECT * FROM vendors WHERE vendor_id = ? AND ';
     let paramsExist = [vendorId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       queryExist += 'client_id = ?';
       paramsExist.push(clientId);
     } else {
@@ -364,7 +364,7 @@ router.delete('/:id', async (req, res) => {
 
     let deleteQuery = 'DELETE FROM vendors WHERE vendor_id = ? AND ';
     let deleteParams = [vendorId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       deleteQuery += 'client_id = ?';
       deleteParams.push(clientId);
     } else {

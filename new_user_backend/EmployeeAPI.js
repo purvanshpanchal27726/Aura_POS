@@ -95,7 +95,7 @@ router.post('/', async (req, res) => {
     // Check for duplicate phone number
     let queryExisting = 'SELECT user_id FROM users WHERE phone_1 = ? AND ';
     let paramsExisting = [phone];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       queryExisting += 'client_id = ?';
       paramsExisting.push(clientId);
     } else {
@@ -111,7 +111,7 @@ router.post('/', async (req, res) => {
     // Check for duplicate name
     let nameCheckQuery = 'SELECT user_id FROM users WHERE LOWER(first_name) = ? AND LOWER(last_name) = ? AND ';
     let nameCheckParams = [first_name.trim().toLowerCase(), last_name.trim().toLowerCase()];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       nameCheckQuery += 'client_id = ?';
       nameCheckParams.push(clientId);
     } else {
@@ -157,7 +157,7 @@ router.post('/', async (req, res) => {
     // Check if already registered as employee
     let queryExistingEmp = 'SELECT employee_id FROM employees WHERE user_id = ? AND ';
     let paramsExistingEmp = [userId];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       queryExistingEmp += 'client_id = ?';
       paramsExistingEmp.push(clientId);
     } else {
@@ -176,7 +176,7 @@ router.post('/', async (req, res) => {
         WHERE employee_id = ? AND 
       `;
       let updateParams = [designation || null, department || null, salary || 0.0, join_date || null, empId];
-      if (clientId !== null && clientId !== undefined) {
+      if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
         updateQuery += 'client_id = ?';
         updateParams.push(clientId);
       } else {
@@ -353,7 +353,7 @@ router.post('/attendance/status', async (req, res) => {
   try {
     let selectQuery = 'SELECT id FROM attendance WHERE employee_id = ? AND date = ? AND ';
     let selectParams = [employee_id, date];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       selectQuery += 'client_id = ?';
       selectParams.push(clientId);
     } else {
@@ -394,7 +394,7 @@ router.post('/attendance/check-in', async (req, res) => {
   try {
     let selectQuery = 'SELECT id FROM attendance WHERE employee_id = ? AND date = ? AND ';
     let selectParams = [employee_id, targetDate];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       selectQuery += 'client_id = ?';
       selectParams.push(clientId);
     } else {
@@ -435,7 +435,7 @@ router.post('/attendance/check-out', async (req, res) => {
   try {
     let selectQuery = 'SELECT id FROM attendance WHERE employee_id = ? AND date = ? AND ';
     let selectParams = [employee_id, targetDate];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       selectQuery += 'client_id = ?';
       selectParams.push(clientId);
     } else {
