@@ -1079,7 +1079,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // 1. Remove active-screen class and hide ALL screen views
+    // 1. Close any open modal overlays (except loginOverlay if active)
+    const allModals = document.querySelectorAll('.modal-overlay');
+    allModals.forEach(m => {
+      if (m.id !== 'loginOverlay') {
+        m.style.display = 'none';
+        m.classList.remove('open', 'show');
+      }
+    });
+
+    // 2. Remove active-screen class and hide ALL screen views
     const allViews = document.querySelectorAll('.screen-view');
     allViews.forEach(v => {
       v.classList.remove('active-screen');

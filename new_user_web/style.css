@@ -719,6 +719,7 @@ tr:hover td {
 
 /* Modals & Overlays (Glassmorphic) */
 .modal-overlay {
+  display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -726,11 +727,14 @@ tr:hover td {
   height: 100vh;
   background-color: rgba(15, 23, 42, 0.75);
   backdrop-filter: var(--glass-blur);
-  display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 15000 !important;
+  z-index: 15000;
   animation: fadeIn 0.3s ease;
+}
+
+.modal-overlay.open, .modal-overlay.show, .modal-overlay[style*="display: flex"], .modal-overlay[style*="display: block"] {
+  display: flex !important;
 }
 
 .modal-card {
