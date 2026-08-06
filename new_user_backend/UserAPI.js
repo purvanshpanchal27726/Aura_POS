@@ -6,19 +6,37 @@ const db = require('./db');
 
 const router = express.Router();
 
-// Helper to get client_id from headers or query params or user token
+// Helper to get client_id from headers or query params
 function getClientId(req) {
   let cid = req.headers['x-client-id'] || req.query.client_id;
-  if (cid !== undefined && cid !== null && cid !== 'null' && cid !== 'undefined') {
-    if (cid.toString().toLowerCase() === 'all') return null;
-    const parsed = parseInt(cid);
-    return isNaN(parsed) ? (req.user?.client_id || 1) : parsed;
+  if (cid === 'ALL' || cid === 'all' || cid === '0') return 'ALL';
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined' || cid === '') {
+    if (req.user && req.user.client_id !== undefined && req.user.client_id !== null) {
+      cid = req.user.client_id;
+    }
   }
-  return req.user?.client_id || 1;
+  if (cid === 'ALL' || cid === 'all' || cid === '0') return 'ALL';
+  if (cid === undefined || cid === null || cid === 'null' || cid === 'undefined' || cid === '') return null;
+  const parsed = parseInt(cid);
+  return isNaN(parsed) ? null : parsed;
 }
 
+// Helper to check if active user is a Super-Admin
 function checkSuperAdmin(req) {
-  return !req.user || req.user.role_id === 1 || req.user.role_id === 2 || req.user.role_id === '1' || req.user.role_id === '2' || req.user.is_superadmin === 1;
+  if (!req.user) return true;
+  return Boolean(
+    req.user.role_id == 1 ||
+    req.user.role_id == '1' ||
+    req.user.role_id == 2 ||
+    req.user.role_id == '2' ||
+    req.user.is_superadmin == 1 ||
+    req.user.is_superadmin == '1' ||
+    req.user.is_superadmin === true ||
+    req.user.client_id === 0 ||
+    req.user.client_id === '0' ||
+    req.user.client_id === null ||
+    req.user.client_id === undefined
+  );
 }
 
 // Middleware to restrict write operations to Super-Admin (1) and Admin (2)

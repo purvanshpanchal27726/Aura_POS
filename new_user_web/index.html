@@ -327,16 +327,16 @@
       <!-- Screen 1: Dashboard (Default view) -->
       <div id="screenDashboard" class="screen-view">
         <!-- Dashboard Header Welcome Hero Banner -->
-        <div class="saas-hero-banner">
+        <div class="saas-hero-banner" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%) !important; border-radius: 16px; padding: 1.5rem 1.75rem; color: #ffffff !important; margin-bottom: 1.5rem; box-shadow: 0 10px 30px -5px rgba(30, 27, 75, 0.25); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
           <div>
-            <h1 style="font-size: 1.75rem; font-weight: 800; color: #ffffff; margin: 0; display: flex; align-items: center; gap: 0.6rem;">
-              Good morning, <span id="dashUserName">Krinna</span>! 👋
+            <h1 style="font-size: 1.75rem; font-weight: 800; color: #ffffff !important; margin: 0; display: flex; align-items: center; gap: 0.6rem;">
+              Good morning, <span id="dashUserName" style="color: #ffffff !important;">Krinna</span>! 👋
             </h1>
-            <p style="color: #c7d2fe; margin: 0.35rem 0 0 0; font-size: 0.95rem; font-weight: 500;">SaaS Global Operations & Multi-Tenant Control Portal</p>
+            <p style="color: #c7d2fe !important; margin: 0.35rem 0 0 0; font-size: 0.95rem; font-weight: 500;">SaaS Global Operations & Multi-Tenant Control Portal</p>
           </div>
-          <div style="background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); padding: 0.55rem 1.1rem; border-radius: 12px; font-weight: 700; font-size: 0.88rem; color: #ffffff; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
-            <span class="material-icons" style="font-size: 1.1rem; color: #818cf8;">calendar_today</span>
-            <span id="dashCurrentDate">May 24, 2025</span>
+          <div style="background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.25); padding: 0.55rem 1.1rem; border-radius: 12px; font-weight: 700; font-size: 0.88rem; color: #ffffff !important; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+            <span class="material-icons" style="font-size: 1.1rem; color: #a5b4fc;">calendar_today</span>
+            <span id="dashCurrentDate" style="color: #ffffff !important;">May 24, 2025</span>
           </div>
         </div>
 
@@ -345,57 +345,57 @@
           <!-- SaaS KPI Cards -->
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
             <!-- Card 1: Total Active Client Tenants -->
-            <div class="vanshi-kpi-card" id="cardSaasClients" style="cursor: pointer;">
-              <div>
+            <div class="vanshi-kpi-card" id="cardSaasClients" style="cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+              <div style="flex: 1; min-width: 0;">
                 <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.35rem 0;">Active Store Tenants</p>
                 <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);" id="valSaasClientsCount">02 Stores</h2>
                 <span style="font-size: 0.78rem; font-weight: 700; color: #10b981; display: inline-flex; align-items: center; gap: 2px;">
                   <span class="material-icons" style="font-size: 0.9rem;">check_circle</span> All SaaS Tenants Healthy
                 </span>
               </div>
-              <div class="vanshi-icon-circle" style="background: rgba(99, 102, 241, 0.12); color: #6366f1;">
+              <div class="vanshi-icon-circle" style="width: 50px; height: 50px; min-width: 50px; min-height: 50px; border-radius: 14px; background: rgba(99, 102, 241, 0.12); color: #6366f1; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
                 <span class="material-icons">storefront</span>
               </div>
             </div>
 
             <!-- Card 2: Platform Total Sales -->
-            <div class="vanshi-kpi-card" id="cardSaasRevenue">
-              <div>
+            <div class="vanshi-kpi-card" id="cardSaasRevenue" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+              <div style="flex: 1; min-width: 0;">
                 <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.35rem 0;">Global Sales Revenue</p>
                 <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);" id="valSaasRevenue">₹ 1,28,450.00</h2>
                 <span style="font-size: 0.78rem; font-weight: 700; color: #10b981; display: inline-flex; align-items: center; gap: 2px;">
                   <span class="material-icons" style="font-size: 0.9rem;">trending_up</span> Aggregate across tenants
                 </span>
               </div>
-              <div class="vanshi-icon-circle" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
+              <div class="vanshi-icon-circle" style="width: 50px; height: 50px; min-width: 50px; min-height: 50px; border-radius: 14px; background: rgba(16, 185, 129, 0.12); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
                 <span class="material-icons">payments</span>
               </div>
             </div>
 
             <!-- Card 3: System Users -->
-            <div class="vanshi-kpi-card" id="cardSaasUsers">
-              <div>
+            <div class="vanshi-kpi-card" id="cardSaasUsers" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+              <div style="flex: 1; min-width: 0;">
                 <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.35rem 0;">Registered SaaS Users</p>
                 <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);" id="valSaasUsersCount">06 Accounts</h2>
                 <span style="font-size: 0.78rem; font-weight: 700; color: #6366f1; display: inline-flex; align-items: center; gap: 2px;">
                   <span class="material-icons" style="font-size: 0.9rem;">security</span> Full RBAC Enabled
                 </span>
               </div>
-              <div class="vanshi-icon-circle" style="background: rgba(37, 99, 235, 0.12); color: #3b82f6;">
+              <div class="vanshi-icon-circle" style="width: 50px; height: 50px; min-width: 50px; min-height: 50px; border-radius: 14px; background: rgba(37, 99, 235, 0.12); color: #3b82f6; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
                 <span class="material-icons">people</span>
               </div>
             </div>
 
             <!-- Card 4: Software License Status -->
-            <div class="vanshi-kpi-card" id="cardSaasLicense">
-              <div>
+            <div class="vanshi-kpi-card" id="cardSaasLicense" style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+              <div style="flex: 1; min-width: 0;">
                 <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.35rem 0;">Software License</p>
                 <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 0.35rem 0; color: #10b981;" id="valSaasLicenseStatus">Active (AMC Ok)</h2>
                 <span style="font-size: 0.78rem; font-weight: 700; color: #10b981; display: inline-flex; align-items: center; gap: 2px;">
                   <span class="material-icons" style="font-size: 0.9rem;">verified</span> Valid thru 2030
                 </span>
               </div>
-              <div class="vanshi-icon-circle" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
+              <div class="vanshi-icon-circle" style="width: 50px; height: 50px; min-width: 50px; min-height: 50px; border-radius: 14px; background: rgba(16, 185, 129, 0.12); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
                 <span class="material-icons">vpn_key</span>
               </div>
             </div>
