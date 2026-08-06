@@ -504,7 +504,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'user_listing': {
       viewId: 'screenUserListing',
       menuId: 'menuUserListing',
-      title: 'User Master'
+      title: 'User Master',
+      onTransition: () => fetchUsers()
     },
     'item': {
       viewId: 'screenItem',
@@ -556,7 +557,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'purchase': {
       viewId: 'screenPurchase',
       menuId: 'menuPurchase',
-      title: 'Purchase Management'
+      title: 'Purchase Management',
+      onTransition: () => fetchPurchaseSetup()
     },
     'receipt': {
       viewId: 'screenReceipt',
@@ -1023,6 +1025,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Toggles the active views and highlights drawer option accordingly
   const switchScreen = (screenName) => {
+    window.currentScreenKey = screenName;
     // Clear any print-report-active modal styling that might hide screens
     if (document.body) {
       document.body.classList.remove('print-report-active');
@@ -1343,7 +1346,11 @@ document.addEventListener('DOMContentLoaded', () => {
           if (activeUser) {
             activeUser.client_id = selectedVal === 'ALL' ? null : parseInt(selectedVal);
           }
-          if (currentScreenView) switchScreen(currentScreenView);
+          if (typeof currentScreenKey !== 'undefined' && currentScreenKey) {
+            switchScreen(currentScreenKey);
+          } else {
+            switchScreen('dashboard');
+          }
         });
       }
     } catch (err) {
