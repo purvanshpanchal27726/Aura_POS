@@ -124,8 +124,11 @@
         <div style="display: flex; align-items: center; gap: 0.75rem;">
           <span class="material-icons" style="font-size: 2rem; color: #818cf8;">storefront</span>
           <div>
-            <h2 id="drawerTitleHeader" style="font-size: 1.15rem; font-weight: 800; color: #ffffff; margin: 0;">POS & ERP Studio</h2>
-            <span id="drawerSubtitleHeader" style="font-size: 0.72rem; color: #a5b4fc; font-weight: 500;">Vanshee Infotech</span>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <h2 id="drawerTitleHeader" style="font-size: 1.15rem; font-weight: 800; color: #ffffff; margin: 0;">Super Admin Menu</h2>
+              <span id="drawerSuperBadge" class="badge" style="background: linear-gradient(135deg, #10b981, #059669); color: #ffffff; font-weight: 800; font-size: 0.65rem; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; box-shadow: 0 2px 6px rgba(16,185,129,0.3);">Super Admin</span>
+            </div>
+            <span id="drawerSubtitleHeader" style="font-size: 0.72rem; color: #a5b4fc; font-weight: 500;">SaaS Global Control</span>
           </div>
         </div>
         <span class="material-icons" id="btnCloseDrawer" style="cursor: pointer; color: #94a3b8; font-size: 1.4rem;">close</span>
@@ -323,16 +326,16 @@
     <div class="main-content">
       <!-- Screen 1: Dashboard (Default view) -->
       <div id="screenDashboard" class="screen-view">
-        <!-- Dashboard Header Welcome Banner -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+        <!-- Dashboard Header Welcome Hero Banner -->
+        <div class="saas-hero-banner">
           <div>
-            <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+            <h1 style="font-size: 1.75rem; font-weight: 800; color: #ffffff; margin: 0; display: flex; align-items: center; gap: 0.6rem;">
               Good morning, <span id="dashUserName">Krinna</span>! 👋
             </h1>
-            <p style="color: var(--text-secondary); margin: 0.25rem 0 0 0; font-size: 0.95rem;">Here's what's happening with your business today.</p>
+            <p style="color: #c7d2fe; margin: 0.35rem 0 0 0; font-size: 0.95rem; font-weight: 500;">SaaS Global Operations & Multi-Tenant Control Portal</p>
           </div>
-          <div style="background: var(--card-bg); border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.88rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; box-shadow: var(--shadow-sm);">
-            <span class="material-icons" style="font-size: 1.1rem; color: var(--primary-color);">calendar_today</span>
+          <div style="background: rgba(255, 255, 255, 0.12); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.2); padding: 0.55rem 1.1rem; border-radius: 12px; font-weight: 700; font-size: 0.88rem; color: #ffffff; display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);">
+            <span class="material-icons" style="font-size: 1.1rem; color: #818cf8;">calendar_today</span>
             <span id="dashCurrentDate">May 24, 2025</span>
           </div>
         </div>

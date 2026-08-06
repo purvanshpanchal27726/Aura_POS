@@ -456,6 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Open side drawer menu
   if (btnMenu && sideDrawer) {
     btnMenu.addEventListener('click', () => {
+      updateNavigationMenuForRole();
       sideDrawer.style.display = 'flex';
     });
   }
@@ -1633,21 +1634,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateNavigationMenuForRole = () => {
     const titleHeader = document.getElementById('drawerTitleHeader');
     const subtitleHeader = document.getElementById('drawerSubtitleHeader');
+    const superBadge = document.getElementById('drawerSuperBadge');
     const appBarSelector = document.getElementById('appBarClientSelectorContainer');
 
-    const isSuper = activeUser && (activeUser.role_id == 1 || activeUser.is_superadmin == 1);
-    const isAdmin = activeUser && (activeUser.role_id == 2 || (activeUser.role_name || '').toLowerCase().includes('admin'));
+    const isSuper = Boolean(activeUser && (
+      activeUser.role_id == 1 || 
+      activeUser.role_id == '1' || 
+      activeUser.is_superadmin == 1 || 
+      activeUser.is_superadmin == '1' || 
+      activeUser.is_superadmin === true || 
+      (activeUser.role_name || '').toLowerCase().includes('super')
+    ));
+
+    const isAdmin = Boolean(activeUser && (
+      activeUser.role_id == 2 || 
+      activeUser.role_id == '2' || 
+      (activeUser.role_name || '').toLowerCase().includes('admin')
+    ));
 
     if (titleHeader) {
       if (isSuper) {
-        titleHeader.textContent = 'Super Admin Portal';
+        titleHeader.textContent = 'Super Admin Menu';
         if (subtitleHeader) subtitleHeader.textContent = 'SaaS Global Control';
+        if (superBadge) superBadge.style.display = 'inline-block';
       } else if (isAdmin) {
         titleHeader.textContent = 'Client Admin Menu';
         if (subtitleHeader) subtitleHeader.textContent = activeUser.client_name || 'Vanshee POS Enterprise';
+        if (superBadge) superBadge.style.display = 'none';
       } else {
         titleHeader.textContent = `${activeUser.role_name || 'Staff'} Counter`;
         if (subtitleHeader) subtitleHeader.textContent = activeUser.client_name || 'Vanshee POS Enterprise';
+        if (superBadge) superBadge.style.display = 'none';
       }
     }
 
