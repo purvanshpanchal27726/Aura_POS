@@ -802,6 +802,11 @@ db.initDb = async function() {
     } catch (err) {}
 
       try {
+        // Ensure is_superadmin column exists on users table
+        await this.query(`
+          ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superadmin INTEGER DEFAULT 0;
+        `);
+
         // Elevate all admin users to Super-Admin role_id=1 & is_superadmin=1
         await this.query(`
           UPDATE users SET role_id = 1, is_superadmin = 1 
@@ -810,6 +815,16 @@ db.initDb = async function() {
         console.log('[DB Migration] ✅ All Admin users successfully updated to Super-Admin status.');
       } catch (err) {
         console.warn('[DB Migration Warning]', err.message);
+        // Fallback update without is_superadmin column if needed
+        try {
+          await this.query(`
+            UPDATE users SET role_id = 1 
+            WHERE role_id = 2 OR LOWER(username) IN ('admin', 'abc', 'parshav', 'dhruvi', 'krinna', 'kavy');
+          `);
+          console.log('[DB Migration Fallback] ✅ Updated users role_id to 1 (Super-Admin).');
+        } catch (fallbackErr) {
+          console.error('[DB Migration Error]', fallbackErr.message);
+        }
       }
 
     } catch (err) {
