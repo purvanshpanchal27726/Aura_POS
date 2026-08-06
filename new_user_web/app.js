@@ -996,21 +996,29 @@ document.addEventListener('DOMContentLoaded', () => {
       `<option value="${u.user_id}">${u.username} (${u.role_name || 'User'})</option>`
     ).join('');
     
-    if (allUsersList.length > 0) {
+    if (activeUser && activeUser.user_id) {
+      selector.value = activeUser.user_id;
+    } else if (allUsersList.length > 0) {
       activeUser = allUsersList[0];
       applyNavigationPermissions();
-      const opField = document.getElementById('invoiceOperator');
-      if (opField) opField.value = activeUser.username;
     }
+    const opField = document.getElementById('invoiceOperator');
+    if (opField && activeUser) opField.value = activeUser.username;
 
-    selector.addEventListener('change', (e) => {
-      const selectedId = e.target.value;
-      activeUser = allUsersList.find(u => u.user_id == selectedId);
-      applyNavigationPermissions();
-      const opField = document.getElementById('invoiceOperator');
-      if (opField) opField.value = activeUser.username;
-      switchScreen('dashboard');
-    });
+    if (!selector.dataset.bound) {
+      selector.dataset.bound = "true";
+      selector.addEventListener('change', (e) => {
+        const selectedId = e.target.value;
+        const found = allUsersList.find(u => u.user_id == selectedId);
+        if (found) {
+          activeUser = found;
+          localStorage.setItem('pos_active_user', JSON.stringify(activeUser));
+          applyNavigationPermissions();
+          if (opField) opField.value = activeUser.username;
+          switchScreen('dashboard');
+        }
+      });
+    }
   };
 
   // Toggles the active views and highlights drawer option accordingly
