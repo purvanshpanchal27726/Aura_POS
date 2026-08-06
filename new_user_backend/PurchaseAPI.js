@@ -142,11 +142,11 @@ router.get('/', async (req, res) => {
       WHERE 
     `;
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'pm.client_id = ?';
       params.push(clientId);
     } else {
-      query += 'pm.client_id IS NULL';
+      query += '1=1';
     }
     query += ' ORDER BY pm.purchase_id ASC';
 
@@ -179,11 +179,11 @@ router.get('/details/all', async (req, res) => {
       WHERE 
     `;
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'pm.client_id = ?';
       params.push(clientId);
     } else {
-      query += 'pm.client_id IS NULL';
+      query += '1=1';
     }
     query += ' ORDER BY pm.purchase_id DESC, pd.purchase_detail_id ASC';
 

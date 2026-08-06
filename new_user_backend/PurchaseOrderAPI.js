@@ -50,11 +50,11 @@ router.get('/', async (req, res) => {
       WHERE 
     `;
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'po.client_id = ?';
       params.push(clientId);
     } else {
-      query += 'po.client_id IS NULL';
+      query += '1=1';
     }
     query += ' ORDER BY po.po_id DESC';
 
