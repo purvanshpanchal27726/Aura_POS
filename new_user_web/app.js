@@ -1079,14 +1079,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const allViews = document.querySelectorAll('.screen-view');
     allViews.forEach(v => {
       v.classList.remove('active-screen');
-      v.style.display = 'none';
+      v.style.setProperty('display', 'none', 'important');
     });
 
     // 2. Add active-screen class and set display block ONLY on target screen view
     const targetView = document.getElementById(targetConfig.viewId);
     if (targetView) {
       targetView.classList.add('active-screen');
-      targetView.style.display = 'block';
+      targetView.style.setProperty('display', 'block', 'important');
+      targetView.style.visibility = 'visible';
+      targetView.style.opacity = '1';
       activeScreen = targetView.id;
       console.log(`[switchScreen] Screen switched to '${screenName}' (ID: ${targetConfig.viewId})`);
     } else {
