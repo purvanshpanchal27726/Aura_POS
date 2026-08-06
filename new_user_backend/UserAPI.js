@@ -566,5 +566,20 @@ router.delete('/:id', checkWriteAccess, async (req, res) => {
   }
 });
 
+/**
+ * POST /api/users/clone-database
+ * Backs up & clones all tables and data from 'posss' into 'poss-1' (or specified target DB).
+ */
+router.post('/clone-database', async (req, res) => {
+  try {
+    const cloneDb = require('./clone_db');
+    const targetDb = req.body.target_db || 'poss-1';
+    const result = await cloneDb(targetDb);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
 
