@@ -349,6 +349,13 @@ h1, h2, h3, h4, h5, h6 {
   visibility: visible !important;
   opacity: 1 !important;
   min-height: 400px !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.screen-view.active-screen > * {
+  visibility: visible !important;
+  opacity: 1 !important;
 }
 
 .list-section, .card, .form-section {

@@ -1091,8 +1091,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (targetView) {
       targetView.classList.add('active-screen');
       targetView.style.setProperty('display', 'block', 'important');
-      targetView.style.visibility = 'visible';
-      targetView.style.opacity = '1';
+      targetView.style.setProperty('visibility', 'visible', 'important');
+      targetView.style.setProperty('opacity', '1', 'important');
+
+      Array.from(targetView.children).forEach(child => {
+        if (child.style.display === 'none') {
+          child.style.display = '';
+        }
+        child.style.visibility = 'visible';
+        child.style.opacity = '1';
+      });
+
       activeScreen = targetView.id;
       console.log(`[switchScreen] Screen switched to '${screenName}' (ID: ${targetConfig.viewId})`);
     } else {
