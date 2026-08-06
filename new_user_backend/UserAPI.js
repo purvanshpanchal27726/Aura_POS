@@ -513,11 +513,14 @@ router.post('/login', async (req, res) => {
     }
 
     const jwtSecret = process.env.JWT_SECRET || 'mySuperSecretJWTKeyForPOSSystem2026';
+    const isSuperAdminFlag = (user.role_id == 1 || user.role_id == '1' || user.is_superadmin == 1 || user.is_superadmin == '1') ? 1 : 0;
+
     const token = jwt.sign(
       {
         user_id: user.user_id,
         client_id: user.client_id,
-        role_id: user.role_id
+        role_id: user.role_id,
+        is_superadmin: isSuperAdminFlag
       },
       jwtSecret,
       { expiresIn: '24h' }
@@ -531,6 +534,7 @@ router.post('/login', async (req, res) => {
       user: {
         ...user,
         id: user.user_id,
+        is_superadmin: isSuperAdminFlag,
         clientModules: clientModules,
         printerSettings: printerSettings,
         license: licenseInfo

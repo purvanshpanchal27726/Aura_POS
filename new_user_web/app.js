@@ -6,15 +6,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    const activeUserData = localStorage.getItem('pos_active_user');
-    if (activeUserData) {
-      try {
-        const u = JSON.parse(activeUserData);
-        if (u && u.client_id !== undefined && u.client_id !== null) {
-          headers['x-client-id'] = u.client_id;
-        }
-      } catch (e) {}
+    
+    // Dynamically resolve x-client-id header:
+    const selectedCid = localStorage.getItem('pos_active_client_id');
+    if (selectedCid && selectedCid !== 'ALL') {
+      headers['x-client-id'] = selectedCid;
+    } else if (selectedCid === 'ALL') {
+      headers['x-client-id'] = 'ALL';
+    } else {
+      const activeUserData = localStorage.getItem('pos_active_user');
+      if (activeUserData) {
+        try {
+          const u = JSON.parse(activeUserData);
+          const isSuper = u && (u.role_id == 1 || u.role_id == '1' || u.is_superadmin == 1 || u.is_superadmin == '1' || u.is_superadmin === true);
+          if (isSuper) {
+            headers['x-client-id'] = 'ALL';
+          } else if (u && u.client_id !== undefined && u.client_id !== null && u.client_id !== 0) {
+            headers['x-client-id'] = u.client_id;
+          } else {
+            headers['x-client-id'] = 'ALL';
+          }
+        } catch (e) {}
+      }
     }
+
     if (options.body && typeof options.body === 'string' && !headers['Content-Type']) {
       headers['Content-Type'] = 'application/json';
     }
