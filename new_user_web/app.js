@@ -1633,7 +1633,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td>${location}</td>
           <td>${contact}</td>
           <td>
-            <span class="badge badge-light" style="background-color:#f1f5f9; color:#475569; padding: 4px 8px; border-radius: 4px; font-weight: 500;">${user.role_name || 'User'}</span>
+            <span class="badge" style="${(user.role_id == 1 || user.is_superadmin == 1) ? 'background-color:#ecfdf5; color:#047857; font-weight: 600;' : 'background-color:#f1f5f9; color:#475569; font-weight: 500;'} padding: 4px 8px; border-radius: 4px;">${(user.role_id == 1 || user.is_superadmin == 1) ? 'Super Admin' : (user.role_name || 'Admin')}</span>
             ${user.client_name ? `<br><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px;">🏢 ${user.client_name}</span>` : ''}
           </td>
           <td>

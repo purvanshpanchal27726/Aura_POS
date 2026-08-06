@@ -35,13 +35,13 @@ if (process.env.DATABASE_URL) {
   };
 } else {
   // Local development / Remote fallback — use individual PG_* environment variables
-  const pgHost = process.env.PG_HOST || 'dpg-d9pbc8e417fc73dhnfsg-a.singapore-postgres.render.com';
+  const pgHost = process.env.PG_HOST || 'dpg-d952i5uq1p3s73cg5470-a.singapore-postgres.render.com';
   poolConfig = {
     host: pgHost,
     port: parseInt(process.env.PG_PORT || '5432'),
-    user: process.env.PG_USER || 'poss_1_user',
-    password: process.env.PG_PASSWORD || 'XfXpHnm5R6DxTmgac8qtHn13s9aHA1yg',
-    database: process.env.PG_NAME || 'poss_1',
+    user: process.env.PG_USER || 'posss_user',
+    password: process.env.PG_PASSWORD || 'wRR2382SEDvv97U8CjigtT47BGtG5OmR',
+    database: process.env.PG_NAME || 'posss',
     max: 10,
     idleTimeoutMillis: 10000,
     connectionTimeoutMillis: 10000,
