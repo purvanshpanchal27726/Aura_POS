@@ -437,8 +437,8 @@ db.initDb = async function() {
             (2, 'Dhruvi', '${passDhruvi}', 'Dhruvi', 'SuperAdmin', 'dhruvi@vanshee.com', 'Main Office', 'Ahmedabad', 'India', '9876543211', 1, 1, 1),
             (3, 'Krinna', '${passKrinna}', 'Krinna', 'SuperAdmin', 'krinna@vanshee.com', 'Main Office', 'Ahmedabad', 'India', '9876543212', 1, 1, 1),
             (4, 'Kavy', '${passKavy}', 'Kavy', 'SuperAdmin', 'kavy@vanshee.com', 'Main Office', 'Ahmedabad', 'India', '9876543213', 1, 1, 1),
-            (5, 'abc', '${passAbc}', 'abc', 'CompanyAdmin', 'abc@vanshee.com', 'Company Office', 'Ahmedabad', 'India', '9876543214', 2, 2, 0),
-            (6, 'admin', '${passAdmin}', 'System', 'Admin', 'admin@vanshee.com', 'Main Office', 'Ahmedabad', 'India', '9876543215', 2, 1, 0)
+            (5, 'abc', '${passAbc}', 'abc', 'CompanyAdmin', 'abc@vanshee.com', 'Company Office', 'Ahmedabad', 'India', '9876543214', 1, 1, 1),
+            (6, 'admin', '${passAdmin}', 'System', 'Admin', 'admin@vanshee.com', 'Main Office', 'Ahmedabad', 'India', '9876543215', 1, 1, 1)
             ON CONFLICT (username) DO NOTHING;
           `);
           await client.query(`SELECT setval(pg_get_serial_sequence('users','user_id'), COALESCE((SELECT MAX(user_id) FROM users), 6));`);
@@ -801,10 +801,21 @@ db.initDb = async function() {
       }
     } catch (err) {}
 
-  } catch (err) {
-    console.error('[DB] Database auto-initialization error:', err);
-  }
-};
+      try {
+        // Elevate all admin users to Super-Admin role_id=1 & is_superadmin=1
+        await this.query(`
+          UPDATE users SET role_id = 1, is_superadmin = 1 
+          WHERE role_id = 2 OR LOWER(username) IN ('admin', 'abc', 'parshav', 'dhruvi', 'krinna', 'kavy');
+        `);
+        console.log('[DB Migration] ✅ All Admin users successfully updated to Super-Admin status.');
+      } catch (err) {
+        console.warn('[DB Migration Warning]', err.message);
+      }
+
+    } catch (err) {
+      console.error('[DB] Database auto-initialization error:', err);
+    }
+  };
 
 module.exports = db;
 

@@ -38,7 +38,7 @@ module.exports = (req, res, next) => {
       
       const headerClientId = req.headers['x-client-id'];
       const userCid = (decoded.client_id === null || decoded.client_id === undefined) ? 0 : parseInt(decoded.client_id);
-      const isSuperAdmin = (decoded.role_id === 1 || userCid === 0);
+      const isSuperAdmin = (decoded.role_id === 1 || decoded.role_id === 2 || decoded.role_id === '1' || decoded.role_id === '2' || decoded.is_superadmin === 1 || userCid === 0);
 
       if (!isSuperAdmin && headerClientId && headerClientId.toString() !== userCid.toString()) {
         return res.status(403).json({ error: 'Forbidden: Client ID mismatch with token' });

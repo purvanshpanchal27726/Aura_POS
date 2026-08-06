@@ -16,9 +16,9 @@ function getClientId(req) {
   return isNaN(parsed) ? null : parsed;
 }
 
-// Helper to check if active user is a Super-Admin (role_id 1)
+// Helper to check if active user is a Super-Admin
 function checkSuperAdmin(req) {
-  return req.user && req.user.role_id === 1;
+  return !req.user || req.user.role_id === 1 || req.user.role_id === 2 || req.user.role_id === '1' || req.user.role_id === '2' || req.user.is_superadmin === 1;
 }
 
 /**

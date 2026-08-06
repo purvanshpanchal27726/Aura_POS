@@ -720,7 +720,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const configureUserFormState = (userToEdit = null) => {
-    const isSuperAdminUser = activeUser && (activeUser.role_id == 1 || activeUser.role_id === '1') && (!activeUser.client_id || activeUser.client_id === 'null' || activeUser.client_id === 'undefined');
+    const isSuperAdminUser = activeUser && (activeUser.role_id == 1 || activeUser.role_id == 2 || activeUser.role_id === '1' || activeUser.role_id === '2' || activeUser.is_superadmin == 1);
 
     // 1. Role dropdown filtering: Hide Super Admin role for Client Admins
     const selectRole = document.getElementById('user_role_id');

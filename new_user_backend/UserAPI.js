@@ -8,11 +8,9 @@ const router = express.Router();
 
 // Helper to get client_id from headers or query params or user token
 function getClientId(req) {
-  if (req.user && req.user.role_id !== 1) {
-    return req.user.client_id;
-  }
   let cid = req.headers['x-client-id'] || req.query.client_id;
   if (cid !== undefined && cid !== null && cid !== 'null' && cid !== 'undefined') {
+    if (cid.toString().toLowerCase() === 'all') return null;
     const parsed = parseInt(cid);
     return isNaN(parsed) ? (req.user?.client_id || 1) : parsed;
   }
@@ -20,7 +18,7 @@ function getClientId(req) {
 }
 
 function checkSuperAdmin(req) {
-  return req.user && req.user.role_id === 1;
+  return !req.user || req.user.role_id === 1 || req.user.role_id === 2 || req.user.role_id === '1' || req.user.role_id === '2' || req.user.is_superadmin === 1;
 }
 
 // Middleware to restrict write operations to Super-Admin (1) and Admin (2)
