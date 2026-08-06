@@ -41,10 +41,14 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('Session expired or invalid token. Redirecting to login...');
       localStorage.removeItem('pos_auth_token');
       localStorage.removeItem('pos_active_user');
+      activeUser = null;
       const loginOverlay = document.getElementById('loginOverlay');
       if (loginOverlay) loginOverlay.style.display = 'flex';
-      const mainContainer = document.getElementById('mainContainer');
-      if (mainContainer) mainContainer.style.display = 'none';
+      const loginErrorBanner = document.getElementById('loginErrorBanner');
+      if (loginErrorBanner) {
+        loginErrorBanner.textContent = 'Session expired or invalid login. Please log in again.';
+        loginErrorBanner.style.display = 'block';
+      }
     }
     return res;
   };
