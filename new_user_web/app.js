@@ -3439,16 +3439,24 @@ document.addEventListener('DOMContentLoaded', () => {
   
 
   async function fetchVendors() {
+    const tbody = document.getElementById('vendorTableBody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="padding: 2rem; text-align: center;"><span class="material-icons spinner" style="font-size: 24px; vertical-align: middle;">sync</span> Loading vendors...</td></tr>`;
+    }
     try {
       const response = await authFetch(getApiUrl('/api/vendors'));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to fetch vendors');
-        }
-      allVendors = await response.json();
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to fetch vendors');
+      }
+      const resData = await response.json();
+      allVendors = Array.isArray(resData) ? resData : (resData.data && Array.isArray(resData.data) ? resData.data : []);
       renderVendors(allVendors);
     } catch (err) {
-      console.error(err);
+      console.error('[fetchVendors Error]', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color: var(--danger-color); padding: 2rem; text-align: center;"><span class="material-icons" style="vertical-align: middle; margin-right: 4px;">error_outline</span> ${err.message || 'Failed to fetch vendors'}</td></tr>`;
+      }
     }
   };
 
@@ -3456,10 +3464,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let vendorCurrentPage = 1;
 
   function renderVendors(list) {
-    if (!vendorTableBody) return;
+    const tbody = document.getElementById('vendorTableBody') || vendorTableBody;
+    if (!tbody) return;
+    const safeList = Array.isArray(list) ? list : [];
 
     const query = vendorSearchQuery.trim().toLowerCase();
-    const filtered = list.filter(v => {
+    const filtered = safeList.filter(v => {
       const fullName = `${v.first_name || ''} ${v.last_name || ''}`.toLowerCase();
       const company = (v.company || '').toLowerCase();
       const phone = (v.phone_1 || '').toLowerCase();
@@ -4320,35 +4330,46 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnRefreshReceipts = document.getElementById('btnRefreshReceipts');
 
   async function fetchReceipts() {
+    const tbody = document.getElementById('receiptTableBody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="padding: 2rem; text-align: center;"><span class="material-icons spinner" style="font-size: 24px; vertical-align: middle;">sync</span> Loading receipts...</td></tr>`;
+    }
     try {
       const response = await authFetch(getApiUrl('/api/sales'));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to load receipts.');
-        }
-      const list = await response.json();
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to load receipts.');
+      }
+      const resData = await response.json();
+      const list = Array.isArray(resData) ? resData : (resData.data && Array.isArray(resData.data) ? resData.data : []);
       renderReceipts(list);
     } catch (err) {
-      console.error(err);
+      console.error('[fetchReceipts Error]', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color: var(--danger-color); padding: 2rem; text-align: center;"><span class="material-icons" style="vertical-align: middle; margin-right: 4px;">error_outline</span> ${err.message || 'Failed to load receipts.'}</td></tr>`;
+      }
     }
   };
 
   function renderReceipts(list) {
-    if (list.length === 0) {
-      receiptTableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No receipts found.</td></tr>`;
+    const tbody = document.getElementById('receiptTableBody');
+    if (!tbody) return;
+    const safeList = Array.isArray(list) ? list : [];
+    if (safeList.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No receipts found.</td></tr>`;
       return;
     }
-    receiptTableBody.innerHTML = list.map(r => {
-      const dateVal = new Date(r.sales_date);
-      const dateStr = `${dateVal.getDate()}/${dateVal.getMonth()+1}/${dateVal.getFullYear()}`;
+    tbody.innerHTML = safeList.map(r => {
+      const dateVal = r.sales_date ? new Date(r.sales_date) : new Date();
+      const dateStr = !isNaN(dateVal.getTime()) ? `${dateVal.getDate()}/${dateVal.getMonth()+1}/${dateVal.getFullYear()}` : 'N/A';
       return `
         <tr>
-          <td><strong>${r.sales_bill_no}</strong></td>
+          <td><strong>${r.sales_bill_no || 'N/A'}</strong></td>
           <td>${r.customer_name || 'N/A'}</td>
           <td>${dateStr}</td>
-          <td style="text-align: right;">₹${parseFloat(r.gross).toFixed(2)}</td>
-          <td style="text-align: right;">₹${parseFloat(r.tax).toFixed(2)}</td>
-          <td style="text-align: right; font-weight: bold; color: var(--primary-color);">₹${parseFloat(r.total).toFixed(2)}</td>
+          <td style="text-align: right;">₹${parseFloat(r.gross || 0).toFixed(2)}</td>
+          <td style="text-align: right;">₹${parseFloat(r.tax || 0).toFixed(2)}</td>
+          <td style="text-align: right; font-weight: bold; color: var(--primary-color);">₹${parseFloat(r.total || 0).toFixed(2)}</td>
           <td style="text-align: center;">
             <div class="table-actions" style="justify-content: center; gap: 6px;">
               <button type="button" class="btn btn-secondary btn-view-receipt" data-id="${r.sales_id}" style="padding: 0.25rem 0.75rem; font-size: 0.8rem;">View Bill</button>
@@ -4644,30 +4665,37 @@ document.addEventListener('DOMContentLoaded', () => {
   // allRoles hoisted to top
 
   async function fetchRoles() {
+    const tbody = document.getElementById('roleTableBody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="padding: 2rem; text-align: center;"><span class="material-icons spinner" style="font-size: 24px; vertical-align: middle;">sync</span> Loading roles...</td></tr>`;
+    }
     try {
       const response = await authFetch(getApiUrl('/api/roles'));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to fetch roles');
-        }
-      allRoles = await response.json();
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to fetch roles');
+      }
+      const resData = await response.json();
+      allRoles = Array.isArray(resData) ? resData : (resData.data && Array.isArray(resData.data) ? resData.data : []);
       renderRoles(allRoles);
     } catch (err) {
-      console.error(err);
+      console.error('[fetchRoles Error]', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color: var(--danger-color); padding: 2rem; text-align: center;"><span class="material-icons" style="vertical-align: middle; margin-right: 4px;">error_outline</span> ${err.message || 'Failed to fetch roles'}</td></tr>`;
+      }
     }
   };
 
   function renderRoles(list) {
-    if (list.length === 0) {
-      roleTableBody.innerHTML = `
-        <tr>
-          <td colspan="5" class="empty-state">No roles registered yet.</td>
-        </tr>
-      `;
+    const tbody = document.getElementById('roleTableBody');
+    if (!tbody) return;
+    const safeList = Array.isArray(list) ? list : [];
+    if (safeList.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-state">No roles registered yet.</td></tr>`;
       return;
     }
 
-    roleTableBody.innerHTML = list.map(r => {
+    tbody.innerHTML = safeList.map(r => {
       const statusText = r.active ? 'Active' : 'Inactive';
       const statusClass = r.active ? 'status-active' : 'status-inactive';
       const createdDate = r.created_date ? new Date(r.created_date).toLocaleDateString() : 'N/A';
@@ -7815,53 +7843,67 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await authFetch(getApiUrl('/api/license'));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to load license details.');
-        }
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to load license details.');
+      }
       const data = await response.json();
+      if (!data) return;
       
       // Update UI elements
-      document.getElementById('licValKey').textContent = data.license_key;
+      const keyEl = document.getElementById('licValKey');
+      if (keyEl) keyEl.textContent = data.license_key || 'N/A';
       
-      const valFrom = new Date(data.valid_from);
-      const valTo = new Date(data.valid_to);
-      const amcStart = new Date(data.amc_start_date);
-      const amcEnd = new Date(data.amc_end_date);
-      
-      document.getElementById('licValFrom').textContent = `${valFrom.getDate()}/${valFrom.getMonth()+1}/${valFrom.getFullYear()}`;
-      document.getElementById('licValTo').textContent = `${valTo.getDate()}/${valTo.getMonth()+1}/${valTo.getFullYear()}`;
-      document.getElementById('licAmcValidity').textContent = `${amcStart.getDate()}/${amcStart.getMonth()+1}/${amcStart.getFullYear()} to ${amcEnd.getDate()}/${amcEnd.getMonth()+1}/${amcEnd.getFullYear()}`;
+      const formatDateStr = (dateVal) => {
+        if (!dateVal) return 'N/A';
+        const d = new Date(dateVal);
+        return isNaN(d.getTime()) ? 'N/A' : `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+      };
+
+      const fromEl = document.getElementById('licValFrom');
+      if (fromEl) fromEl.textContent = formatDateStr(data.valid_from);
+
+      const toEl = document.getElementById('licValTo');
+      if (toEl) toEl.textContent = formatDateStr(data.valid_to);
+
+      const amcEl = document.getElementById('licAmcValidity');
+      if (amcEl) amcEl.textContent = `${formatDateStr(data.amc_start_date)} to ${formatDateStr(data.amc_end_date)}`;
       
       const remainingDaysText = document.getElementById('licValDays');
-      remainingDaysText.textContent = `${data.remaining_days} days`;
+      if (remainingDaysText) remainingDaysText.textContent = `${data.remaining_days ?? 0} days`;
       
       const badge = document.getElementById('licenseStatusBadge');
-      badge.textContent = data.status;
-      badge.className = 'license-status-badge'; // reset
+      if (badge) {
+        badge.textContent = data.status || 'Active';
+        badge.className = 'license-status-badge'; // reset
+      }
       
       const alertBanner = document.getElementById('licenseAlertBanner');
       const alertText = document.getElementById('licenseAlertText');
       
       if (data.status === 'Expired') {
-        badge.classList.add('expired');
-        alertBanner.style.display = 'flex';
-        alertBanner.style.background = '#fee2e2';
-        alertBanner.style.color = '#991b1b';
-        alertBanner.style.borderLeft = '5px solid #ef4444';
-        alertText.textContent = `Your software license and AMC support expired on ${valTo.getDate()}/${valTo.getMonth()+1}/${valTo.getFullYear()}. Please renew online instantly to restore all operations.`;
+        if (badge) badge.classList.add('expired');
+        if (alertBanner) {
+          alertBanner.style.display = 'flex';
+          alertBanner.style.background = '#fee2e2';
+          alertBanner.style.color = '#991b1b';
+          alertBanner.style.borderLeft = '5px solid #ef4444';
+        }
+        if (alertText) alertText.textContent = `Your software license and AMC support expired on ${formatDateStr(data.valid_to)}. Please renew online instantly to restore all operations.`;
       } else if (data.status === 'Renewal Due') {
-        badge.classList.add('due');
-        alertBanner.style.display = 'flex';
-        alertBanner.style.background = '#fef3c7';
-        alertBanner.style.color = '#92400e';
-        alertBanner.style.borderLeft = '5px solid #d97706';
-        alertText.textContent = `Your Annual Maintenance Contract is expiring in ${data.remaining_days} days. Please renew online instantly to prevent system disruption.`;
+        if (badge) badge.classList.add('due');
+        if (alertBanner) {
+          alertBanner.style.display = 'flex';
+          alertBanner.style.background = '#fef3c7';
+          alertBanner.style.color = '#92400e';
+          alertBanner.style.borderLeft = '5px solid #d97706';
+        }
+        if (alertText) alertText.textContent = `Your Annual Maintenance Contract is expiring in ${data.remaining_days ?? 0} days. Please renew online instantly to prevent system disruption.`;
       } else {
-        badge.classList.add('active');
-        alertBanner.style.display = 'none';
+        if (badge) badge.classList.add('active');
+        if (alertBanner) alertBanner.style.display = 'none';
       }
     } catch (err) {
-      console.error('License fetch failed:', err);
+      console.error('[fetchLicenseDetails Error]', err);
     }
   };
 
@@ -8877,16 +8919,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- ROOMS MANAGEMENT ---
   async function fetchHotelRooms() {
+    const container = document.getElementById('roomGridContainer');
+    if (container) {
+      container.innerHTML = `<div style="grid-column: 1/-1;" class="empty-state"><span class="material-icons spinner" style="font-size: 24px; vertical-align: middle;">sync</span> Loading hotel rooms...</div>`;
+    }
     try {
       const response = await authFetch(getApiUrl('/api/hotel/rooms'));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to fetch rooms');
-        }
-      allRooms = await response.json();
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to fetch rooms');
+      }
+      const resData = await response.json();
+      allRooms = Array.isArray(resData) ? resData : (resData.data && Array.isArray(resData.data) ? resData.data : []);
       renderHotelRooms();
     } catch (err) {
-      console.error(err);
+      console.error('[fetchHotelRooms Error]', err);
+      if (container) {
+        container.innerHTML = `<div style="grid-column: 1/-1;" class="empty-state" style="color: var(--danger-color);"><span class="material-icons" style="vertical-align: middle; margin-right: 4px;">error_outline</span> ${err.message || 'Failed to fetch rooms'}</div>`;
+      }
     }
   };
 
@@ -8991,13 +9041,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderHotelRooms() {
     const container = document.getElementById('roomGridContainer');
     if (!container) return;
-
-    if (allRooms.length === 0) {
+    const safeList = Array.isArray(allRooms) ? allRooms : [];
+    if (safeList.length === 0) {
       container.innerHTML = `<div style="grid-column: 1/-1;" class="empty-state">No rooms registered yet. Create one above!</div>`;
       return;
     }
 
-    container.innerHTML = allRooms.map((r, idx) => {
+    container.innerHTML = safeList.map((r, idx) => {
       let statusColor = '#10B981'; // Available - Green
       if (r.status === 'occupied') statusColor = '#EF4444'; // Occupied - Red
       else if (r.status === 'dirty') statusColor = '#F59E0B'; // Dirty - Amber
@@ -9117,29 +9167,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- GUESTS REGISTRY ---
   async function fetchHotelGuests() {
+    const tbody = document.getElementById('hotelGuestsTableBody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="padding: 2rem; text-align: center;"><span class="material-icons spinner" style="font-size: 24px; vertical-align: middle;">sync</span> Loading guests...</td></tr>`;
+    }
     try {
       const response = await authFetch(getApiUrl('/api/hotel/guests'));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to fetch guests');
-        }
-      allGuests = await response.json();
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to fetch guests');
+      }
+      const resData = await response.json();
+      allGuests = Array.isArray(resData) ? resData : (resData.data && Array.isArray(resData.data) ? resData.data : []);
       renderHotelGuests();
     } catch (err) {
-      console.error(err);
+      console.error('[fetchHotelGuests Error]', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color: var(--danger-color); padding: 2rem; text-align: center;"><span class="material-icons" style="vertical-align: middle; margin-right: 4px;">error_outline</span> ${err.message || 'Failed to fetch guests'}</td></tr>`;
+      }
     }
   };
 
   function renderHotelGuests() {
     const tbody = document.getElementById('hotelGuestsTableBody');
     if (!tbody) return;
-
-    if (allGuests.length === 0) {
+    const safeList = Array.isArray(allGuests) ? allGuests : [];
+    if (safeList.length === 0) {
       tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No guests registered in system yet.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = allGuests.map((g, idx) => {
+    tbody.innerHTML = safeList.map((g, idx) => {
       const dateVal = new Date(g.created_date || Date.now());
       const dateStr = `${dateVal.getDate()}/${dateVal.getMonth()+1}/${dateVal.getFullYear()}`;
       return `
@@ -9244,29 +9302,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- HOTEL STAY BOOKINGS ---
   async function fetchHotelBookings() {
+    const tbody = document.getElementById('hotelBookingsTableBody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="padding: 2rem; text-align: center;"><span class="material-icons spinner" style="font-size: 24px; vertical-align: middle;">sync</span> Loading stay folios...</td></tr>`;
+    }
     try {
       const response = await authFetch(getApiUrl('/api/hotel/bookings'));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to fetch bookings');
-        }
-      allBookings = await response.json();
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to fetch bookings');
+      }
+      const resData = await response.json();
+      allBookings = Array.isArray(resData) ? resData : (resData.data && Array.isArray(resData.data) ? resData.data : []);
       renderHotelBookings();
     } catch (err) {
-      console.error(err);
+      console.error('[fetchHotelBookings Error]', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="8" class="empty-state" style="color: var(--danger-color); padding: 2rem; text-align: center;"><span class="material-icons" style="vertical-align: middle; margin-right: 4px;">error_outline</span> ${err.message || 'Failed to fetch bookings'}</td></tr>`;
+      }
     }
   };
 
   function renderHotelBookings() {
     const tbody = document.getElementById('hotelBookingsTableBody');
     if (!tbody) return;
-
-    if (allBookings.length === 0) {
+    const safeList = Array.isArray(allBookings) ? allBookings : [];
+    if (safeList.length === 0) {
       tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No stay folios checked-in yet.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = allBookings.map((b, idx) => {
+    tbody.innerHTML = safeList.map((b, idx) => {
       const inDate = new Date(b.check_in_date);
       const inStr = `${inDate.getDate()}/${inDate.getMonth()+1} ${inDate.getHours().toString().padStart(2,'0')}:${inDate.getMinutes().toString().padStart(2,'0')}`;
       
@@ -9601,29 +9667,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- INVENTORY MANAGEMENT ---
   async function fetchInventory() {
+    const tbody = document.getElementById('inventoryTableBody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="9" class="empty-state" style="padding: 2rem; text-align: center;"><span class="material-icons spinner" style="font-size: 24px; vertical-align: middle;">sync</span> Loading stock inventory...</td></tr>`;
+    }
     try {
       const response = await authFetch(getApiUrl('/api/inventory'));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to fetch stock inventory');
-        }
-      allInventory = await response.json();
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to fetch stock inventory');
+      }
+      const resData = await response.json();
+      allInventory = Array.isArray(resData) ? resData : (resData.data && Array.isArray(resData.data) ? resData.data : []);
       renderInventory();
     } catch (err) {
-      console.error(err);
+      console.error('[fetchInventory Error]', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="9" class="empty-state" style="color: var(--danger-color); padding: 2rem; text-align: center;"><span class="material-icons" style="vertical-align: middle; margin-right: 4px;">error_outline</span> ${err.message || 'Failed to fetch stock inventory'}</td></tr>`;
+      }
     }
   };
 
   function renderInventory() {
     const tbody = document.getElementById('inventoryTableBody');
     if (!tbody) return;
-
-    if (allInventory.length === 0) {
+    const safeList = Array.isArray(allInventory) ? allInventory : [];
+    if (safeList.length === 0) {
       tbody.innerHTML = `<tr><td colspan="9" class="empty-state">No items registered in stock inventory yet.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = allInventory.map((i, idx) => {
+    tbody.innerHTML = safeList.map((i, idx) => {
       const current = parseFloat(i.current_stock || 0);
       const minStock = parseFloat(i.min_stock || 0);
       const isLow = current <= minStock;
@@ -9793,29 +9867,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- PURCHASE ORDERS (PO) MANAGEMENT ---
   async function fetchPurchaseOrders() {
+    const tbody = document.getElementById('poTableBody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="padding: 2rem; text-align: center;"><span class="material-icons spinner" style="font-size: 24px; vertical-align: middle;">sync</span> Loading purchase orders...</td></tr>`;
+    }
     try {
       const response = await authFetch(getApiUrl('/api/purchase-orders'));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to fetch purchase orders');
-        }
-      allPOs = await response.json();
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to fetch purchase orders');
+      }
+      const resData = await response.json();
+      allPOs = Array.isArray(resData) ? resData : (resData.data && Array.isArray(resData.data) ? resData.data : []);
       renderPurchaseOrders();
     } catch (err) {
-      console.error(err);
+      console.error('[fetchPurchaseOrders Error]', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-state" style="color: var(--danger-color); padding: 2rem; text-align: center;"><span class="material-icons" style="vertical-align: middle; margin-right: 4px;">error_outline</span> ${err.message || 'Failed to fetch purchase orders'}</td></tr>`;
+      }
     }
   };
 
   function renderPurchaseOrders() {
     const tbody = document.getElementById('poTableBody');
     if (!tbody) return;
-
-    if (allPOs.length === 0) {
+    const safeList = Array.isArray(allPOs) ? allPOs : [];
+    if (safeList.length === 0) {
       tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No Purchase Orders created yet.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = allPOs.map((po, idx) => {
+    tbody.innerHTML = safeList.map((po, idx) => {
       const dateVal = new Date(po.created_date);
       const dateStr = `${dateVal.getDate()}/${dateVal.getMonth()+1}/${dateVal.getFullYear()}`;
       
@@ -10109,29 +10191,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- EMPLOYEE MANAGEMENT ---
   async function fetchEmployees() {
+    const tbody = document.getElementById('employeesTableBody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="9" class="empty-state" style="padding: 2rem; text-align: center;"><span class="material-icons spinner" style="font-size: 24px; vertical-align: middle;">sync</span> Loading employees list...</td></tr>`;
+    }
     try {
       const response = await authFetch(getApiUrl('/api/employees'));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to fetch employees list');
-        }
-      allEmployees = await response.json();
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to fetch employees list');
+      }
+      const resData = await response.json();
+      allEmployees = Array.isArray(resData) ? resData : (resData.data && Array.isArray(resData.data) ? resData.data : []);
       renderEmployees();
     } catch (err) {
-      console.error(err);
+      console.error('[fetchEmployees Error]', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="9" class="empty-state" style="color: var(--danger-color); padding: 2rem; text-align: center;"><span class="material-icons" style="vertical-align: middle; margin-right: 4px;">error_outline</span> ${err.message || 'Failed to fetch employees list'}</td></tr>`;
+      }
     }
   };
 
   function renderEmployees() {
     const tbody = document.getElementById('employeesTableBody');
     if (!tbody) return;
-
-    if (allEmployees.length === 0) {
+    const safeList = Array.isArray(allEmployees) ? allEmployees : [];
+    if (safeList.length === 0) {
       tbody.innerHTML = `<tr><td colspan="9" class="empty-state">No staff employees registered yet.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = allEmployees.map((e, idx) => {
+    tbody.innerHTML = safeList.map((e, idx) => {
       const salaryVal = parseFloat(e.salary || 0);
       const joinStr = e.join_date ? new Date(e.join_date).toLocaleDateString() : 'N/A';
 
@@ -10294,29 +10384,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchAttendance() {
     const date = attendanceDatePicker ? attendanceDatePicker.value : new Date().toISOString().substring(0, 10);
+    const tbody = document.getElementById('attendanceTableBody');
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="padding: 2rem; text-align: center;"><span class="material-icons spinner" style="font-size: 24px; vertical-align: middle;">sync</span> Loading attendance sheet...</td></tr>`;
+    }
     try {
       const response = await authFetch(getApiUrl(`/api/employees/attendance?date=${date}`));
       if (!response.ok) {
-          const errRes = await response.json().catch(() => ({}));
-          throw new Error(errRes.error || errRes.message || 'Failed to load attendance sheet');
-        }
-      allAttendance = await response.json();
+        const errRes = await response.json().catch(() => ({}));
+        throw new Error(errRes.error || errRes.message || 'Failed to load attendance sheet');
+      }
+      const resData = await response.json();
+      allAttendance = Array.isArray(resData) ? resData : (resData.data && Array.isArray(resData.data) ? resData.data : []);
       renderAttendance();
     } catch (err) {
-      console.error(err);
+      console.error('[fetchAttendance Error]', err);
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color: var(--danger-color); padding: 2rem; text-align: center;"><span class="material-icons" style="vertical-align: middle; margin-right: 4px;">error_outline</span> ${err.message || 'Failed to load attendance sheet'}</td></tr>`;
+      }
     }
   };
 
   function renderAttendance() {
     const tbody = document.getElementById('attendanceTableBody');
     if (!tbody) return;
-
-    if (allAttendance.length === 0) {
+    const safeList = Array.isArray(allAttendance) ? allAttendance : [];
+    if (safeList.length === 0) {
       tbody.innerHTML = `<tr><td colspan="6" class="empty-state">No active employees to track attendance for.</td></tr>`;
       return;
     }
 
-    tbody.innerHTML = allAttendance.map(att => {
+    tbody.innerHTML = safeList.map(att => {
       const checkInStr = att.check_in || '--:--';
       const checkOutStr = att.check_out || '--:--';
 
