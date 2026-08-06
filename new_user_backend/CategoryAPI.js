@@ -97,15 +97,11 @@ router.get('/', async (req, res) => {
 
     let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY category_id ASC)::integer AS display_id FROM categories WHERE ';
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
-      if (isSuperAdmin) {
-        query += '1=1';
-      } else {
-        query += '1=1';
-      }
+      query += '1=1';
     }
     query += ' ORDER BY category_id ASC';
 

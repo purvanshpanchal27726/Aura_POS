@@ -146,15 +146,11 @@ router.get('/', async (req, res) => {
     
     let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY customer_id ASC)::integer AS display_id FROM customers WHERE ';
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
-      if (isSuperAdmin) {
-        query += '1=1';
-      } else {
-        query += '1=1';
-      }
+      query += '1=1';
     }
     query += ' ORDER BY customer_id ASC';
 
@@ -178,10 +174,10 @@ router.get('/:id', async (req, res) => {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    let query = 'SELECT * FROM customers WHERE customer_id = ? AND ';
+    let query = 'SELECT * FROM customers WHERE customer_id = $1 AND ';
     let params = [customerId];
-    if (clientId !== null && clientId !== undefined) {
-      query += 'client_id = ?';
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
+      query += 'client_id = $2';
       params.push(clientId);
     } else {
       query += '1=1';

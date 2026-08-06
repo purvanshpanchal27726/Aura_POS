@@ -50,7 +50,7 @@ router.get('/rooms', async (req, res) => {
 
     let query = 'SELECT room_id, client_id, room_no, type AS room_type, price_per_night, status, floor, amenities, active, ROW_NUMBER() OVER(ORDER BY room_id ASC)::integer AS display_id FROM hotel_rooms WHERE active = 1 AND ';
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = $1';
       params.push(clientId);
     } else {

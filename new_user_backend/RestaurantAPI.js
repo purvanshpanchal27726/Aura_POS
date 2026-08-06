@@ -50,7 +50,7 @@ router.get('/tables', async (req, res) => {
 
     let query = 'SELECT *, ROW_NUMBER() OVER(ORDER BY table_id ASC)::integer AS display_id FROM restaurant_tables WHERE active = 1 AND ';
     let params = [];
-    if (clientId !== null && clientId !== undefined) {
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
       query += 'client_id = $1';
       params.push(clientId);
     } else {
