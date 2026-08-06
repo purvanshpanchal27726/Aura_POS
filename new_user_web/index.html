@@ -74,6 +74,14 @@
       <kbd style="background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.1rem 0.4rem; font-size: 0.7rem; font-weight: bold; color: var(--text-secondary); margin-left: 0.5rem;">Ctrl K</kbd>
     </button>
 
+    <!-- Global Client Switcher Dropdown (Super Admin only) -->
+    <div id="appBarClientSelectorContainer" style="display: none; align-items: center; gap: 0.4rem; background: var(--card-bg); border: 1.5px solid var(--primary-color); padding: 0.25rem 0.6rem; border-radius: 8px; margin-right: 0.75rem;">
+      <span class="material-icons" style="font-size: 1.1rem; color: var(--primary-color);">store</span>
+      <select id="appBarClientSelector" style="background: transparent; border: none; font-size: 0.85rem; font-weight: 700; color: var(--text-main); cursor: pointer; outline: none;">
+        <option value="ALL">🏢 All Stores (Global View)</option>
+      </select>
+    </div>
+
     <div class="user-selector-container" id="loggedInUserContainer" style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-main);">
       <span class="material-icons" style="color: var(--primary-color);">account_circle</span>
       <span id="loggedInUsername" style="font-weight: bold; margin-right: 0.5rem; color: var(--text-main);">Guest</span>
@@ -116,8 +124,8 @@
         <div style="display: flex; align-items: center; gap: 0.75rem;">
           <span class="material-icons" style="font-size: 2rem; color: #818cf8;">storefront</span>
           <div>
-            <h2 style="font-size: 1.15rem; font-weight: 800; color: #ffffff; margin: 0;">POS & ERP Studio</h2>
-            <span style="font-size: 0.72rem; color: #a5b4fc; font-weight: 500;">Vanshee Infotech</span>
+            <h2 id="drawerTitleHeader" style="font-size: 1.15rem; font-weight: 800; color: #ffffff; margin: 0;">POS & ERP Studio</h2>
+            <span id="drawerSubtitleHeader" style="font-size: 0.72rem; color: #a5b4fc; font-weight: 500;">Vanshee Infotech</span>
           </div>
         </div>
         <span class="material-icons" id="btnCloseDrawer" style="cursor: pointer; color: #94a3b8; font-size: 1.4rem;">close</span>
@@ -323,12 +331,125 @@
             </h1>
             <p style="color: var(--text-secondary); margin: 0.25rem 0 0 0; font-size: 0.95rem;">Here's what's happening with your business today.</p>
           </div>
-          <div style="background: var(--card-bg); border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: 10px; font-weight: 600; font-size: 0.88rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; box-shadow: var(--shadow-sm);">
+          <div style="background: var(--card-bg); border: 1px solid var(--border-color); padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.88rem; color: var(--text-main); display: flex; align-items: center; gap: 0.5rem; box-shadow: var(--shadow-sm);">
             <span class="material-icons" style="font-size: 1.1rem; color: var(--primary-color);">calendar_today</span>
             <span id="dashCurrentDate">May 24, 2025</span>
           </div>
         </div>
 
+        <!-- Super Admin SaaS Dashboard Container -->
+        <div id="superAdminDashboardContainer" style="display: none; margin-bottom: 1.5rem;">
+          <!-- SaaS KPI Cards -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
+            <!-- Card 1: Total Active Client Tenants -->
+            <div class="vanshi-kpi-card" id="cardSaasClients" style="cursor: pointer;">
+              <div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.35rem 0;">Active Store Tenants</p>
+                <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);" id="valSaasClientsCount">02 Stores</h2>
+                <span style="font-size: 0.78rem; font-weight: 700; color: #10b981; display: inline-flex; align-items: center; gap: 2px;">
+                  <span class="material-icons" style="font-size: 0.9rem;">check_circle</span> All SaaS Tenants Healthy
+                </span>
+              </div>
+              <div class="vanshi-icon-circle" style="background: rgba(99, 102, 241, 0.12); color: #6366f1;">
+                <span class="material-icons">storefront</span>
+              </div>
+            </div>
+
+            <!-- Card 2: Platform Total Sales -->
+            <div class="vanshi-kpi-card" id="cardSaasRevenue">
+              <div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.35rem 0;">Global Sales Revenue</p>
+                <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);" id="valSaasRevenue">₹ 1,28,450.00</h2>
+                <span style="font-size: 0.78rem; font-weight: 700; color: #10b981; display: inline-flex; align-items: center; gap: 2px;">
+                  <span class="material-icons" style="font-size: 0.9rem;">trending_up</span> Aggregate across tenants
+                </span>
+              </div>
+              <div class="vanshi-icon-circle" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
+                <span class="material-icons">payments</span>
+              </div>
+            </div>
+
+            <!-- Card 3: System Users -->
+            <div class="vanshi-kpi-card" id="cardSaasUsers">
+              <div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.35rem 0;">Registered SaaS Users</p>
+                <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 0.35rem 0; color: var(--text-main);" id="valSaasUsersCount">06 Accounts</h2>
+                <span style="font-size: 0.78rem; font-weight: 700; color: #6366f1; display: inline-flex; align-items: center; gap: 2px;">
+                  <span class="material-icons" style="font-size: 0.9rem;">security</span> Full RBAC Enabled
+                </span>
+              </div>
+              <div class="vanshi-icon-circle" style="background: rgba(37, 99, 235, 0.12); color: #3b82f6;">
+                <span class="material-icons">people</span>
+              </div>
+            </div>
+
+            <!-- Card 4: Software License Status -->
+            <div class="vanshi-kpi-card" id="cardSaasLicense">
+              <div>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; margin: 0 0 0.35rem 0;">Software License</p>
+                <h2 style="font-size: 1.6rem; font-weight: 800; margin: 0 0 0.35rem 0; color: #10b981;" id="valSaasLicenseStatus">Active (AMC Ok)</h2>
+                <span style="font-size: 0.78rem; font-weight: 700; color: #10b981; display: inline-flex; align-items: center; gap: 2px;">
+                  <span class="material-icons" style="font-size: 0.9rem;">verified</span> Valid thru 2030
+                </span>
+              </div>
+              <div class="vanshi-icon-circle" style="background: rgba(16, 185, 129, 0.12); color: #10b981;">
+                <span class="material-icons">vpn_key</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- SaaS Super-Admin Management Cards -->
+          <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem;">
+            <div class="vanshi-widget-card">
+              <div class="vanshi-widget-header">
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Registered Store Tenants (Clients)</h3>
+                <button type="button" id="btnSaasAddClient" class="btn btn-sm btn-primary">
+                  <span class="material-icons">add_business</span> Register Store Client
+                </button>
+              </div>
+              <div id="saasClientTenantsList">
+                <div style="padding: 1.5rem; text-align: center; color: var(--text-secondary);">
+                  <span class="material-icons spinner">sync</span> Loading store tenants...
+                </div>
+              </div>
+            </div>
+
+            <div class="vanshi-widget-card">
+              <div class="vanshi-widget-header">
+                <h3 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: var(--text-main);">Super Admin Quick Tools</h3>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <div class="vanshi-quick-action" id="saasQuickUserMaster">
+                  <span style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                    <span class="material-icons" style="color: #3b82f6;">people</span> Manage Users & Roles
+                  </span>
+                  <span class="material-icons" style="font-size: 1rem; color: var(--text-secondary);">chevron_right</span>
+                </div>
+                <div class="vanshi-quick-action" id="saasQuickPermissions">
+                  <span style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                    <span class="material-icons" style="color: #10b981;">security</span> Security Permissions
+                  </span>
+                  <span class="material-icons" style="font-size: 1rem; color: var(--text-secondary);">chevron_right</span>
+                </div>
+                <div class="vanshi-quick-action" id="saasQuickBackup">
+                  <span style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                    <span class="material-icons" style="color: #6366f1;">backup</span> Backup & Migration
+                  </span>
+                  <span class="material-icons" style="font-size: 1rem; color: var(--text-secondary);">chevron_right</span>
+                </div>
+                <div class="vanshi-quick-action" id="saasQuickLicense">
+                  <span style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+                    <span class="material-icons" style="color: #f59e0b;">vpn_key</span> System License Portal
+                  </span>
+                  <span class="material-icons" style="font-size: 1rem; color: var(--text-secondary);">chevron_right</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Store Admin Operational Dashboard Container -->
+        <div id="storeAdminDashboardContainer">
         <!-- Row 1: 4 Vanshi POS Metric KPI Cards -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem;">
           <!-- Card 1: Today's Sales -->
@@ -635,8 +756,7 @@
               </div>
             </div>
           </div>
-
-        </div>
+        </div> <!-- End #storeAdminDashboardContainer -->
       </div>
 
       <!-- Screen 2: User Listing -->

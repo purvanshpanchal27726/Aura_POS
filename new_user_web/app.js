@@ -1294,8 +1294,84 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  const populateAppBarClientSelector = async () => {
+    const selector = document.getElementById('appBarClientSelector');
+    if (!selector) return;
+
+    try {
+      const response = await authFetch(getApiUrl('/api/clients'));
+      if (!response.ok) return;
+      const clients = await response.json();
+      if (!Array.isArray(clients)) return;
+
+      const activeCid = localStorage.getItem('pos_active_client_id') || 'ALL';
+
+      selector.innerHTML = `<option value="ALL">🏢 All Stores (Global View)</option>` + 
+        clients.map(c => `<option value="${c.client_id}">🏪 ${c.name}</option>`).join('');
+
+      selector.value = activeCid;
+
+      if (!selector.dataset.bound) {
+        selector.dataset.bound = "true";
+        selector.addEventListener('change', (e) => {
+          const selectedVal = e.target.value;
+          localStorage.setItem('pos_active_client_id', selectedVal);
+          if (activeUser) {
+            activeUser.client_id = selectedVal === 'ALL' ? null : parseInt(selectedVal);
+          }
+          if (currentScreenView) switchScreen(currentScreenView);
+        });
+      }
+    } catch (err) {
+      console.warn('Populate client selector error:', err);
+    }
+  };
+
   async function fetchDashboardStats() {
     try {
+      const superContainer = document.getElementById('superAdminDashboardContainer');
+      const storeContainer = document.getElementById('storeAdminDashboardContainer');
+
+      const isSuper = activeUser && (activeUser.role_id == 1 || activeUser.is_superadmin == 1);
+
+      if (isSuper) {
+        if (superContainer) superContainer.style.display = 'block';
+        if (storeContainer) storeContainer.style.display = 'block'; // Also show store metrics below
+
+        // Load SaaS platform stats
+        try {
+          const clientRes = await authFetch(getApiUrl('/api/clients'));
+          if (clientRes.ok) {
+            const clients = await clientRes.ok ? await clientRes.json() : [];
+            if (Array.isArray(clients)) {
+              const countEl = document.getElementById('valSaasClientsCount');
+              if (countEl) countEl.textContent = `${clients.length} Store${clients.length === 1 ? '' : 's'}`;
+
+              const listEl = document.getElementById('saasClientTenantsList');
+              if (listEl) {
+                listEl.innerHTML = clients.map(c => `
+                  <div class="vanshi-list-item">
+                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                      <div class="vanshi-thumb-box" style="background: rgba(99, 102, 241, 0.12); color: #6366f1;">🏢</div>
+                      <div>
+                        <strong style="font-size: 0.9rem; color: var(--text-main); display: block;">${c.name}</strong>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">${c.email || 'N/A'} · ${c.phone || 'N/A'}</span>
+                      </div>
+                    </div>
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #10b981; font-weight: 700; font-size: 0.78rem; padding: 4px 10px; border-radius: 6px;">Active</span>
+                  </div>
+                `).join('');
+              }
+            }
+          }
+        } catch (sErr) {
+          console.warn('SaaS Stats fetch warning:', sErr);
+        }
+      } else {
+        if (superContainer) superContainer.style.display = 'none';
+        if (storeContainer) storeContainer.style.display = 'block';
+      }
+
       const response = await authFetch(getApiUrl('/api/dashboard/stats'));
       if (!response.ok) {
         const errRes = await response.json().catch(() => ({}));
@@ -1536,9 +1612,49 @@ document.addEventListener('DOMContentLoaded', () => {
     const linkTx = document.getElementById('linkTransactionsViewAll');
     const linkTop = document.getElementById('linkTopSellingViewAll');
 
-    if (linkLowStock) linkLowStock.addEventListener('click', (e) => { e.preventDefault(); switchScreen('inventory'); });
-    if (linkTx) linkTx.addEventListener('click', (e) => { e.preventDefault(); switchScreen('receipt'); });
-    if (linkTop) linkTop.addEventListener('click', (e) => { e.preventDefault(); switchScreen('reports'); });
+    // Super Admin Quick SaaS Action Tiles
+    const btnSaasAddClient = document.getElementById('btnSaasAddClient');
+    const saasUser = document.getElementById('saasQuickUserMaster');
+    const saasPerm = document.getElementById('saasQuickPermissions');
+    const saasBackup = document.getElementById('saasQuickBackup');
+    const saasLicense = document.getElementById('saasQuickLicense');
+
+    if (btnSaasAddClient) btnSaasAddClient.addEventListener('click', () => switchScreen('clients'));
+    if (saasUser) saasUser.addEventListener('click', () => switchScreen('user_listing'));
+    if (saasPerm) saasPerm.addEventListener('click', () => switchScreen('role_listing'));
+    if (saasBackup) saasBackup.addEventListener('click', () => {
+      switchScreen('settings');
+      const tabBackup = document.getElementById('tabHeaderBackupRestore');
+      if (tabBackup) tabBackup.click();
+    });
+    if (saasLicense) saasLicense.addEventListener('click', () => switchScreen('license'));
+  };
+
+  const updateNavigationMenuForRole = () => {
+    const titleHeader = document.getElementById('drawerTitleHeader');
+    const subtitleHeader = document.getElementById('drawerSubtitleHeader');
+    const appBarSelector = document.getElementById('appBarClientSelectorContainer');
+
+    const isSuper = activeUser && (activeUser.role_id == 1 || activeUser.is_superadmin == 1);
+    const isAdmin = activeUser && (activeUser.role_id == 2 || (activeUser.role_name || '').toLowerCase().includes('admin'));
+
+    if (titleHeader) {
+      if (isSuper) {
+        titleHeader.textContent = 'Super Admin Portal';
+        if (subtitleHeader) subtitleHeader.textContent = 'SaaS Global Control';
+      } else if (isAdmin) {
+        titleHeader.textContent = 'Client Admin Menu';
+        if (subtitleHeader) subtitleHeader.textContent = activeUser.client_name || 'Vanshee POS Enterprise';
+      } else {
+        titleHeader.textContent = `${activeUser.role_name || 'Staff'} Counter`;
+        if (subtitleHeader) subtitleHeader.textContent = activeUser.client_name || 'Vanshee POS Enterprise';
+      }
+    }
+
+    if (appBarSelector) {
+      appBarSelector.style.display = isSuper ? 'flex' : 'none';
+      if (isSuper) populateAppBarClientSelector();
+    }
   };
 
   bindCardClicks();
@@ -5192,6 +5308,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (loginOverlay) loginOverlay.style.display = 'none';
       if (loggedInUsername) loggedInUsername.textContent = (activeUser && activeUser.username) ? activeUser.username : 'User';
+      updateNavigationMenuForRole();
       
       // Load app stats and data safely
       fetchPermissionsAndUsers().catch(e => console.warn('Permissions fetch warning:', e));
