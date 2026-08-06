@@ -58,8 +58,16 @@ app.use((req, res, next) => {
 // Protect all stateful api endpoints under /api
 app.use('/api', authMiddleware);
 
-// Serve static frontend files
-app.use(express.static(path.join(__dirname, '../new_user_web')));
+// Serve static frontend files with no-cache headers to prevent stale browser caching
+app.use(express.static(path.join(__dirname, '../new_user_web'), {
+  setHeaders: (res, filepath) => {
+    if (filepath.endsWith('.html') || filepath.endsWith('.js') || filepath.endsWith('.css')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/Images', express.static(path.join(__dirname, 'Images')));
 

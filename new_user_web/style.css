@@ -885,8 +885,8 @@ tr:hover td {
 
 .pos-workspace {
   display: grid;
-  grid-template-columns: minmax(350px, 1fr) minmax(450px, 1.8fr) 180px;
-  gap: 1.5rem;
+  grid-template-columns: minmax(320px, 1fr) minmax(400px, 1.5fr);
+  gap: 1.25rem;
   flex: 1;
   min-height: 0;
 }
