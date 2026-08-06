@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS Frontend Unit Testing Dashboard (Indian POV)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent-green: #10b981;
+      --accent-red: #ef4444;
+      --accent-blue: #6366f1;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      margin: 0;
+      padding: 2rem;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.5rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn-run {
+      background: var(--accent-blue);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .btn-run:hover {
+      background: #4f46e5;
+    }
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 2rem;
+      font-weight: 800;
+      font-family: 'Outfit', sans-serif;
+    }
+    .stat-lbl {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .test-list {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .test-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .test-row:last-child {
+      border-bottom: none;
+    }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .badge-passed {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--accent-green);
+    }
+    .badge-failed {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--accent-red);
+    }
+    .badge-pending {
+      background: rgba(148, 163, 184, 0.2);
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1><span class="material-icons" style="color: var(--accent-green);">verified_user</span> POS Frontend Unit Testing Suite</h1>
+      <button class="btn-run" id="btnRunTests">
+        <span class="material-icons">play_arrow</span> Run Unit Tests
+      </button>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-val" id="statTotal">0</div>
+        <div class="stat-lbl">Total Tests</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: var(--accent-green);" id="statPassed">0</div>
+        <div class="stat-lbl">Passed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: var(--accent-red);" id="statFailed">0</div>
+        <div class="stat-lbl">Failed</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" style="color: var(--accent-blue);" id="statPassRate">0%</div>
+        <div class="stat-lbl">Pass Rate</div>
+      </div>
+    </div>
+
+    <div class="test-list" id="testResultsList">
+      <div style="padding: 2rem; text-align: center; color: var(--text-muted);">
+        Click <strong>Run Unit Tests</strong> to execute positive, negative, false, wrong, and edge-case test cases.
+      </div>
+    </div>
+  </div>
+
+  <script src="test_frontend.js"></script>
+  <script>
+    const btnRun = document.getElementById('btnRunTests');
+    const statTotal = document.getElementById('statTotal');
+    const statPassed = document.getElementById('statPassed');
+    const statFailed = document.getElementById('statFailed');
+    const statPassRate = document.getElementById('statPassRate');
+    const testResultsList = document.getElementById('testResultsList');
+
+    async function executeSuite() {
+      btnRun.disabled = true;
+      btnRun.innerHTML = '<span class="material-icons" style="animation: spin 1s linear infinite;">autorenew</span> Running...';
+
+      const results = await window.POSFrontendTestSuite.runAll();
+
+      statTotal.textContent = results.total;
+      statPassed.textContent = results.passed;
+      statFailed.textContent = results.failed;
+      const rate = results.total > 0 ? Math.round((results.passed / results.total) * 100) : 0;
+      statPassRate.textContent = `${rate}%`;
+
+      testResultsList.innerHTML = results.details.map(d => `
+        <div class="test-row">
+          <div>
+            <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">${d.category}</div>
+            <div style="font-weight:600; margin-top:2px;">${d.name}</div>
+            ${d.error ? `<div style="color:var(--accent-red); font-size:0.82rem; margin-top:4px;">❌ Error: ${d.error}</div>` : ''}
+          </div>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <span style="font-size:0.8rem; color:var(--text-muted); font-family:monospace;">${d.duration}</span>
+            <span class="badge badge-${d.status.toLowerCase()}">${d.status}</span>
+          </div>
+        </div>
+      `).join('');
+
+      btnRun.disabled = false;
+      btnRun.innerHTML = '<span class="material-icons">play_arrow</span> Re-run Unit Tests';
+    }
+
+    btnRun.addEventListener('click', executeSuite);
+    // Auto execute on page load
+    window.addEventListener('DOMContentLoaded', executeSuite);
+  </script>
+</body>
+</html>

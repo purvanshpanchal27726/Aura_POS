@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vanshee POS - Advanced Point of Sale Dashboard</title>
   <meta name="description" content="Manage inventory, customers, vendors, sales billing, purchases, and advanced reporting with Vanshee POS System.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -314,6 +317,10 @@
             <li class="drawer-item" id="menuSupport" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
               <span class="material-icons" style="font-size: 1.1rem;">contact_support</span>
               <span>Support & Help</span>
+            </li>
+            <li class="drawer-item" id="menuUnitTests" onclick="window.open('test_runner.html', '_blank')" style="border-radius: 6px; padding: 0.55rem 0.85rem; cursor: pointer; color: #10b981; font-weight: 600;">
+              <span class="material-icons" style="font-size: 1.1rem; color: #10b981;">verified_user</span>
+              <span>Run Unit Tests Dashboard</span>
             </li>
           </ul>
         </li>
@@ -3837,7 +3844,29 @@
 
         </div>
       </section>
+  <!-- Indian UPI Payment QR Modal -->
+  <div id="upiModal" class="modal-overlay" style="display: none; justify-content: center; align-items: center; z-index: 12000; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);">
+    <div class="modal-card" style="max-width: 420px; width: 90%; text-align: center; border-radius: 16px; padding: 2rem; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); position: relative;">
+      <span class="close-modal" id="upiModalClose" onclick="document.getElementById('upiModal').style.display='none'" style="cursor: pointer; position: absolute; right: 1.5rem; top: 1.5rem; font-size: 1.5rem;">&times;</span>
+      <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: #10b981; margin-bottom: 1rem;">
+        <span class="material-icons" style="font-size: 2rem;">qr_code_scanner</span>
+      </div>
+      <h2 style="margin: 0 0 0.5rem 0; font-size: 1.4rem; color: var(--text-main);">Instant UPI QR Payment</h2>
+      <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0 0 1.25rem 0;">Scan using GPay, PhonePe, Paytm or any UPI App</p>
+      
+      <div style="background: white; padding: 1.25rem; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 1rem;">
+        <img id="upiQrCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3Dvanshee%40upi%26pn%3DVanshee%2520POS" alt="UPI QR Code" style="width: 180px; height: 180px; display: block;">
+      </div>
+
+      <div style="background: var(--input-bg); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 700; color: var(--primary-color); font-size: 1.1rem; margin-bottom: 1.25rem;">
+        Amount: <span id="upiModalAmount">₹0.00</span>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; justify-content: center;">
+        <button type="button" class="btn btn-primary" onclick="document.getElementById('upiModal').style.display='none'" style="flex: 1; padding: 0.65rem; border-radius: 8px; font-weight: 700;">Confirm Payment Received</button>
+      </div>
     </div>
+  </div>
 
   <div id="toastContainer" style="z-index: 99999 !important; position: fixed;"></div>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>

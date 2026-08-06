@@ -317,7 +317,20 @@ document.addEventListener('DOMContentLoaded', () => {
   initRealtimeSSE();
 
 
-  const money = (value) => `Rs.${(parseFloat(value || 0)).toFixed(2)}`;
+  const money = (value) => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return '₹0.00';
+    const isNegative = num < 0;
+    const absVal = Math.abs(num);
+    const parts = absVal.toFixed(2).split('.');
+    let lastThree = parts[0].slice(-3);
+    const otherNumbers = parts[0].slice(0, -3);
+    if (otherNumbers !== '') {
+      lastThree = ',' + lastThree;
+    }
+    const formattedInt = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
+    return (isNegative ? '-₹' : '₹') + formattedInt + '.' + parts[1];
+  };
 
   const getItemImageSrc = (item, preferred = 'thumb') => {
     if (!item) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300';
@@ -780,11 +793,18 @@ document.addEventListener('DOMContentLoaded', () => {
     options = options || {};
     options.headers = options.headers || {};
     const token = localStorage.getItem('pos_auth_token');
-    if (token) {
+    if (token && !options.headers['Authorization']) {
       options.headers['Authorization'] = 'Bearer ' + token;
     }
-    if (activeUser && activeUser.client_id) {
-      options.headers['x-client-id'] = activeUser.client_id.toString();
+    // Only set x-client-id if NOT already set by authFetch
+    if (!options.headers['x-client-id']) {
+      const isSuper = activeUser && (activeUser.role_id == 1 || activeUser.is_superadmin == 1 || activeUser.is_superadmin === true);
+      if (isSuper) {
+        const selectedCid = localStorage.getItem('pos_active_client_id');
+        options.headers['x-client-id'] = (selectedCid && selectedCid !== 'ALL') ? selectedCid : 'ALL';
+      } else if (activeUser && activeUser.client_id) {
+        options.headers['x-client-id'] = activeUser.client_id.toString();
+      }
     }
     return originalFetch(url, options);
   };
@@ -1055,11 +1075,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // 1. Remove active-screen class and reset inline display styles on ALL screen views
+    // 1. Remove active-screen class and hide ALL screen views
     const allViews = document.querySelectorAll('.screen-view');
     allViews.forEach(v => {
       v.classList.remove('active-screen');
-      v.style.display = '';
+      v.style.display = 'none';
     });
 
     // 2. Add active-screen class and set display block ONLY on target screen view
@@ -10801,6 +10821,28 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  window.openUpiModal = function(amount) {
+    const upiModal = document.getElementById('upiModal');
+    const upiModalAmount = document.getElementById('upiModalAmount');
+    const upiQrCodeImg = document.getElementById('upiQrCodeImg');
+    const num = parseFloat(amount) || 0;
+    if (upiModalAmount) upiModalAmount.textContent = money(num);
+    const upiUrl = `upi://pay?pa=vanshee@upi&pn=Vanshee%20POS&am=${num.toFixed(2)}&cu=INR`;
+    if (upiQrCodeImg) {
+      upiQrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`;
+    }
+    if (upiModal) upiModal.style.display = 'flex';
+  };
+
+  window.shareWhatsAppInvoice = function(billNo, phone, netAmount) {
+    const cleanPhone = (phone || '').toString().replace(/[^0-9]/g, '');
+    const msg = `Hello! Thank you for shopping with us. Your invoice *${billNo}* for total amount *${money(netAmount)}* has been generated. Have a great day!`;
+    const waUrl = cleanPhone.length >= 10 
+      ? `https://wa.me/91${cleanPhone.slice(-10)}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
+  };
 
   window.fetchLicenseDetails = fetchLicenseDetails;
 
