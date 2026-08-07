@@ -3976,11 +3976,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const salesItemSelect = document.getElementById('salesItemSelect');
       if (salesItemSelect) {
         salesItemSelect.innerHTML = '<option value="">-- Choose Item from List --</option>' + 
-          availableItems.map(i => `<option value="${i.item_id}">${i.name} - Rs.${i.sell_price || i.unit_price || 0}</option>`).join('');
+          availableItems.map(i => `<option value="${i.item_id}">${i.name || i.item_name} - Rs.${parseFloat(i.sales_price || i.sell_price || i.price || 0).toFixed(2)}</option>`).join('');
       }
       if (adderItem) {
         adderItem.innerHTML = '<option value="">-- Choose Item from List --</option>' + 
-          availableItems.map(i => `<option value="${i.item_id}">${i.name} - Rs.${i.sell_price || i.unit_price || 0}</option>`).join('');
+          availableItems.map(i => `<option value="${i.item_id}">${i.name || i.item_name} - Rs.${parseFloat(i.sales_price || i.sell_price || i.price || 0).toFixed(2)}</option>`).join('');
       }
       renderSalesCategories(); 
       renderSalesCatalog();
