@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS users (
     email_2 VARCHAR(255),
     role_id INT,
     client_id INT,
+    is_superadmin SMALLINT DEFAULT 0,
     created_by VARCHAR(255) DEFAULT 'System',
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (role_id) REFERENCES roles(role_id) ON DELETE SET NULL ON UPDATE CASCADE,
@@ -285,6 +286,8 @@ INSERT INTO role_permissions (role_id, module_id, allowed) VALUES
 (3,1,0),(3,2,1),(3,3,1),(3,4,0),(3,5,1),(3,6,1),(3,7,1),(3,8,0),(3,9,0),(3,10,0),
 (4,1,0),(4,2,0),(4,3,0),(4,4,0),(4,5,1),(4,6,1),(4,7,0),(4,8,0),(4,9,0),(4,10,0)
 ON CONFLICT (role_id, module_id) DO NOTHING;
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superadmin SMALLINT DEFAULT 0;
 
 INSERT INTO users (user_id, username, password, first_name, middle_name, last_name, address_1, address_2, address_3, city, country, phone_1, phone_2, email_1, email_2, role_id, client_id, is_superadmin, created_by) VALUES
 (1,'Dhruvi','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Dhruvi','','Patel','Admin Office 1','','','Ahmedabad','India','9876543210','','dhruvi@vanshee.com','',1,1,1,'System'),
