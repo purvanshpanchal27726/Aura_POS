@@ -543,6 +543,10 @@ db.initDb = async function() {
       // 2. Incremental column migrations & fixes
       try {
         await this.query(`ALTER TABLE units ADD COLUMN IF NOT EXISTS short_code VARCHAR(50);`);
+        await this.query(`
+          ALTER TABLE taxes ADD COLUMN IF NOT EXISTS tax_name VARCHAR(255);
+          ALTER TABLE taxes ADD COLUMN IF NOT EXISTS rate DECIMAL(5,2) DEFAULT 0.00;
+        `);
         await this.query(`ALTER TABLE sales_master ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';`);
         await this.query(`
           ALTER TABLE items ADD COLUMN IF NOT EXISTS pos_item SMALLINT DEFAULT 0;

@@ -160,7 +160,9 @@ CREATE TABLE IF NOT EXISTS taxes (
     tax_id SERIAL PRIMARY KEY,
     client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
+    tax_name VARCHAR(255),
     percentage DECIMAL(5,2) NOT NULL DEFAULT 0.00,
+    rate DECIMAL(5,2) DEFAULT 0.00,
     active SMALLINT DEFAULT 1,
     created_by VARCHAR(255) DEFAULT 'System',
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
