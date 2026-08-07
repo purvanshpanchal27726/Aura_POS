@@ -5,9 +5,9 @@ const fs = require('fs');
 // Load Render-specific environment variables if running on Render
 if (process.env.RENDER === 'true') {
   const renderEnvPath = path.join(__dirname, '.env.render');
-  if (fs.existsSync(renderEnvPath)) {
+  if (fs.existsSync(renderEnvPath) && !process.env.DATABASE_URL) {
     require('dotenv').config({ path: renderEnvPath });
-  } else {
+  } else if (!process.env.DATABASE_URL) {
     require('dotenv').config();
   }
 } else {

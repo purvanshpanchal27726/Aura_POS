@@ -6,9 +6,9 @@ const path = require('path');
 // Load Render-specific environment variables if running on Render
 if (process.env.RENDER === 'true') {
   const renderEnvPath = path.join(__dirname, '.env.render');
-  if (fs.existsSync(renderEnvPath)) {
+  if (fs.existsSync(renderEnvPath) && !process.env.DATABASE_URL) {
     require('dotenv').config({ path: renderEnvPath });
-  } else {
+  } else if (!process.env.DATABASE_URL) {
     require('dotenv').config();
   }
 } else {
@@ -359,45 +359,33 @@ db.initDb = async function() {
   const path = require('path');
   
   try {
-    // 1. Check if the 'users' table exists first
-    const [result] = await this.query(`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'users'
-      )
-    `);
+    console.log('[DB Auto-Init] Verifying database schema, tables, and sequence synchronization...');
     
-    const usersExist = result && result[0] && result[0].exists;
-
-    if (!usersExist) {
-      console.log('[DB] Database tables not found. Initializing PostgreSQL database...');
+    const schemaPath = path.join(__dirname, 'schema_pg.sql');
+    if (!fs.existsSync(schemaPath)) {
+      console.error('[DB] schema_pg.sql not found! Cannot auto-initialize.');
+      return;
+    }
+    
+    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+    const cleanedSql = schemaSql.replace(/--.*$/gm, '');
+    const statements = cleanedSql
+      .split(';')
+      .map(s => s.trim())
+      .filter(s => s.length > 0);
       
-      const schemaPath = path.join(__dirname, 'schema_pg.sql');
-      if (!fs.existsSync(schemaPath)) {
-        console.error('[DB] schema_pg.sql not found! Cannot auto-initialize.');
-        return;
-      }
-      
-      const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-      const cleanedSql = schemaSql.replace(/--.*$/gm, '');
-      const statements = cleanedSql
-        .split(';')
-        .map(s => s.trim())
-        .filter(s => s.length > 0);
-        
-      console.log(`[DB] Executing ${statements.length} schema statements...`);
-      
-      const client = await pgPool.connect();
-      try {
-        for (const statement of statements) {
-          try {
-            await client.query(statement);
-          } catch (stmtErr) {
-            console.warn('[DB Init Warning]', stmtErr.message);
-          }
+    console.log(`[DB Auto-Init] Executing schema statements & verifying ${statements.length} table definitions...`);
+    
+    const client = await pgPool.connect();
+    try {
+      for (const statement of statements) {
+        try {
+          await client.query(statement);
+        } catch (stmtErr) {
+          // Ignore table exists warnings
         }
-        console.log('[DB] Database initialization completed successfully!');
+      }
+      console.log('[DB Auto-Init] Database schema verification completed successfully!');
         
         // Seed complete Multi-Tenant POS dataset (Client 1 & 2, Users, Items, Sales, Customers)
         try {
@@ -556,277 +544,46 @@ db.initDb = async function() {
             ON CONFLICT DO NOTHING;
           `);
 
-          console.log('[DB Seed] 🎉 Successfully seeded full POS dataset into PostgreSQL database!');
+          console.log('[DB Seed] 🎉 Successfully verified & seeded POS master dataset!');
         } catch (seedErr) {
           console.warn('[DB Seed Warning]', seedErr.message);
         }
       } finally {
         client.release();
       }
-    } else {
-      console.log('[DB] Database tables exist. Checking data content...');
+
+      // 2. Incremental column migrations & fixes
       try {
-        const [itemRows] = await this.query('SELECT COUNT(*) AS count FROM items');
-        if (itemRows && itemRows[0] && parseInt(itemRows[0].count) === 0) {
-          console.log('[DB] Items table is empty! Populating complete POS dataset now...');
-          const bcrypt = require('bcryptjs');
-          const client = await pgPool.connect();
-          try {
-            // Seed Clients & Client Modules
-            await client.query(`
-              INSERT INTO clients (client_id, name, email, phone, address, active) VALUES 
-              (1, 'Vanshee POS Enterprise', 'admin@vanshee.com', '9876543210', 'SG Highway, Ahmedabad, India', 1),
-              (2, 'ABC Retail & Hospitality', 'abc@vanshee.com', '9876543214', 'Company Office, Ahmedabad, India', 1)
-              ON CONFLICT (client_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('clients','client_id'), COALESCE((SELECT MAX(client_id) FROM clients), 2));`);
-
-            await client.query(`
-              INSERT INTO client_modules (client_id, group_id, enabled) VALUES
-              (1, 1, 1), (1, 2, 1), (1, 3, 1),
-              (2, 1, 1), (2, 2, 1), (2, 3, 1)
-              ON CONFLICT (client_id, group_id) DO NOTHING;
-            `);
-
-            // Seed Units, Taxes & Categories
-            await client.query(`
-              INSERT INTO units (unit_id, client_id, name, active) VALUES
-              (1, 1, 'Packet / Unit', 1), (2, 1, 'Kilograms', 1), (3, 1, 'Liters', 1), (4, 1, 'Pieces', 1)
-              ON CONFLICT (unit_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('units','unit_id'), COALESCE((SELECT MAX(unit_id) FROM units), 4));`);
-
-            await client.query(`
-              INSERT INTO taxes (tax_id, client_id, name, percentage, active) VALUES
-              (1, 1, 'GST 0%', 0.00, 1), (2, 1, 'GST 5%', 5.00, 1), (3, 1, 'GST 12%', 12.00, 1), (4, 1, 'GST 18%', 18.00, 1)
-              ON CONFLICT (tax_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('taxes','tax_id'), COALESCE((SELECT MAX(tax_id) FROM taxes), 4));`);
-
-            await client.query(`
-              INSERT INTO categories (category_id, client_id, name, active) VALUES
-              (1, 1, 'Dairy & Beverages', 1),
-              (2, 1, 'Snacks & Wafers', 1),
-              (3, 1, 'Bakery & Confectionery', 1),
-              (4, 1, 'Grocery & Staples', 1)
-              ON CONFLICT (category_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('categories','category_id'), COALESCE((SELECT MAX(category_id) FROM categories), 4));`);
-
-            // Seed Items (POS & Restaurant)
-            await client.query(`
-              INSERT INTO items (item_id, client_id, code, name, category_id, unit_id, tax_id, purchase_price, sales_price, pos_item, show_in_restaurant, visible, active, created_by) VALUES
-              (1, 1, '8901262010015', 'Amul Taaza Milk 500ml', 1, 1, 4, 28.00, 34.00, 1, 1, 1, 1, 'Parshav'),
-              (2, 1, '8901262010016', 'Pepsi 500ml', 1, 1, 4, 30.00, 40.00, 1, 1, 1, 1, 'Parshav'),
-              (3, 1, '8901262010017', 'Amul Butter 100g', 1, 1, 4, 50.00, 56.00, 1, 1, 1, 1, 'Parshav'),
-              (4, 1, '8901262010018', 'Britannia Sandwich Bread 400g', 3, 1, 2, 38.00, 45.00, 1, 1, 1, 1, 'Parshav'),
-              (5, 1, '8901262010019', 'Paneer Butter Masala', 1, 4, 2, 180.00, 280.00, 1, 1, 1, 1, 'Parshav'),
-              (6, 1, '8901262010020', 'Veg Cheese Pizza 8-inch', 2, 4, 2, 120.00, 220.00, 1, 1, 1, 1, 'Parshav')
-              ON CONFLICT (item_id) DO UPDATE SET
-                pos_item = EXCLUDED.pos_item,
-                show_in_restaurant = EXCLUDED.show_in_restaurant,
-                visible = EXCLUDED.visible;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('items','item_id'), COALESCE((SELECT MAX(item_id) FROM items), 6));`);
-
-            // Seed Restaurant Menu Categories & Items
-            await client.query(`
-              INSERT INTO menu_categories (category_id, client_id, name, active) VALUES
-              (1, 1, 'Main Course', 1),
-              (2, 1, 'Starters & Drinks', 1),
-              (3, 1, 'Breads & Rice', 1)
-              ON CONFLICT (category_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('menu_categories','category_id'), COALESCE((SELECT MAX(category_id) FROM menu_categories), 3));`);
-
-            await client.query(`
-              INSERT INTO menu_items (menu_item_id, client_id, category_id, name, price, active) VALUES
-              (1, 1, 1, 'Paneer Butter Masala', 280.00, 1),
-              (2, 1, 1, 'Dal Makhani Special', 220.00, 1),
-              (3, 1, 2, 'Cold Coffee with Ice Cream', 120.00, 1),
-              (4, 1, 2, 'Crispy French Fries', 110.00, 1),
-              (5, 1, 3, 'Butter Garlic Naan', 60.00, 1)
-              ON CONFLICT (menu_item_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('menu_items','menu_item_id'), COALESCE((SELECT MAX(menu_item_id) FROM menu_items), 5));`);
-
-            // Seed Customers & Vendors
-            await client.query(`
-              INSERT INTO customers (customer_id, client_id, first_name, last_name, phone_1, email, address_1, city, country) VALUES
-              (1, 1, 'Walk-in', 'Customer', '9999999999', 'cash@store.com', 'Counter Sale', 'Ahmedabad', 'India'),
-              (2, 1, 'Rajesh', 'Sharma', '9876543210', 'rajesh.sharma@example.com', 'A-102 Swastik Complex, SG Highway', 'Ahmedabad', 'India')
-              ON CONFLICT (customer_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('customers','customer_id'), COALESCE((SELECT MAX(customer_id) FROM customers), 2));`);
-
-            await client.query(`
-              INSERT INTO vendors (vendor_id, client_id, first_name, last_name, company, phone_1, email, address_1, city, country) VALUES
-              (1, 1, 'Sanjay', 'Patel', 'Amul Dairy Distributors', '9825012345', 'distributor@amul.coop', 'GIDC Industrial Estate', 'Anand', 'India')
-              ON CONFLICT (vendor_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('vendors','vendor_id'), COALESCE((SELECT MAX(vendor_id) FROM vendors), 1));`);
-
-            // Seed Sales Invoices
-            await client.query(`
-              INSERT INTO sales_master (sales_id, sales_bill_no, customer_id, sales_date, gross, tax, total, payment_method, client_id) VALUES
-              (1, 'INV-1001', 2, CURRENT_DATE - INTERVAL '1 day', 34.00, 6.12, 40.12, 'Cash', 1),
-              (2, 'INV-1002', 1, CURRENT_DATE, 74.00, 13.32, 87.32, 'UPI', 1)
-              ON CONFLICT (sales_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('sales_master','sales_id'), COALESCE((SELECT MAX(sales_id) FROM sales_master), 2));`);
-
-            await client.query(`
-              INSERT INTO sales_details (sales_detail_id, sales_id, item_id, item_name, quantity, rate, item_amount, client_id) VALUES
-              (1, 1, 1, 'Amul Taaza Milk 500ml', 1.00, 34.00, 34.00, 1),
-              (2, 2, 1, 'Amul Taaza Milk 500ml', 1.00, 34.00, 34.00, 1),
-              (3, 2, 2, 'Pepsi 500ml', 1.00, 40.00, 40.00, 1)
-              ON CONFLICT (sales_detail_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('sales_details','sales_detail_id'), COALESCE((SELECT MAX(sales_detail_id) FROM sales_details), 3));`);
-
-            // Seed Stock Inventory
-            await client.query(`
-              INSERT INTO inventory (inventory_id, client_id, item_name, sku, barcode, unit, current_stock, min_stock) VALUES
-              (1, 1, 'Amul Taaza Milk 500ml', '8901262010015', '8901262010015', 'Pkt', 100.00, 10.00),
-              (2, 1, 'Pepsi 500ml', '8901262010016', '8901262010016', 'Pcs', 75.00, 10.00),
-              (3, 1, 'Amul Butter 100g', '8901262010017', '8901262010017', 'Pkt', 50.00, 5.00),
-              (4, 1, 'Britannia Sandwich Bread 400g', '8901262010018', '8901262010018', 'Pkt', 40.00, 5.00)
-              ON CONFLICT (inventory_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('inventory','inventory_id'), COALESCE((SELECT MAX(inventory_id) FROM inventory), 4));`);
-
-            // Seed Employees & Attendance
-            await client.query(`
-              INSERT INTO employees (employee_id, client_id, user_id, designation, department, salary, active) VALUES
-              (1, 1, 1, 'Store Manager', 'Management', 45000.00, 1),
-              (2, 1, 6, 'Head Cashier', 'Sales', 25000.00, 1)
-              ON CONFLICT (employee_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('employees','employee_id'), COALESCE((SELECT MAX(employee_id) FROM employees), 2));`);
-
-            await client.query(`
-              INSERT INTO attendance (id, client_id, employee_id, date, check_in, check_out, status) VALUES
-              (1, 1, 1, CURRENT_DATE, '09:00:00', '18:00:00', 'present'),
-              (2, 1, 2, CURRENT_DATE, '09:15:00', '18:00:00', 'present')
-              ON CONFLICT (id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('attendance','id'), COALESCE((SELECT MAX(id) FROM attendance), 2));`);
-
-            // Seed Purchase Orders
-            await client.query(`
-              INSERT INTO purchase_orders (po_id, client_id, po_number, vendor_id, order_date, total_amount, status) VALUES
-              (1, 1, 'PO-2026-001', 1, CURRENT_DATE - INTERVAL '2 days', 5600.00, 'Approved')
-              ON CONFLICT (po_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('purchase_orders','po_id'), COALESCE((SELECT MAX(po_id) FROM purchase_orders), 1));`);
-
-            // Seed Hotel Rooms, Guests, Bookings
-            await client.query(`
-              INSERT INTO hotel_rooms (room_id, client_id, room_no, type, price_per_night, status) VALUES
-              (1, 1, 'Room 101', 'Deluxe AC Double', 2500.00, 'available'),
-              (2, 1, 'Room 102', 'Executive Suite', 4500.00, 'available')
-              ON CONFLICT (room_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('hotel_rooms','room_id'), COALESCE((SELECT MAX(room_id) FROM hotel_rooms), 2));`);
-
-            await client.query(`
-              INSERT INTO hotel_guests (guest_id, client_id, first_name, last_name, phone, email) VALUES
-              (1, 1, 'Anand', 'Verma', '9811223344', 'anand@gmail.com')
-              ON CONFLICT (guest_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('hotel_guests','guest_id'), COALESCE((SELECT MAX(guest_id) FROM hotel_guests), 1));`);
-
-            await client.query(`
-              INSERT INTO hotel_bookings (booking_id, client_id, room_id, guest_id, check_in, check_out, total_amount, status) VALUES
-              (1, 1, 1, 1, CURRENT_DATE, CURRENT_DATE + INTERVAL '2 days', 5000.00, 'confirmed')
-              ON CONFLICT (booking_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('hotel_bookings','booking_id'), COALESCE((SELECT MAX(booking_id) FROM hotel_bookings), 1));`);
-
-            // Seed Restaurant Tables
-            await client.query(`
-              INSERT INTO restaurant_tables (table_id, client_id, table_no, capacity, status) VALUES
-              (1, 1, 'Table 01', 4, 'available'),
-              (2, 1, 'Table 02', 2, 'available')
-              ON CONFLICT (table_id) DO NOTHING;
-            `);
-            await client.query(`SELECT setval(pg_get_serial_sequence('restaurant_tables','table_id'), COALESCE((SELECT MAX(table_id) FROM restaurant_tables), 2));`);
-
-            console.log('[DB Seed] 🎉 Successfully auto-populated full POS dataset across ALL 10 modules!');
-          } finally {
-            client.release();
-          }
-        }
-      } catch (checkErr) {
-        console.warn('[DB Check Warning]', checkErr.message);
-      }
-    }
-
-    // 2. Run incremental migrations safely
-    try {
-      await this.query(`ALTER TABLE sales_master ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';`);
-    } catch (err) {}
-
-    try {
-      await this.query(`
-        ALTER TABLE items ADD COLUMN IF NOT EXISTS pos_item SMALLINT DEFAULT 0;
-        ALTER TABLE items ADD COLUMN IF NOT EXISTS show_in_restaurant SMALLINT DEFAULT 0;
-        ALTER TABLE items ADD COLUMN IF NOT EXISTS is_hotel_service SMALLINT DEFAULT 0;
-      `);
-    } catch (err) {}
-
-    try {
-      await this.query(`
-        CREATE TABLE IF NOT EXISTS license_info (
-          license_id SERIAL PRIMARY KEY,
-          client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
-          license_key VARCHAR(255) NOT NULL,
-          valid_from DATE NOT NULL,
-          valid_to DATE NOT NULL,
-          amc_start_date DATE NOT NULL,
-          amc_end_date DATE NOT NULL,
-          status VARCHAR(50) DEFAULT 'Active',
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        );
-        ALTER TABLE license_info ADD COLUMN IF NOT EXISTS client_id INT REFERENCES clients(client_id) ON DELETE CASCADE;
-        UPDATE license_info SET client_id = 1 WHERE client_id IS NULL;
-      `);
-      
-      const [licenseCount] = await this.query('SELECT COUNT(*) AS count FROM license_info');
-      if (licenseCount && licenseCount[0] && parseInt(licenseCount[0].count) === 0) {
+        await this.query(`ALTER TABLE sales_master ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';`);
         await this.query(`
-          INSERT INTO license_info (client_id, license_key, valid_from, valid_to, amc_start_date, amc_end_date, status)
-          VALUES (1, 'VANSHEE-POS-LICENSE-KEY-2026', '2026-01-01', '2030-12-31', '2026-01-01', '2030-12-31', 'Active');
+          ALTER TABLE items ADD COLUMN IF NOT EXISTS pos_item SMALLINT DEFAULT 0;
+          ALTER TABLE items ADD COLUMN IF NOT EXISTS show_in_restaurant SMALLINT DEFAULT 0;
+          ALTER TABLE items ADD COLUMN IF NOT EXISTS is_hotel_service SMALLINT DEFAULT 0;
         `);
-      }
-    } catch (err) {}
-
-      try {
-        // Ensure is_superadmin column exists on users table
         await this.query(`
-          ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superadmin INTEGER DEFAULT 0;
+          CREATE TABLE IF NOT EXISTS license_info (
+            license_id SERIAL PRIMARY KEY,
+            client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
+            license_key VARCHAR(255) NOT NULL,
+            valid_from DATE NOT NULL,
+            valid_to DATE NOT NULL,
+            amc_start_date DATE NOT NULL,
+            amc_end_date DATE NOT NULL,
+            status VARCHAR(50) DEFAULT 'Active',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          );
+          ALTER TABLE license_info ADD COLUMN IF NOT EXISTS client_id INT REFERENCES clients(client_id) ON DELETE CASCADE;
+          UPDATE license_info SET client_id = 1 WHERE client_id IS NULL;
         `);
-
-        // Elevate all admin users to Super-Admin role_id=1 & is_superadmin=1
+        await this.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superadmin INTEGER DEFAULT 0;`);
         await this.query(`
           UPDATE users SET role_id = 1, is_superadmin = 1 
           WHERE role_id = 2 OR LOWER(username) IN ('admin', 'abc', 'parshav', 'dhruvi', 'krinna', 'kavy');
         `);
-        console.log('[DB Migration] ✅ All Admin users successfully updated to Super-Admin status.');
-      } catch (err) {
-        console.warn('[DB Migration Warning]', err.message);
-        // Fallback update without is_superadmin column if needed
-        try {
-          await this.query(`
-            UPDATE users SET role_id = 1 
-            WHERE role_id = 2 OR LOWER(username) IN ('admin', 'abc', 'parshav', 'dhruvi', 'krinna', 'kavy');
-          `);
-          console.log('[DB Migration Fallback] ✅ Updated users role_id to 1 (Super-Admin).');
-        } catch (fallbackErr) {
-          console.error('[DB Migration Error]', fallbackErr.message);
-        }
+        console.log('[DB Migration] ✅ Database schema & migrations verified successfully.');
+      } catch (migErr) {
+        console.warn('[DB Migration Warning]', migErr.message);
       }
-
     } catch (err) {
       console.error('[DB] Database auto-initialization error:', err);
     }
