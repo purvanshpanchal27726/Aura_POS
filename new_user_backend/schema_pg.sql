@@ -239,8 +239,10 @@ CREATE TABLE IF NOT EXISTS sales_master (
 -- 12. Sales Details
 CREATE TABLE IF NOT EXISTS sales_details (
     sales_detail_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     sales_id INT NOT NULL,
     item_id INT NOT NULL,
+    item_name VARCHAR(255),
     rate DECIMAL(10,2) NOT NULL,
     quantity DECIMAL(10,2) NOT NULL,
     item_amount DECIMAL(10,2) NOT NULL,
@@ -266,8 +268,10 @@ CREATE TABLE IF NOT EXISTS purchase_master (
 -- 14. Purchase Details
 CREATE TABLE IF NOT EXISTS purchase_details (
     purchase_detail_id SERIAL PRIMARY KEY,
+    client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     purchase_id INT NOT NULL,
     item_id INT NOT NULL,
+    item_name VARCHAR(255),
     rate DECIMAL(10,2) NOT NULL,
     quantity DECIMAL(10,2) NOT NULL,
     item_amount DECIMAL(10,2) NOT NULL,

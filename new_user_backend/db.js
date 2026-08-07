@@ -553,6 +553,12 @@ db.initDb = async function() {
         `);
         await this.query(`ALTER TABLE sales_master ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';`);
         await this.query(`
+          ALTER TABLE sales_details ADD COLUMN IF NOT EXISTS item_name VARCHAR(255);
+          ALTER TABLE sales_details ADD COLUMN IF NOT EXISTS client_id INT;
+          ALTER TABLE purchase_details ADD COLUMN IF NOT EXISTS item_name VARCHAR(255);
+          ALTER TABLE purchase_details ADD COLUMN IF NOT EXISTS client_id INT;
+        `);
+        await this.query(`
           ALTER TABLE items ADD COLUMN IF NOT EXISTS pos_item SMALLINT DEFAULT 0;
           ALTER TABLE items ADD COLUMN IF NOT EXISTS show_in_restaurant SMALLINT DEFAULT 0;
           ALTER TABLE items ADD COLUMN IF NOT EXISTS is_hotel_service SMALLINT DEFAULT 0;
