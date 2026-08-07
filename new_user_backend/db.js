@@ -432,11 +432,11 @@ db.initDb = async function() {
 
           // 5. Taxes
           await client.query(`
-            INSERT INTO taxes (tax_id, client_id, tax_name, rate) VALUES
-            (1, 1, 'GST 0%', 0.00),
-            (2, 1, 'GST 5%', 5.00),
-            (3, 1, 'GST 12%', 12.00),
-            (4, 1, 'GST 18%', 18.00)
+            INSERT INTO taxes (tax_id, client_id, name, tax_name, percentage, rate) VALUES
+            (1, 1, 'GST 0%', 'GST 0%', 0.00, 0.00),
+            (2, 1, 'GST 5%', 'GST 5%', 5.00, 5.00),
+            (3, 1, 'GST 12%', 'GST 12%', 12.00, 12.00),
+            (4, 1, 'GST 18%', 'GST 18%', 18.00, 18.00)
             ON CONFLICT (tax_id) DO NOTHING;
           `);
           await client.query(`SELECT setval(pg_get_serial_sequence('taxes','tax_id'), COALESCE((SELECT MAX(tax_id) FROM taxes), 4));`);
