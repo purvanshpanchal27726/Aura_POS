@@ -149,6 +149,7 @@ CREATE TABLE IF NOT EXISTS units (
     unit_id SERIAL PRIMARY KEY,
     client_id INT REFERENCES clients(client_id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
+    short_code VARCHAR(50),
     active SMALLINT DEFAULT 1,
     created_by VARCHAR(255) DEFAULT 'System',
     created_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
