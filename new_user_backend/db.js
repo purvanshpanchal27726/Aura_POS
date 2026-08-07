@@ -367,6 +367,7 @@ db.initDb = async function() {
       return;
     }
     
+    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
     console.log('[DB Auto-Init] Executing PostgreSQL schema_pg.sql batch initialization...');
     
     const client = await pgPool.connect();
