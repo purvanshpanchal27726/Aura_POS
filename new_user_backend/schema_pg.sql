@@ -260,6 +260,11 @@ CREATE TABLE IF NOT EXISTS purchase_details (
 );
 
 -- SEED DATA
+INSERT INTO clients (client_id, name, email, phone, address, active) VALUES 
+(1, 'Vanshee POS Enterprise', 'admin@vanshee.com', '9876543210', 'SG Highway, Ahmedabad, India', 1),
+(2, 'ABC Retail & Hospitality', 'abc@vanshee.com', '9876543214', 'Company Office, Ahmedabad, India', 1)
+ON CONFLICT (client_id) DO NOTHING;
+
 INSERT INTO roles (role_id, name, active, created_by) VALUES 
 (1, 'Admin', 1, 'System'),
 (2, 'Manager', 1, 'System'),
@@ -268,24 +273,27 @@ INSERT INTO roles (role_id, name, active, created_by) VALUES
 ON CONFLICT (role_id) DO NOTHING;
 
 INSERT INTO modules (module_id, name) VALUES
-(1, 'User'), (2, 'Customer'), (3, 'Item'),
-(4, 'Sales'), (5, 'Purchase'), (6, 'Report')
+(1, 'User Master'), (2, 'Customer Master'), (3, 'Item & Stock'),
+(4, 'Category & Tax'), (5, 'Sales Billing (POS)'), (6, 'Purchase Inward'),
+(7, 'Restaurant POS'), (8, 'Hotel Management'), (9, 'Employee Staff'),
+(10, 'Reports & Analytics')
 ON CONFLICT (module_id) DO NOTHING;
 
 INSERT INTO role_permissions (role_id, module_id, allowed) VALUES
-(1,1,1),(1,2,1),(1,3,1),(1,4,1),(1,5,1),(1,6,1),
-(2,1,1),(2,2,1),(2,3,1),(2,4,1),(2,5,1),(2,6,1),
-(3,1,0),(3,2,0),(3,3,0),(3,4,1),(3,5,1),(3,6,0),
-(4,1,0),(4,2,0),(4,3,0),(4,4,0),(4,5,0),(4,6,1)
+(1,1,1),(1,2,1),(1,3,1),(1,4,1),(1,5,1),(1,6,1),(1,7,1),(1,8,1),(1,9,1),(1,10,1),
+(2,1,1),(2,2,1),(2,3,1),(2,4,1),(2,5,1),(2,6,1),(2,7,1),(2,8,1),(2,9,1),(2,10,1),
+(3,1,0),(3,2,1),(3,3,1),(3,4,0),(3,5,1),(3,6,1),(3,7,1),(3,8,0),(3,9,0),(3,10,0),
+(4,1,0),(4,2,0),(4,3,0),(4,4,0),(4,5,1),(4,6,1),(4,7,0),(4,8,0),(4,9,0),(4,10,0)
 ON CONFLICT (role_id, module_id) DO NOTHING;
 
-INSERT INTO users (user_id, username, password, first_name, middle_name, last_name, address_1, address_2, address_3, city, country, phone_1, phone_2, email_1, email_2, role_id, created_by) VALUES
-(1,'Dhruvi','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Dhruvi','','Patel','Admin Office 1','','','Ahmedabad','India','9876543210','','dhruvi@vanshee.com','',1,'System'),
-(2,'Krinna','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Krinna','','Anandpara','Manager Desk A','','','Surat','India','9876543211','','krinna@vanshee.com','',1,'System'),
-(3,'Parshav','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Parshav','','Shah','Store Counter 1','','','Vadodara','India','9876543212','','parshav@vanshee.com','',1,'System')
+INSERT INTO users (user_id, username, password, first_name, middle_name, last_name, address_1, address_2, address_3, city, country, phone_1, phone_2, email_1, email_2, role_id, client_id, is_superadmin, created_by) VALUES
+(1,'Dhruvi','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Dhruvi','','Patel','Admin Office 1','','','Ahmedabad','India','9876543210','','dhruvi@vanshee.com','',1,1,1,'System'),
+(2,'Krinna','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Krinna','','Anandpara','Manager Desk A','','','Surat','India','9876543211','','krinna@vanshee.com','',1,1,1,'System'),
+(3,'Parshav','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Parshav','','Shah','Store Counter 1','','','Vadodara','India','9876543212','','parshav@vanshee.com','',1,1,1,'System')
 ON CONFLICT (user_id) DO NOTHING;
 
 -- Fix serial sequences after explicit ID inserts (REQUIRED in PostgreSQL)
+SELECT setval(pg_get_serial_sequence('clients','client_id'), COALESCE((SELECT MAX(client_id) FROM clients), 1));
 SELECT setval(pg_get_serial_sequence('roles','role_id'), COALESCE((SELECT MAX(role_id) FROM roles), 1));
 SELECT setval(pg_get_serial_sequence('modules','module_id'), COALESCE((SELECT MAX(module_id) FROM modules), 1));
 SELECT setval(pg_get_serial_sequence('users','user_id'), COALESCE((SELECT MAX(user_id) FROM users), 1));
