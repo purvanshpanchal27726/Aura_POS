@@ -443,11 +443,11 @@ db.initDb = async function() {
 
           // 6. Categories
           await client.query(`
-            INSERT INTO categories (category_id, client_id, category_name, description) VALUES
-            (1, 1, 'Dairy & Beverages', 'Fresh milk, butter, soft drinks, water'),
-            (2, 1, 'Snacks & Wafers', 'Chips, biscuits, namkeen'),
-            (3, 1, 'Bakery & Confectionery', 'Fresh bread, cakes, buns'),
-            (4, 1, 'Grocery & Staples', 'Rice, flour, sugar, oil')
+            INSERT INTO categories (category_id, client_id, name, category_name, description) VALUES
+            (1, 1, 'Dairy & Beverages', 'Dairy & Beverages', 'Fresh milk, butter, soft drinks, water'),
+            (2, 1, 'Snacks & Wafers', 'Snacks & Wafers', 'Chips, biscuits, namkeen'),
+            (3, 1, 'Bakery & Confectionery', 'Bakery & Confectionery', 'Fresh bread, cakes, buns'),
+            (4, 1, 'Grocery & Staples', 'Grocery & Staples', 'Rice, flour, sugar, oil')
             ON CONFLICT (category_id) DO NOTHING;
           `);
           await client.query(`SELECT setval(pg_get_serial_sequence('categories','category_id'), COALESCE((SELECT MAX(category_id) FROM categories), 4));`);
@@ -543,6 +543,10 @@ db.initDb = async function() {
       // 2. Incremental column migrations & fixes
       try {
         await this.query(`ALTER TABLE units ADD COLUMN IF NOT EXISTS short_code VARCHAR(50);`);
+        await this.query(`
+          ALTER TABLE categories ADD COLUMN IF NOT EXISTS category_name VARCHAR(255);
+          ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT;
+        `);
         await this.query(`
           ALTER TABLE taxes ADD COLUMN IF NOT EXISTS tax_name VARCHAR(255);
           ALTER TABLE taxes ADD COLUMN IF NOT EXISTS rate DECIMAL(5,2) DEFAULT 0.00;
