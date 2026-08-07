@@ -454,11 +454,11 @@ db.initDb = async function() {
 
           // 7. Items
           await client.query(`
-            INSERT INTO items (item_id, client_id, item_code, barcode, item_name, category_id, unit_id, cost_price, sales_price, stock_quantity, min_stock, active, pos_item) VALUES
-            (1, 1, '8901262010015', '8901262010015', 'Amul Taaza Milk 500ml', 1, 1, 28.00, 34.00, 100.00, 10.00, 1, 1),
-            (2, 1, '8901262010016', '8901262010016', 'Pepsi 500ml', 1, 1, 30.00, 40.00, 75.00, 10.00, 1, 1),
-            (3, 1, '8901262010017', '8901262010017', 'Amul Butter 100g', 1, 1, 50.00, 56.00, 50.00, 5.00, 1, 1),
-            (4, 1, '8901262010018', '8901262010018', 'Britannia Sandwich Bread 400g', 3, 1, 38.00, 45.00, 40.00, 5.00, 1, 1)
+            INSERT INTO items (item_id, client_id, name, item_name, code, item_code, barcode, category_id, unit_id, cost_price, purchase_price, sales_price, stock_quantity, min_stock, active, pos_item) VALUES
+            (1, 1, 'Amul Taaza Milk 500ml', 'Amul Taaza Milk 500ml', '8901262010015', '8901262010015', '8901262010015', 1, 1, 28.00, 28.00, 34.00, 100.00, 10.00, 1, 1),
+            (2, 1, 'Pepsi 500ml', 'Pepsi 500ml', '8901262010016', '8901262010016', '8901262010016', 1, 1, 30.00, 30.00, 40.00, 75.00, 10.00, 1, 1),
+            (3, 1, 'Amul Butter 100g', 'Amul Butter 100g', '8901262010017', '8901262010017', '8901262010017', 1, 1, 50.00, 50.00, 56.00, 50.00, 5.00, 1, 1),
+            (4, 1, 'Britannia Sandwich Bread 400g', 'Britannia Sandwich Bread 400g', '8901262010018', '8901262010018', '8901262010018', 3, 1, 38.00, 38.00, 45.00, 40.00, 5.00, 1, 1)
             ON CONFLICT (item_id) DO NOTHING;
           `);
           await client.query(`SELECT setval(pg_get_serial_sequence('items','item_id'), COALESCE((SELECT MAX(item_id) FROM items), 4));`);
@@ -556,6 +556,12 @@ db.initDb = async function() {
           ALTER TABLE items ADD COLUMN IF NOT EXISTS pos_item SMALLINT DEFAULT 0;
           ALTER TABLE items ADD COLUMN IF NOT EXISTS show_in_restaurant SMALLINT DEFAULT 0;
           ALTER TABLE items ADD COLUMN IF NOT EXISTS is_hotel_service SMALLINT DEFAULT 0;
+          ALTER TABLE items ADD COLUMN IF NOT EXISTS item_code VARCHAR(100);
+          ALTER TABLE items ADD COLUMN IF NOT EXISTS item_name VARCHAR(255);
+          ALTER TABLE items ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
+          ALTER TABLE items ADD COLUMN IF NOT EXISTS cost_price DECIMAL(10,2) DEFAULT 0.00;
+          ALTER TABLE items ADD COLUMN IF NOT EXISTS stock_quantity DECIMAL(10,2) DEFAULT 0.00;
+          ALTER TABLE items ADD COLUMN IF NOT EXISTS min_stock DECIMAL(10,2) DEFAULT 0.00;
         `);
         await this.query(`
           CREATE TABLE IF NOT EXISTS license_info (
