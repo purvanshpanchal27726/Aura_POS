@@ -367,25 +367,12 @@ db.initDb = async function() {
       return;
     }
     
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-    const cleanedSql = schemaSql.replace(/--.*$/gm, '');
-    const statements = cleanedSql
-      .split(';')
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-      
-    console.log(`[DB Auto-Init] Executing schema statements & verifying ${statements.length} table definitions...`);
+    console.log('[DB Auto-Init] Executing PostgreSQL schema_pg.sql batch initialization...');
     
     const client = await pgPool.connect();
     try {
-      for (const statement of statements) {
-        try {
-          await client.query(statement);
-        } catch (stmtErr) {
-          // Ignore table exists warnings
-        }
-      }
-      console.log('[DB Auto-Init] Database schema verification completed successfully!');
+      await client.query(schemaSql);
+      console.log('[DB Auto-Init] Database schema & table definitions verified successfully!');
         
         // Seed complete Multi-Tenant POS dataset (Client 1 & 2, Users, Items, Sales, Customers)
         try {

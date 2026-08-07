@@ -264,27 +264,31 @@ INSERT INTO roles (role_id, name, active, created_by) VALUES
 (1, 'Admin', 1, 'System'),
 (2, 'Manager', 1, 'System'),
 (3, 'User', 1, 'System'),
-(4, 'Viewer', 1, 'System');
+(4, 'Viewer', 1, 'System')
+ON CONFLICT (role_id) DO NOTHING;
 
 INSERT INTO modules (module_id, name) VALUES
 (1, 'User'), (2, 'Customer'), (3, 'Item'),
-(4, 'Sales'), (5, 'Purchase'), (6, 'Report');
+(4, 'Sales'), (5, 'Purchase'), (6, 'Report')
+ON CONFLICT (module_id) DO NOTHING;
 
 INSERT INTO role_permissions (role_id, module_id, allowed) VALUES
 (1,1,1),(1,2,1),(1,3,1),(1,4,1),(1,5,1),(1,6,1),
 (2,1,1),(2,2,1),(2,3,1),(2,4,1),(2,5,1),(2,6,1),
 (3,1,0),(3,2,0),(3,3,0),(3,4,1),(3,5,1),(3,6,0),
-(4,1,0),(4,2,0),(4,3,0),(4,4,0),(4,5,0),(4,6,1);
+(4,1,0),(4,2,0),(4,3,0),(4,4,0),(4,5,0),(4,6,1)
+ON CONFLICT (role_id, module_id) DO NOTHING;
 
 INSERT INTO users (user_id, username, password, first_name, middle_name, last_name, address_1, address_2, address_3, city, country, phone_1, phone_2, email_1, email_2, role_id, created_by) VALUES
 (1,'Dhruvi','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Dhruvi','','Patel','Admin Office 1','','','Ahmedabad','India','9876543210','','dhruvi@vanshee.com','',1,'System'),
 (2,'Krinna','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Krinna','','Anandpara','Manager Desk A','','','Surat','India','9876543211','','krinna@vanshee.com','',1,'System'),
-(3,'Parshav','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Parshav','','Shah','Store Counter 1','','','Vadodara','India','9876543212','','parshav@vanshee.com','',1,'System');
+(3,'Parshav','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Parshav','','Shah','Store Counter 1','','','Vadodara','India','9876543212','','parshav@vanshee.com','',1,'System')
+ON CONFLICT (user_id) DO NOTHING;
 
 -- Fix serial sequences after explicit ID inserts (REQUIRED in PostgreSQL)
-SELECT setval(pg_get_serial_sequence('roles','role_id'), MAX(role_id)) FROM roles;
-SELECT setval(pg_get_serial_sequence('modules','module_id'), MAX(module_id)) FROM modules;
-SELECT setval(pg_get_serial_sequence('users','user_id'), MAX(user_id)) FROM users;
+SELECT setval(pg_get_serial_sequence('roles','role_id'), COALESCE((SELECT MAX(role_id) FROM roles), 1));
+SELECT setval(pg_get_serial_sequence('modules','module_id'), COALESCE((SELECT MAX(module_id) FROM modules), 1));
+SELECT setval(pg_get_serial_sequence('users','user_id'), COALESCE((SELECT MAX(user_id) FROM users), 1));
 
 -- 15. License Info Table
 CREATE TABLE IF NOT EXISTS license_info (
