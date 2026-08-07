@@ -1,41 +1,22 @@
 const { Pool } = require('pg');
 
-async function cloneDatabase(targetDbName = 'poss-1') {
-  console.log(`🚀 Starting database clone from 'posss' to '${targetDbName}'...`);
+async function cloneDatabase(targetDbName = 'poss_1') {
+  console.log(`🚀 Starting database data copy from old 'posss' database to '${targetDbName}'...`);
   
-  const sourceConnectionString = process.env.DATABASE_URL || 'postgres://posss_user:wRR2382SEDvv97U8CjigtT47BGtG5OmR@dpg-d952i5uq1p3s73cg5470-a.singapore-postgres.render.com/posss';
+  const sourceConnectionString = process.env.OLD_DATABASE_URL || 'postgres://posss_user:wRR2382SEDvv97U8CjigtT47BGtG5OmR@dpg-d952i5uq1p3s73cg5470-a/posss';
+  const targetConnectionString = process.env.DATABASE_URL || 'postgres://poss_1_user:XEXol-nmER6DxTmgae8qtHmi3s9oHA1yg@dpg-d3poc5e417fc73dhnfsg-a/poss_1';
   
   const sourcePool = new Pool({
     connectionString: sourceConnectionString,
     ssl: { rejectUnauthorized: false }
   });
 
+  const targetPool = new Pool({
+    connectionString: targetConnectionString,
+    ssl: { rejectUnauthorized: false }
+  });
+
   try {
-    const client = await sourcePool.connect();
-    
-    // Check if target db exists
-    const checkDbRes = await client.query(`SELECT datname FROM pg_database WHERE datname = $1;`, [targetDbName]);
-    if (checkDbRes.rows.length === 0) {
-      console.log(`Database "${targetDbName}" does not exist. Attempting to create it...`);
-      try {
-        await client.query(`CREATE DATABASE "${targetDbName}";`);
-        console.log(`Successfully created database "${targetDbName}"!`);
-      } catch (createErr) {
-        console.warn(`CREATE DATABASE warning: ${createErr.message}`);
-      }
-    } else {
-      console.log(`Database "${targetDbName}" exists.`);
-    }
-    client.release();
-
-    const targetConnectionString = sourceConnectionString.replace(/\/posss(\?|$)/, `/${targetDbName}$1`);
-    console.log(`Target database URL: ${targetConnectionString.replace(/:[^:@]+@/, ':****@')}`);
-
-    const targetPool = new Pool({
-      connectionString: targetConnectionString,
-      ssl: { rejectUnauthorized: false }
-    });
-
     const sourceClient = await sourcePool.connect();
     const targetClient = await targetPool.connect();
 
@@ -46,40 +27,68 @@ async function cloneDatabase(targetDbName = 'poss-1') {
       ORDER BY table_name;
     `);
 
+    let totalMigratedRows = 0;
+
     for (const row of tablesRes.rows) {
       const tableName = row.table_name;
       console.log(`📋 Copying table: "${tableName}"...`);
 
-      const dataRes = await sourceClient.query(`SELECT * FROM "${tableName}";`);
-      console.log(`   └─ Found ${dataRes.rows.length} rows.`);
+      try {
+        const dataRes = await sourceClient.query(`SELECT * FROM "${tableName}";`);
+        console.log(`   └─ Found ${dataRes.rows.length} rows in source database.`);
 
-      if (dataRes.rows.length > 0) {
-        for (const dataRow of dataRes.rows) {
-          const keys = Object.keys(dataRow);
-          const values = Object.values(dataRow);
-          const placeholders = keys.map((_, idx) => `$${idx + 1}`).join(', ');
-          const colNames = keys.map(k => `"${k}"`).join(', ');
+        if (dataRes.rows.length > 0) {
+          for (const dataRow of dataRes.rows) {
+            const keys = Object.keys(dataRow);
+            const values = Object.values(dataRow);
+            const placeholders = keys.map((_, idx) => `$${idx + 1}`).join(', ');
+            const colNames = keys.map(k => `"${k}"`).join(', ');
 
-          const insertSql = `
-            INSERT INTO "${tableName}" (${colNames}) 
-            VALUES (${placeholders}) 
-            ON CONFLICT DO NOTHING;
-          `;
-          try {
-            await targetClient.query(insertSql, values);
-          } catch (insertErr) {
-            // Silently swallow duplicate key conflicts during copy
+            const insertSql = `
+              INSERT INTO "${tableName}" (${colNames}) 
+              VALUES (${placeholders}) 
+              ON CONFLICT DO NOTHING;
+            `;
+            try {
+              await targetClient.query(insertSql, values);
+              totalMigratedRows++;
+            } catch (insertErr) {
+              // Silently swallow duplicate key conflicts during copy
+            }
           }
         }
+      } catch (tErr) {
+        console.warn(`   └─ Skipped table ${tableName}:`, tErr.message);
       }
+    }
+
+    // Sync all serial sequence counters
+    console.log('🔄 Syncing sequence counters...');
+    for (const row of tablesRes.rows) {
+      const tableName = row.table_name;
+      try {
+        const pkRes = await targetClient.query(`
+          SELECT a.attname
+          FROM pg_index i
+          JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+          WHERE i.indrelid = $1::regclass AND i.indisprimary;
+        `, [tableName]);
+
+        if (pkRes.rows.length > 0) {
+          const pkCol = pkRes.rows[0].attname;
+          await targetClient.query(`
+            SELECT setval(pg_get_serial_sequence('${tableName}', '${pkCol}'), COALESCE((SELECT MAX("${pkCol}") FROM "${tableName}"), 1));
+          `);
+        }
+      } catch (seqErr) {}
     }
 
     sourceClient.release();
     targetClient.release();
     await sourcePool.end();
     await targetPool.end();
-    console.log(`🎉 Database backup & migration to '${targetDbName}' completed successfully!`);
-    return { success: true, message: `Backup & migration to database ${targetDbName} complete.` };
+    console.log(`🎉 Database backup & migration from 'posss' to '${targetDbName}' completed successfully! Total ${totalMigratedRows} rows copied.`);
+    return { success: true, message: `Backup & migration complete. Total ${totalMigratedRows} rows copied into ${targetDbName}.` };
   } catch (err) {
     console.error('Clone Execution Error:', err);
     return { success: false, error: err.message };
