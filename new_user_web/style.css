@@ -353,16 +353,22 @@ h1, h2, h3, h4, h5, h6 {
   z-index: 1 !important;
 }
 
-.screen-view.active-screen,
-.screen-view.active-screen * {
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-.screen-view.active-screen .pos-terminal {
+.screen-view.active-screen > .pos-terminal {
   display: flex !important;
   flex-direction: column !important;
-  min-height: calc(100vh - 110px) !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 500px !important;
+}
+
+.screen-view.active-screen > .card,
+.screen-view.active-screen > .list-section,
+.screen-view.active-screen > .saas-hero-banner,
+.screen-view.active-screen > .form-section {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 300px !important;
 }
 
 .screen-view.active-screen .pos-cart-panel {

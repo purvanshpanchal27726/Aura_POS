@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260808_v40">
+  <link rel="stylesheet" href="style.css?v=20260808_v50">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -773,7 +773,7 @@
       </div>
 
       <!-- Screen 2: User Listing -->
-      <div id="screenUserListing" class="screen-view" style="display: none;">
+      <div id="screenUserListing" class="screen-view">
         <section class="list-section card">
         <div class="list-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <h2>Registered Users</h2>
@@ -820,7 +820,7 @@
     </div> <!-- Closes screenUserListing -->
 
     <!-- Clients Listing Screen -->
-    <div id="screenClients" class="screen-view" style="display: none;">
+    <div id="screenClients" class="screen-view">
       <section class="list-section card">
         <div class="list-header">
           <h2>Client Companies (Tenants)</h2>
@@ -855,7 +855,7 @@
     </div> <!-- Closes screenClients -->
 
     <!-- Screen 3: Customer Listing -->
-    <div id="screenCustomerListing" class="screen-view" style="display: none;">
+    <div id="screenCustomerListing" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <h2>Registered Customers</h2>
@@ -901,7 +901,7 @@
     </div> <!-- Closes screenCustomerListing -->
 
     <!-- Screen 4: Item Master -->
-    <div id="screenItem" class="screen-view" style="display: none;">
+    <div id="screenItem" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <h2>Registered Items</h2>
@@ -947,7 +947,7 @@
 
 
     <!-- Screen 5: Category Master -->
-    <div id="screenCategory" class="screen-view" style="display: none;">
+    <div id="screenCategory" class="screen-view">
       <section class="list-section card">
         <div class="list-header">
           <h2>Registered Categories</h2>
@@ -980,7 +980,7 @@
     </div>
 
     <!-- Screen 6: Unit Master -->
-    <div id="screenUnit" class="screen-view" style="display: none;">
+    <div id="screenUnit" class="screen-view">
       <section class="list-section card">
         <div class="list-header">
           <h2>Registered Units</h2>
@@ -1013,7 +1013,7 @@
     </div> <!-- Closes screenUnit -->
 
     <!-- Screen 7: Tax Master -->
-    <div id="screenTax" class="screen-view" style="display: none;">
+    <div id="screenTax" class="screen-view">
       <section class="list-section card">
         <div class="list-header">
           <h2>Registered Taxes</h2>
@@ -1046,7 +1046,7 @@
     </div>
 
     <!-- Screen 8: Company Master -->
-    <div id="screenCompany" class="screen-view" style="display: none;">
+    <div id="screenCompany" class="screen-view">
       <section class="form-section card" style="max-width: 800px; margin: 0 auto;">
         <h2>Company Master Settings</h2>
         <form id="companyForm">
@@ -1081,7 +1081,7 @@
     </div>
 
     <!-- Screen 9: Sales Management (Sell billing tab) -->
-    <div id="screenSales" class="screen-view" style="display: none;">
+    <div id="screenSales" class="screen-view">
       <div class="pos-terminal">
         <form id="invoiceForm" class="pos-toolbar">
           <div class="form-field" style="flex: 1.5;">
@@ -1191,7 +1191,7 @@
     </div>
 
     <!-- Screen 10: Purchase Management -->
-    <div id="screenPurchase" class="screen-view" style="display: none;">
+    <div id="screenPurchase" class="screen-view">
       <div class="pos-terminal purchase-mode">
         <form id="purchaseForm" class="pos-toolbar">
           <div class="form-field" style="flex: 1.5;">
@@ -1284,7 +1284,7 @@
       </div>
     </div>
     <!-- Screen 11: Reports & Analytics -->
-    <div id="screenReports" class="screen-view" style="display: none;">
+    <div id="screenReports" class="screen-view">
       <!-- Print-Only Report Header -->
       <div class="print-header-only" style="display: none; margin-bottom: 2.5rem; width: 100%;">
         <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 1rem; width: 100%;">
@@ -1484,7 +1484,7 @@
     </div>
 
     <!-- Screen 12: Premium Settings Control Hub -->
-    <div id="screenSettings" class="screen-view" style="display: none;">
+    <div id="screenSettings" class="screen-view">
       <div class="settings-hub-container">
         
         <!-- Header & Title -->
@@ -1799,7 +1799,7 @@
       </div>
 
     <!-- Screen 13: Vendor Listing [NEW] -->
-    <div id="screenVendorListing" class="screen-view" style="display: none;">
+    <div id="screenVendorListing" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <h2>Registered Vendors</h2>
@@ -1846,7 +1846,7 @@
     </div>
 
     <!-- Screen 14: Receipt Management [NEW] -->
-    <div id="screenReceipt" class="screen-view" style="display: none;">
+    <div id="screenReceipt" class="screen-view">
       <section class="list-section card">
         <div class="list-header">
           <h2>Invoices & Receipts</h2>
@@ -1883,7 +1883,7 @@
     </div>
 
     <!-- Screen 15: Role Listing [NEW] -->
-    <div id="screenRoleListing" class="screen-view" style="display: none;">
+    <div id="screenRoleListing" class="screen-view">
       <section class="list-section card">
         <div class="list-header">
           <h2>Registered Roles</h2>
@@ -1916,7 +1916,7 @@
     </div>
 
     <!-- Screen 16: Support & Contact [NEW] -->
-    <div id="screenSupport" class="screen-view" style="display: none;">
+    <div id="screenSupport" class="screen-view">
       <section class="support-section card">
         <div class="support-container">
           <div class="support-header">
@@ -1976,7 +1976,7 @@
     </div>
 
     <!-- Screen 18: Dine-in Tables [NEW] -->
-    <div id="screenRestTables" class="screen-view" style="display: none;">
+    <div id="screenRestTables" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -1994,7 +1994,7 @@
     </div>
 
     <!-- Screen 19: Restaurant Menu Management [NEW] -->
-    <div id="screenRestMenu" class="screen-view" style="display: none;">
+    <div id="screenRestMenu" class="screen-view">
       <div style="display: flex; gap: 1.5rem; margin-bottom: 1.5rem;">
         <button type="button" id="btnTabMenuCategories" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Menu Categories</button>
         <button type="button" id="btnTabMenuItems" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Menu Items</button>
@@ -2058,7 +2058,7 @@
     </div>
 
     <!-- Screen 20: Restaurant Orders & KOT [NEW] -->
-    <div id="screenRestOrders" class="screen-view" style="display: none;">
+    <div id="screenRestOrders" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2090,7 +2090,7 @@
     </div>
 
     <!-- Screen 21: Kitchen Queue / KDS [NEW] -->
-    <div id="screenRestKds" class="screen-view" style="display: none;">
+    <div id="screenRestKds" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">
           <div>
@@ -2113,7 +2113,7 @@
     </div>
 
     <!-- Screen 22: Hotel Rooms [NEW] -->
-    <div id="screenHotelRooms" class="screen-view" style="display: none;">
+    <div id="screenHotelRooms" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2131,7 +2131,7 @@
     </div>
 
     <!-- Screen 23: Hotel Guests [NEW] -->
-    <div id="screenHotelGuests" class="screen-view" style="display: none;">
+    <div id="screenHotelGuests" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2162,7 +2162,7 @@
     </div>
 
     <!-- Screen 24: Room Bookings [NEW] -->
-    <div id="screenHotelBookings" class="screen-view" style="display: none;">
+    <div id="screenHotelBookings" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2194,7 +2194,7 @@
     </div>
 
     <!-- Screen 25: Stock Inventory [NEW] -->
-    <div id="screenInventory" class="screen-view" style="display: none;">
+    <div id="screenInventory" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2233,7 +2233,7 @@
     </div>
 
     <!-- Screen 26: Purchase Orders (PO) [NEW] -->
-    <div id="screenPurchaseOrders" class="screen-view" style="display: none;">
+    <div id="screenPurchaseOrders" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2265,7 +2265,7 @@
     </div>
 
     <!-- Screen 27: Employee Directory [NEW] -->
-    <div id="screenEmployees" class="screen-view" style="display: none;">
+    <div id="screenEmployees" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2299,7 +2299,7 @@
     </div>
 
     <!-- Screen 28: Staff Attendance [NEW] -->
-    <div id="screenAttendance" class="screen-view" style="display: none;">
+    <div id="screenAttendance" class="screen-view">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2331,7 +2331,7 @@
     </div>
 
     <!-- Screen 17: License & AMC Management [NEW] -->
-    <div id="screenLicense" class="screen-view" style="display: none;">
+    <div id="screenLicense" class="screen-view">
       <!-- Validity Status Banner Alert -->
       <div id="licenseAlertBanner" class="license-alert-banner" style="display: none; background: #fee2e2; border-left: 5px solid #ef4444; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; color: #991b1b;">
         <span class="material-icons" style="font-size: 28px; color: #ef4444;">warning</span>
@@ -3779,7 +3779,7 @@
   
 
     <!-- Screen 21: Barcode & Label Printing Studio -->
-    <div id="screenBarcodeStudio" class="screen-view" style="display: none;">
+    <div id="screenBarcodeStudio" class="screen-view">
       <section class="form-section card" style="max-width: 1000px; margin: 0 auto; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg);">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
           <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -3873,6 +3873,6 @@
 
   <div id="toastContainer" style="z-index: 99999 !important; position: fixed;"></div>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <script src="app.js?v=20260808_v40"></script>
+  <script src="app.js?v=20260808_v50"></script>
 </body>
 </html>

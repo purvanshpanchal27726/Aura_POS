@@ -397,16 +397,13 @@ router.post('/login', async (req, res) => {
     const dbPassword = user.password;
     let isMatch = false;
 
-    if (password === dbPassword || password.toLowerCase() === user.username.toLowerCase() || password === 'Admin@123' || password === '123456') {
+    if (password === dbPassword) {
       isMatch = true;
     } else if (dbPassword.startsWith('$2a$') || dbPassword.startsWith('$2b$') || dbPassword.startsWith('$2y$')) {
       isMatch = await bcrypt.compare(password, dbPassword);
-      if (!isMatch && (password.toLowerCase() === user.username.toLowerCase() || password === 'Admin@123' || password === '123456')) {
-        isMatch = true;
-      }
     } else {
       const decrypted = decryptPassword(dbPassword);
-      if (decrypted === password || password.toLowerCase() === user.username.toLowerCase() || password === 'Admin@123' || password === '123456') {
+      if (decrypted === password) {
         isMatch = true;
       }
     }
