@@ -5407,7 +5407,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (amcBanner) amcBanner.style.display = 'none';
       }
 
-      if (loginOverlay) loginOverlay.style.display = 'none';
+      if (loginOverlay) {
+        loginOverlay.style.display = 'none';
+        loginOverlay.classList.remove('open', 'show');
+      }
       if (loggedInUsername) loggedInUsername.textContent = (activeUser && activeUser.username) ? activeUser.username : 'User';
       updateNavigationMenuForRole();
       
@@ -5422,7 +5425,10 @@ document.addEventListener('DOMContentLoaded', () => {
       activeUser = null;
       if (lockoutOverlay) lockoutOverlay.style.display = 'none';
       if (amcBanner) amcBanner.style.display = 'none';
-      if (loginOverlay) loginOverlay.style.display = 'flex';
+      if (loginOverlay) {
+        loginOverlay.style.display = 'flex';
+        loginOverlay.classList.add('open');
+      }
       if (loggedInUsername) loggedInUsername.textContent = 'Guest';
     }
   };

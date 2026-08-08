@@ -744,7 +744,7 @@ tr:hover td {
   animation: fadeIn 0.3s ease;
 }
 
-.modal-overlay.open, .modal-overlay.show, .modal-overlay[style*="display: flex"], .modal-overlay[style*="display: block"] {
+.modal-overlay.open, .modal-overlay.show {
   display: flex !important;
 }
 
