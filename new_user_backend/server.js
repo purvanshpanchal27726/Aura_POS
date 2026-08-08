@@ -58,33 +58,29 @@ app.use((req, res, next) => {
 // Protect all stateful api endpoints under /api
 app.use('/api', authMiddleware);
 
-// Serve Flutter Web application
+// Serve Flutter Web application as default primary application at root '/'
 const flutterWebPath = fs.existsSync(path.join(__dirname, 'flutter_web')) 
   ? path.join(__dirname, 'flutter_web') 
   : path.join(__dirname, '../new_user_flutter/build/web');
 
+// Serve legacy HTML admin web portal at /admin and /web
+const legacyWebPath = path.join(__dirname, '../new_user_web');
+app.use('/admin', express.static(legacyWebPath));
+app.use('/web', express.static(legacyWebPath));
+
 if (fs.existsSync(flutterWebPath)) {
   app.use('/flutter', express.static(flutterWebPath));
   app.use('/app', express.static(flutterWebPath));
-
-  app.use('/app', (req, res) => {
-    res.sendFile(path.join(flutterWebPath, 'index.html'));
-  });
-  app.use('/flutter', (req, res) => {
-    res.sendFile(path.join(flutterWebPath, 'index.html'));
-  });
-}
-
-// Serve static frontend files with no-cache headers to prevent stale browser caching
-app.use(express.static(path.join(__dirname, '../new_user_web'), {
-  setHeaders: (res, filepath) => {
-    if (filepath.endsWith('.html') || filepath.endsWith('.js') || filepath.endsWith('.css')) {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
+  app.use(express.static(flutterWebPath, {
+    setHeaders: (res, filepath) => {
+      if (filepath.endsWith('.html') || filepath.endsWith('.js') || filepath.endsWith('.json')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
     }
-  }
-}));
+  }));
+}
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/Images', express.static(path.join(__dirname, 'Images')));
 
