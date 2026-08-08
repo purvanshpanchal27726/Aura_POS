@@ -374,6 +374,36 @@ db.initDb = async function() {
     try {
       await client.query(schemaSql);
       console.log('[DB Auto-Init] Database schema & table definitions verified successfully!');
+
+      // Run ALTER TABLE column migrations to ensure total column compatibility
+      await client.query(`
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superadmin SMALLINT DEFAULT 0;
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(50);
+        UPDATE users SET email = email_1 WHERE email IS NULL OR email = '';
+        UPDATE users SET phone = phone_1 WHERE phone IS NULL OR phone = '';
+        ALTER TABLE units ADD COLUMN IF NOT EXISTS short_code VARCHAR(50);
+        ALTER TABLE taxes ADD COLUMN IF NOT EXISTS tax_name VARCHAR(255);
+        ALTER TABLE taxes ADD COLUMN IF NOT EXISTS rate DECIMAL(5,2);
+        ALTER TABLE categories ADD COLUMN IF NOT EXISTS category_name VARCHAR(255);
+        ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT;
+        ALTER TABLE items ADD COLUMN IF NOT EXISTS item_code VARCHAR(100);
+        ALTER TABLE items ADD COLUMN IF NOT EXISTS item_name VARCHAR(255);
+        ALTER TABLE items ADD COLUMN IF NOT EXISTS barcode VARCHAR(100);
+        ALTER TABLE items ADD COLUMN IF NOT EXISTS cost_price DECIMAL(15,2);
+        ALTER TABLE items ADD COLUMN IF NOT EXISTS stock_quantity DECIMAL(15,3);
+        ALTER TABLE items ADD COLUMN IF NOT EXISTS min_stock DECIMAL(15,3);
+        ALTER TABLE customers ADD COLUMN IF NOT EXISTS email_1 VARCHAR(255);
+        ALTER TABLE customers ADD COLUMN IF NOT EXISTS company_name VARCHAR(255);
+        ALTER TABLE customers ADD COLUMN IF NOT EXISTS contact_person VARCHAR(255);
+        ALTER TABLE vendors ADD COLUMN IF NOT EXISTS email_1 VARCHAR(255);
+        ALTER TABLE vendors ADD COLUMN IF NOT EXISTS company_name VARCHAR(255);
+        ALTER TABLE vendors ADD COLUMN IF NOT EXISTS contact_person VARCHAR(255);
+        ALTER TABLE sales_details ADD COLUMN IF NOT EXISTS item_name VARCHAR(255);
+        ALTER TABLE sales_details ADD COLUMN IF NOT EXISTS client_id INT;
+        ALTER TABLE purchase_details ADD COLUMN IF NOT EXISTS item_name VARCHAR(255);
+        ALTER TABLE purchase_details ADD COLUMN IF NOT EXISTS client_id INT;
+      `);
         
         // Seed complete Multi-Tenant POS dataset (Client 1 & 2, Users, Items, Sales, Customers)
         try {
