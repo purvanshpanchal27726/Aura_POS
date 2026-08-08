@@ -58,6 +58,16 @@ app.use((req, res, next) => {
 // Protect all stateful api endpoints under /api
 app.use('/api', authMiddleware);
 
+// Serve Flutter Web application
+const flutterWebPath = fs.existsSync(path.join(__dirname, 'flutter_web')) 
+  ? path.join(__dirname, 'flutter_web') 
+  : path.join(__dirname, '../new_user_flutter/build/web');
+
+if (fs.existsSync(flutterWebPath)) {
+  app.use('/flutter', express.static(flutterWebPath));
+  app.use('/app', express.static(flutterWebPath));
+}
+
 // Serve static frontend files with no-cache headers to prevent stale browser caching
 app.use(express.static(path.join(__dirname, '../new_user_web'), {
   setHeaders: (res, filepath) => {
