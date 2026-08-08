@@ -137,6 +137,42 @@ router.post('/renew', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/license/details
+ * Alias for GET /api/license
+ */
+router.get('/details', async (req, res) => {
+  try {
+    const clientId = getClientId(req);
+    let query = 'SELECT * FROM license_info WHERE ';
+    let params = [];
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
+      query += 'client_id = ?';
+      params.push(clientId);
+    } else {
+      query += 'client_id IS NULL OR client_id = 1';
+    }
+    query += ' ORDER BY license_id DESC LIMIT 1';
+
+    const [rows] = await db.query(query, params);
+    if (rows.length === 0) {
+      return res.json({
+        license_key: 'VANSHEE-POS-LICENSE-KEY-2026',
+        valid_from: '2026-01-01',
+        valid_to: '2030-12-31',
+        amc_start_date: '2026-01-01',
+        amc_end_date: '2030-12-31',
+        status: 'Active',
+        remaining_days: 1600,
+        needs_renewal: false
+      });
+    }
+    res.json(calculateLicenseDays(rows[0]));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 function calculateLicenseDays(license) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);

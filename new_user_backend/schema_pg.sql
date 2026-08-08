@@ -379,11 +379,35 @@ CREATE TABLE IF NOT EXISTS menu_categories (
     active       SMALLINT DEFAULT 1
 );
 
+CREATE TABLE IF NOT EXISTS restaurant_menu_categories (
+    category_id  SERIAL PRIMARY KEY,
+    client_id    INT REFERENCES clients(client_id) ON DELETE CASCADE,
+    name         VARCHAR(255) NOT NULL,
+    image_url    TEXT,
+    active       SMALLINT DEFAULT 1
+);
+
 -- 20. Menu Items
 CREATE TABLE IF NOT EXISTS menu_items (
     menu_item_id    SERIAL PRIMARY KEY,
     client_id       INT REFERENCES clients(client_id) ON DELETE CASCADE,
     category_id     INT REFERENCES menu_categories(category_id),
+    name            VARCHAR(255) NOT NULL,
+    description     TEXT,
+    price           DECIMAL(10,2) NOT NULL,
+    image_url       TEXT,
+    preparation_time INT DEFAULT 10,
+    kitchen_dept    VARCHAR(100),
+    gst_percent     DECIMAL(5,2) DEFAULT 0,
+    is_veg          SMALLINT DEFAULT 1,
+    available       SMALLINT DEFAULT 1,
+    active          SMALLINT DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS restaurant_menu_items (
+    item_id         SERIAL PRIMARY KEY,
+    client_id       INT REFERENCES clients(client_id) ON DELETE CASCADE,
+    category_id     INT,
     name            VARCHAR(255) NOT NULL,
     description     TEXT,
     price           DECIMAL(10,2) NOT NULL,

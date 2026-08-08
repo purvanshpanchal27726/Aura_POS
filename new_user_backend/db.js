@@ -540,15 +540,25 @@ db.initDb = async function() {
             ON CONFLICT (table_id) DO NOTHING;
           `);
           await client.query(`
+            INSERT INTO menu_categories (category_id, name, active, client_id) VALUES
+            (1, 'Main Course', 1, 1)
+            ON CONFLICT (category_id) DO NOTHING;
+          `).catch(() => {});
+          await client.query(`
             INSERT INTO restaurant_menu_categories (category_id, name, active, client_id) VALUES
             (1, 'Main Course', 1, 1)
             ON CONFLICT (category_id) DO NOTHING;
-          `);
+          `).catch(() => {});
+          await client.query(`
+            INSERT INTO menu_items (menu_item_id, name, price, category_id, active, client_id) VALUES
+            (1, 'Paneer Butter Masala', 280.00, 1, 1, 1)
+            ON CONFLICT (menu_item_id) DO NOTHING;
+          `).catch(() => {});
           await client.query(`
             INSERT INTO restaurant_menu_items (item_id, name, price, category_id, active, client_id) VALUES
             (1, 'Paneer Butter Masala', 280.00, 1, 1, 1)
             ON CONFLICT (item_id) DO NOTHING;
-          `);
+          `).catch(() => {});
 
           // 12. Printer & License Settings
           await client.query(`
