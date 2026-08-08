@@ -142,9 +142,15 @@ const settingsRoutes = require('./SettingsAPI');
 app.use('/api/settings', settingsRoutes);
 app.use('/api/Settings', settingsRoutes);
 
-const backupRoutes = require('./BackupAPI');
-app.use('/api/backup', backupRoutes);
-app.use('/api/Backup', backupRoutes);
+const backupAPI = require('./BackupAPI');
+app.use('/api/system/backup', backupAPI.router);
+app.use('/api/backup', backupAPI.router);
+app.use('/api/Backup', backupAPI.router);
+
+// Schedule 12-hour periodic database backup snapshot
+setInterval(() => {
+  backupAPI.generateDatabaseBackup().catch(err => console.warn('[AutoBackup] Error:', err.message));
+}, 12 * 60 * 60 * 1000);
 
 const restaurantRoutes = require('./RestaurantAPI');
 app.use('/api/restaurant', restaurantRoutes);

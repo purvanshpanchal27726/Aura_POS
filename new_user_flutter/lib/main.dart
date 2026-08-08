@@ -98,16 +98,16 @@ class _MyAppState extends State<MyApp> {
   Color _getPrimaryColor() {
     switch (_accentColor) {
       case 'green':
-        return Color(0xFF10B981);
+        return const Color(0xFF10B981);
       case 'purple':
-        return Color(0xFF6366F1);
+        return const Color(0xFF6366F1);
       case 'red':
-        return Color(0xFFEF4444);
+        return const Color(0xFFEF4444);
       case 'orange':
-        return Color(0xFFF97316);
+        return const Color(0xFFF97316);
       case 'blue':
       default:
-        return Color(0xFF2563EB);
+        return const Color(0xFF2563EB);
     }
   }
 
@@ -133,11 +133,11 @@ class _MyAppState extends State<MyApp> {
     final primaryColor = _getPrimaryColor();
     
     return MaterialApp(
-      title: 'POS System Management',
+      title: 'Vanshee POS Business Suite',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF8FAFC), // Slate-50 clean background
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
         primaryColor: primaryColor,
         colorScheme: ColorScheme.light(
           primary: primaryColor,
@@ -145,14 +145,13 @@ class _MyAppState extends State<MyApp> {
           surface: Colors.white,
         ),
         textTheme: GoogleFonts.interTextTheme(const TextTheme(
-          bodyLarge: TextStyle(color: Color(0xFF0F172A), fontSize: 14), // Slate-900 primary text
-          bodyMedium: TextStyle(color: Color(0xFF475569), fontSize: 13), // Slate-600 secondary text
+          bodyLarge: TextStyle(color: Color(0xFF0F172A), fontSize: 14),
+          bodyMedium: TextStyle(color: Color(0xFF475569), fontSize: 13),
         )),
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.white,
           foregroundColor: Color(0xFF0F172A),
           elevation: 0,
-          shadowColor: Colors.black12,
           shape: Border(bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.5)),
         ),
         cardTheme: CardThemeData(
@@ -167,19 +166,19 @@ class _MyAppState extends State<MyApp> {
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0B0F19), // Deep rich dark background
+        scaffoldBackgroundColor: const Color(0xFF0B0F19),
         primaryColor: primaryColor,
         colorScheme: ColorScheme.dark(
           primary: primaryColor,
           secondary: primaryColor.withValues(alpha: 0.7),
-          surface: const Color(0xFF151D30), // Rich dark-blue card
+          surface: const Color(0xFF151D30),
         ),
         textTheme: GoogleFonts.interTextTheme(const TextTheme(
-          bodyLarge: TextStyle(color: Color(0xFFF8FAFC), fontSize: 14), // Slate-50 primary text
-          bodyMedium: TextStyle(color: Color(0xFF94A3B8), fontSize: 13), // Slate-400 secondary text
+          bodyLarge: TextStyle(color: Color(0xFFF8FAFC), fontSize: 14),
+          bodyMedium: TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
         )),
         appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF111827),
+          backgroundColor: Color(0xFF0F172A),
           foregroundColor: Color(0xFFF8FAFC),
           elevation: 0,
           shape: Border(bottom: BorderSide(color: Color(0xFF1F2937), width: 1.5)),
@@ -227,13 +226,11 @@ class _MainLayoutState extends State<MainLayout> {
   int _currentIndex = 0;
   bool isLoading = true;
   bool isConnectionFailed = false;
-  bool _isWakingUp = false; // true when Render cold-start is detected
+  bool _isWakingUp = false;
 
   List<dynamic> allUsers = [];
   Map<String, dynamic>? activeUser;
   List<dynamic> permissionsData = [];
-
-  /// Keep-alive timer — pings Render every 13 min so it never sleeps.
   Timer? _keepAliveTimer;
 
   @override
@@ -285,7 +282,6 @@ class _MainLayoutState extends State<MainLayout> {
     super.dispose();
   }
 
-  /// Silently pings the backend every 13 minutes to prevent Render cold starts.
   void _startKeepAlive() {
     _keepAliveTimer?.cancel();
     _keepAliveTimer = Timer.periodic(const Duration(minutes: 13), (_) async {
@@ -293,18 +289,10 @@ class _MainLayoutState extends State<MainLayout> {
         await http
             .get(Uri.parse(AppConfig.usersApiUrl), headers: AppConfig.extraHeaders)
             .timeout(const Duration(seconds: 10));
-        debugPrint('[KeepAlive] Render pinged successfully.');
-      } catch (e) {
-        debugPrint('[KeepAlive] Ping failed (will retry next cycle): $e');
-      }
+      } catch (e) {}
     });
   }
 
-  /// Fetches users and permissions from the backend.
-  /// Automatically handles Render.com cold starts with a 3-attempt retry:
-  ///   Attempt 1 — 8s  (fast check)
-  ///   Attempt 2 — 25s (Render may be waking up)
-  ///   Attempt 3 — 50s (full cold-start wait)
   Future<void> fetchUsersAndPermissions() async {
     setState(() {
       isLoading = true;
@@ -319,7 +307,6 @@ class _MainLayoutState extends State<MainLayout> {
     ];
 
     for (int i = 0; i < attempts.length; i++) {
-      // On 2nd+ attempt, show the waking-up message
       if (i == 1 && mounted) {
         setState(() => _isWakingUp = true);
       }
@@ -343,9 +330,8 @@ class _MainLayoutState extends State<MainLayout> {
               _isWakingUp = false;
             });
           }
-          return; // success — stop retrying
+          return;
         }
-        // Non-200 response — don't retry, show error immediately
         if (mounted) {
           setState(() {
             isLoading = false;
@@ -355,18 +341,13 @@ class _MainLayoutState extends State<MainLayout> {
         }
         return;
       } catch (e) {
-        debugPrint('[Attempt ${i + 1}/${attempts.length}] Connection error: $e');
-        if (i == attempts.length - 1) {
-          // All attempts exhausted
-          if (mounted) {
-            setState(() {
-              isLoading = false;
-              isConnectionFailed = true;
-              _isWakingUp = false;
-            });
-          }
+        if (i == attempts.length - 1 && mounted) {
+          setState(() {
+            isLoading = false;
+            isConnectionFailed = true;
+            _isWakingUp = false;
+          });
         }
-        // else: loop continues to next attempt
       }
     }
   }
@@ -374,9 +355,7 @@ class _MainLayoutState extends State<MainLayout> {
   bool _hasPermission(int moduleId) {
     if (activeUser == null) return false;
     final int? roleId = int.tryParse(activeUser!['role_id']?.toString() ?? '');
-    
     if (permissionsData.isEmpty) return false;
-    
     final perm = permissionsData.firstWhere(
       (p) {
         final pRoleId = int.tryParse(p['role_id']?.toString() ?? '');
@@ -385,7 +364,6 @@ class _MainLayoutState extends State<MainLayout> {
       },
       orElse: () => null,
     );
-    
     if (perm == null) return false;
     return perm['allowed'] == 1 || perm['allowed'] == true;
   }
@@ -393,7 +371,7 @@ class _MainLayoutState extends State<MainLayout> {
   bool _hasModuleGroup(String groupName) {
     if (activeUser == null) return false;
     final modules = activeUser!['clientModules'];
-    if (modules == null) return true; // Legacy support
+    if (modules == null) return true;
     if (modules is List) {
       if (modules.contains('ALL')) return true;
       return modules.any((m) => m.toString().toLowerCase() == groupName.toLowerCase());
@@ -403,143 +381,102 @@ class _MainLayoutState extends State<MainLayout> {
 
   List<Widget> get _screens => [
     DashboardScreen(
-      onNavigate: (index) {
-        setState(() => _currentIndex = index);
-      },
+      onNavigate: (index) => setState(() => _currentIndex = index),
       activeUser: activeUser,
       permissionsData: permissionsData,
     ),
-    CategoryListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(3)), // 1
-    ItemListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(3)), // 2
-    CustomerListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(2)), // 3
-    VendorListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(3)), // 4
-    UnitListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(3)), // 5
-    UserListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(1)), // 6
-    TaxListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(3)), // 7
-    RolewisePermissionsScreen(onSaved: fetchUsersAndPermissions), // 8
-    const SalesBillingScreen(), // 9
-    const PurchaseBillingScreen(), // 10
-    const ReceiptListingScreen(), // 11
-    const ReportsScreen(), // 12
-    RoleListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(1)), // 13
-    const SupportScreen(), // 14
-    const LicenseScreen(), // 15
-    ClientsScreen(canModify: activeUser?['client_id'] == null), // 16
-    const PrinterSettingsScreen(), // 17
-    const RestaurantTablesScreen(), // 18
-    const RestaurantMenuScreen(), // 19
-    const RestaurantOrdersScreen(), // 20
-    const RestaurantKdsScreen(), // 21
-    const HotelRoomsScreen(), // 22
-    const HotelGuestsScreen(), // 23
-    const HotelBookingsScreen(), // 24
-    const InventoryScreen(), // 25
-    const PurchaseOrdersScreen(), // 26
-    const EmployeeScreen(), // 27
+    CategoryListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(3)),
+    ItemListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(3)),
+    CustomerListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(2)),
+    VendorListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(3)),
+    UnitListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(3)),
+    UserListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(1)),
+    TaxListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(3)),
+    RolewisePermissionsScreen(onSaved: fetchUsersAndPermissions),
+    const SalesBillingScreen(),
+    const PurchaseBillingScreen(),
+    const ReceiptListingScreen(),
+    const ReportsScreen(),
+    RoleListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(1)),
+    const SupportScreen(),
+    const LicenseScreen(),
+    ClientsScreen(canModify: activeUser?['client_id'] == null),
+    const PrinterSettingsScreen(),
+    const RestaurantTablesScreen(),
+    const RestaurantMenuScreen(),
+    const RestaurantOrdersScreen(),
+    const RestaurantKdsScreen(),
+    const HotelRoomsScreen(),
+    const HotelGuestsScreen(),
+    const HotelBookingsScreen(),
+    const InventoryScreen(),
+    const PurchaseOrdersScreen(),
+    const EmployeeScreen(),
   ];
 
   String _getAppBarTitle() {
     switch (_currentIndex) {
-      case 0:
-        return 'Dashboard';
-      case 1:
-        return 'Category Master';
-      case 2:
-        return 'Item Master';
-      case 3:
-        return 'Customer Master';
-      case 4:
-        return 'Vendor Master';
-      case 5:
-        return 'Unit Master';
-      case 6:
-        return 'User Master';
-      case 7:
-        return 'Tax Master';
-      case 8:
-        return 'Settings';
-      case 9:
-        return 'Sales Billing';
-      case 10:
-        return 'Purchase Management';
-      case 11:
-        return 'Receipts';
-      case 12:
-        return 'Reports';
-      case 13:
-        return 'Role Master';
-      case 14:
-        return 'Support & Contact Us';
-      case 15:
-        return 'AMC & License Management';
-      case 16:
-        return 'Clients Company Management';
-      case 17:
-        return 'Thermal Printer Settings';
-      case 18:
-        return 'Restaurant Tables';
-      case 19:
-        return 'Restaurant Menu';
-      case 20:
-        return 'Restaurant Orders';
-      case 21:
-        return 'Kitchen Display (KDS)';
-      case 22:
-        return 'Hotel Rooms';
-      case 23:
-        return 'Hotel Guest Registry';
-      case 24:
-        return 'Hotel Stay Bookings';
-      case 25:
-        return 'Stock Inventory';
-      case 26:
-        return 'Purchase Orders';
-      case 27:
-        return 'Employees & Attendance';
-      default:
-        return 'POS System';
+      case 0: return 'Dashboard';
+      case 1: return 'Category Master';
+      case 2: return 'Item Master';
+      case 3: return 'Customer Master';
+      case 4: return 'Vendor Master';
+      case 5: return 'Unit Master';
+      case 6: return 'User Master';
+      case 7: return 'Tax Master';
+      case 8: return 'Settings';
+      case 9: return 'Sales Billing';
+      case 10: return 'Purchase Management';
+      case 11: return 'Receipts';
+      case 12: return 'Reports';
+      case 13: return 'Role Master';
+      case 14: return 'Support & Contact Us';
+      case 15: return 'AMC & License Management';
+      case 16: return 'Clients Company Management';
+      case 17: return 'Thermal Printer Settings';
+      case 18: return 'Restaurant Tables';
+      case 19: return 'Restaurant Menu';
+      case 20: return 'Restaurant Orders';
+      case 21: return 'Kitchen Display (KDS)';
+      case 22: return 'Hotel Rooms';
+      case 23: return 'Hotel Guest Registry';
+      case 24: return 'Hotel Stay Bookings';
+      case 25: return 'Stock Inventory';
+      case 26: return 'Purchase Orders';
+      case 27: return 'Employees & Attendance';
+      default: return 'VANSHI POS Business Suite';
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = Theme.of(context).primaryColor;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth > 900;
+
     if (isLoading && activeUser == null) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
       return Scaffold(
         backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
         body: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Animated spinner
               SizedBox(
                 width: 52,
                 height: 52,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3.5,
-                  color: Theme.of(context).primaryColor,
-                ),
+                child: CircularProgressIndicator(strokeWidth: 3.5, color: primaryColor),
               ),
               const SizedBox(height: 28),
               Text(
                 _isWakingUp ? '☁️  Waking up server...' : 'Connecting to server...',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF1E293B)),
               ),
               const SizedBox(height: 8),
               Text(
-                _isWakingUp
-                    ? 'The cloud server was idle.\nThis may take up to 60 seconds on first launch.'
-                    : 'Please wait while we load your data.',
+                'Please wait while we load your data.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 1.5,
-                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
-                ),
+                style: TextStyle(fontSize: 13, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
               ),
             ],
           ),
@@ -548,9 +485,7 @@ class _MainLayoutState extends State<MainLayout> {
     }
 
     if (isConnectionFailed && activeUser == null) {
-      return ConnectionSetupScreen(
-        onRetry: fetchUsersAndPermissions,
-      );
+      return ConnectionSetupScreen(onRetry: fetchUsersAndPermissions);
     }
 
     if (activeUser == null) {
@@ -569,656 +504,278 @@ class _MainLayoutState extends State<MainLayout> {
                 prefs.setString('auth_token', user['token'].toString());
               });
             }
-            _currentIndex = 0; // Go to dashboard
+            _currentIndex = 0;
           });
           _saveUser(user);
         },
       );
     }
 
-    // License Lockout Check
-    if (activeUser != null && activeUser!['license'] != null) {
-      final license = activeUser!['license'] as Map<String, dynamic>;
-      final status = license['status']?.toString();
-      if (status == 'Expired' || status == 'Suspended') {
-        return LicenseLockoutScreen(
-          clientName: activeUser!['client_name']?.toString() ?? 'Client Company',
-          licenseKey: license['license_key']?.toString() ?? 'N/A',
-          expiryDate: license['valid_to']?.toString() ?? 'N/A',
-          onLogout: () async {
-            await _clearUser();
-            setState(() {
-              activeUser = null;
-            });
-          },
-        );
-      }
-    }
-
+    // Main App Body with persistent sidebar drawer on desktop
     return Scaffold(
-      appBar: AppBar(
-        leading: _currentIndex == 0
-            ? null
-            : IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: () {
-                  setState(() => _currentIndex = 0);
-                },
-              ),
-        title: Text(
-          _getAppBarTitle(),
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          if (MediaQuery.of(context).size.width > 800) ...[
-            Icon(Icons.account_circle, color: Theme.of(context).primaryColor, size: 18),
-            const SizedBox(width: 6),
-            Text(
-              '${activeUser!['username']} (${activeUser!['role_name'] ?? 'User'})',
-              style: TextStyle(
-                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : const Color(0xFF1E293B),
-                fontWeight: FontWeight.bold,
-                fontSize: 13,
-              ),
-            ),
-            const SizedBox(width: 16),
-          ]
-        ],
-        bottom: isConnectionFailed
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(40),
-                child: Container(
-                  color: const Color(0xFFFEF2F2),
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.signal_wifi_off_rounded, color: Color(0xFFDC2626), size: 16),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Offline: Cannot connect to server.',
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFF991B1B),
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      InkWell(
-                        onTap: fetchUsersAndPermissions,
-                        child: Text(
-                          'Retry Connection',
-                          style: GoogleFonts.inter(
-                            color: Theme.of(context).primaryColor,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              )
-            : null,
-      ),
-      drawer: Drawer(
-        backgroundColor: Theme.of(context).cardColor,
-        child: Column(
-          children: [
-            UserAccountsDrawerHeader(
-              decoration: BoxDecoration(color: Theme.of(context).primaryColor),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, color: Theme.of(context).primaryColor, size: 36),
-              ),
-              accountName: Text(
-                activeUser!['username'],
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
-              ),
-              accountEmail: Text(
-                'Role: ${activeUser!['role_name'] ?? 'User'}',
-                style: TextStyle(fontSize: 13, color: Colors.white70),
-              ),
-              margin: EdgeInsets.zero,
-            ),
-
-            Flexible(
-              child: Scrollbar(
-                thumbVisibility: true,
-                thickness: 4,
-                radius: const Radius.circular(99),
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  children: [
-                    ListTile(
-                      leading: Icon(Icons.dashboard, color: Color(0xFF64748B)),
-                      title: Text('Home'),
-                      selected: _currentIndex == 0,
-                      onTap: () {
-                        setState(() => _currentIndex = 0);
-                        Navigator.pop(context);
-                      },
-                    ),
-                    
-                    if ((_hasPermission(1) || _hasPermission(2) || _hasPermission(3)) && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
-                      ExpansionTile(
-                        leading: Icon(Icons.layers, color: Color(0xFF64748B)),
-                        title: Text('Masters', style: TextStyle(fontWeight: FontWeight.bold)),
-                        childrenPadding: EdgeInsets.only(left: 16.0),
-                        children: [
-                          if (_hasPermission(3))
-                            ListTile(
-                              leading: Icon(Icons.category_outlined, color: Color(0xFF64748B)),
-                              title: Text('Category'),
-                              selected: _currentIndex == 1,
-                              onTap: () {
-                                setState(() => _currentIndex = 1);
-                                Navigator.pop(context);
-                              },
-                            ),
-                          if (_hasPermission(3))
-                            ListTile(
-                              leading: Icon(Icons.inventory_2_outlined, color: Color(0xFF64748B)),
-                              title: Text('Item'),
-                              selected: _currentIndex == 2,
-                              onTap: () {
-                                setState(() => _currentIndex = 2);
-                                Navigator.pop(context);
-                              },
-                            ),
-                          if (_hasPermission(2))
-                            ListTile(
-                              leading: Icon(Icons.contact_mail, color: Color(0xFF64748B)),
-                              title: Text('Customer'),
-                              selected: _currentIndex == 3,
-                              onTap: () {
-                                setState(() => _currentIndex = 3);
-                                Navigator.pop(context);
-                              },
-                            ),
-                          if (_hasPermission(3))
-                            ListTile(
-                              leading: Icon(Icons.local_shipping_outlined, color: Color(0xFF64748B)),
-                              title: Text('Vendor'),
-                              selected: _currentIndex == 4,
-                              onTap: () {
-                                setState(() => _currentIndex = 4);
-                                Navigator.pop(context);
-                              },
-                            ),
-                          if (_hasPermission(3))
-                            ListTile(
-                              leading: Icon(Icons.straighten_outlined, color: Color(0xFF64748B)),
-                              title: Text('Unit'),
-                              selected: _currentIndex == 5,
-                              onTap: () {
-                                setState(() => _currentIndex = 5);
-                                Navigator.pop(context);
-                              },
-                            ),
-                          if (_hasPermission(1))
-                            ListTile(
-                              leading: Icon(Icons.people, color: Color(0xFF64748B)),
-                              title: Text('Users'),
-                              selected: _currentIndex == 6,
-                              onTap: () {
-                                setState(() => _currentIndex = 6);
-                                Navigator.pop(context);
-                              },
-                            ),
-                          if (_hasPermission(3))
-                            ListTile(
-                              leading: Icon(Icons.percent_outlined, color: Color(0xFF64748B)),
-                              title: Text('Tax'),
-                              selected: _currentIndex == 7,
-                              onTap: () {
-                                setState(() => _currentIndex = 7);
-                                Navigator.pop(context);
-                              },
-                            ),
-                          if (_hasPermission(1))
-                            ListTile(
-                              leading: Icon(Icons.security, color: Color(0xFF64748B)),
-                              title: Text('Roles'),
-                              selected: _currentIndex == 13,
-                              onTap: () {
-                                setState(() => _currentIndex = 13);
-                                Navigator.pop(context);
-                              },
-                            ),
-                        ],
-                      ),
-
-                    if (_hasPermission(1))
-                      ExpansionTile(
-                        leading: const Icon(Icons.settings_outlined, color: Color(0xFF64748B)),
-                        title: const Text('Settings', style: TextStyle(fontWeight: FontWeight.bold)),
-                        childrenPadding: const EdgeInsets.only(left: 16.0),
-                        children: [
-                          if (_hasModuleGroup('Kirana') || _hasModuleGroup('POS'))
-                            ListTile(
-                              leading: const Icon(Icons.security_outlined, color: Color(0xFF64748B)),
-                              title: const Text('Role Permissions'),
-                              selected: _currentIndex == 8,
-                              onTap: () {
-                                setState(() => _currentIndex = 8);
-                                Navigator.pop(context);
-                              },
-                            ),
-                          ListTile(
-                            leading: const Icon(Icons.print_outlined, color: Color(0xFF64748B)),
-                            title: const Text('Printer Settings'),
-                            selected: _currentIndex == 17,
-                            onTap: () {
-                              setState(() => _currentIndex = 17);
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ],
-                      ),
-
-                    if (_hasModuleGroup('Restaurant'))
-                      ExpansionTile(
-                        leading: const Icon(Icons.restaurant_outlined, color: Color(0xFF64748B)),
-                        title: const Text('Restaurant POS', style: TextStyle(fontWeight: FontWeight.bold)),
-                        childrenPadding: const EdgeInsets.only(left: 16.0),
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.table_restaurant_outlined, color: Color(0xFF64748B)),
-                            title: const Text('Tables Grid'),
-                            selected: _currentIndex == 18,
-                            onTap: () {
-                              setState(() => _currentIndex = 18);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.restaurant_menu_outlined, color: Color(0xFF64748B)),
-                            title: const Text('Menu Catalog'),
-                            selected: _currentIndex == 19,
-                            onTap: () {
-                              setState(() => _currentIndex = 19);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.ramen_dining_outlined, color: Color(0xFF64748B)),
-                            title: const Text('Orders & KOT'),
-                            selected: _currentIndex == 20,
-                            onTap: () {
-                              setState(() => _currentIndex = 20);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.kitchen_outlined, color: Color(0xFF64748B)),
-                            title: const Text('Kitchen Display (KDS)'),
-                            selected: _currentIndex == 21,
-                            onTap: () {
-                              setState(() => _currentIndex = 21);
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ],
-                      ),
-
-                    if (_hasModuleGroup('Hotel'))
-                      ExpansionTile(
-                        leading: const Icon(Icons.hotel_outlined, color: Color(0xFF64748B)),
-                        title: const Text('Hotel Management', style: TextStyle(fontWeight: FontWeight.bold)),
-                        childrenPadding: const EdgeInsets.only(left: 16.0),
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.bed_outlined, color: Color(0xFF64748B)),
-                            title: const Text('Hotel Rooms'),
-                            selected: _currentIndex == 22,
-                            onTap: () {
-                              setState(() => _currentIndex = 22);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.person_pin_outlined, color: Color(0xFF64748B)),
-                            title: const Text('Guest Registry'),
-                            selected: _currentIndex == 23,
-                            onTap: () {
-                              setState(() => _currentIndex = 23);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.bedroom_parent_outlined, color: Color(0xFF64748B)),
-                            title: const Text('Room Bookings'),
-                            selected: _currentIndex == 24,
-                            onTap: () {
-                              setState(() => _currentIndex = 24);
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ],
-                      ),
-
-                    if (_hasModuleGroup('Kirana') || _hasModuleGroup('POS'))
-                      ExpansionTile(
-                        leading: const Icon(Icons.inventory_2_outlined, color: Color(0xFF64748B)),
-                        title: const Text('Inventory & PO', style: TextStyle(fontWeight: FontWeight.bold)),
-                        childrenPadding: const EdgeInsets.only(left: 16.0),
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.shelves, color: Color(0xFF64748B)),
-                            title: const Text('Stock Inventory'),
-                            selected: _currentIndex == 25,
-                            onTap: () {
-                              setState(() => _currentIndex = 25);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.local_shipping_outlined, color: Color(0xFF64748B)),
-                            title: const Text('Purchase Orders'),
-                            selected: _currentIndex == 26,
-                            onTap: () {
-                              setState(() => _currentIndex = 26);
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ],
-                      ),
-
-                      ListTile(
-                        leading: const Icon(Icons.people_outline, color: Color(0xFF64748B)),
-                        title: const Text('Employees & Attendance'),
-                        selected: _currentIndex == 27,
-                        onTap: () {
-                          setState(() => _currentIndex = 27);
-                          Navigator.pop(context);
-                        },
-                      ),
-
-                    if (_hasPermission(4) && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
-                      ListTile(
-                        leading: Icon(Icons.shopping_cart_outlined, color: Color(0xFF64748B)),
-                        title: Text('Sell'),
-                        selected: _currentIndex == 9,
-                        onTap: () {
-                          setState(() => _currentIndex = 9);
-                          Navigator.pop(context);
-                        },
-                      ),
-                    
-                    if (_hasPermission(5) && !AppConfig.isRestaurantMode && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
-                      ListTile(
-                        leading: Icon(Icons.receipt_long_outlined, color: Color(0xFF64748B)),
-                        title: Text('Purchase'),
-                        selected: _currentIndex == 10,
-                        onTap: () {
-                          setState(() => _currentIndex = 10);
-                          Navigator.pop(context);
-                        },
-                      ),
-
-                    if (_hasPermission(4) && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
-                      ListTile(
-                        leading: Icon(Icons.receipt, color: Color(0xFF64748B)),
-                        title: Text('Receipt'),
-                        selected: _currentIndex == 11,
-                        onTap: () {
-                          setState(() => _currentIndex = 11);
-                          Navigator.pop(context);
-                        },
-                      ),
-                    
-                    if (_hasPermission(6) && (_hasModuleGroup('Kirana') || _hasModuleGroup('POS')))
-                      ListTile(
-                        leading: Icon(Icons.assessment_outlined, color: Color(0xFF64748B)),
-                        title: Text('Reports'),
-                        selected: _currentIndex == 12,
-                        onTap: () {
-                          setState(() => _currentIndex = 12);
-                          Navigator.pop(context);
-                        },
-                      ),
-
-                    if (activeUser?['client_id'] == null && _hasModuleGroup('ALL'))
-                      ListTile(
-                        leading: const Icon(Icons.business, color: Color(0xFF64748B)),
-                        title: const Text('Clients'),
-                        selected: _currentIndex == 16,
-                        onTap: () {
-                          setState(() => _currentIndex = 16);
-                          Navigator.pop(context);
-                        },
-                      ),
-
-                    ListTile(
-                      leading: Icon(Icons.contact_support_outlined, color: Color(0xFF64748B)),
-                      title: Text('Support & Contact'),
-                      selected: _currentIndex == 14,
-                      onTap: () {
-                        setState(() => _currentIndex = 14);
-                        Navigator.pop(context);
-                      },
-                    ),
-
-                    ListTile(
-                      leading: Icon(Icons.badge_outlined, color: Color(0xFF64748B)),
-                      title: Text('License & AMC'),
-                      selected: _currentIndex == 15,
-                      onTap: () {
-                        setState(() => _currentIndex = 15);
-                        Navigator.pop(context);
-                      },
-                    ),
-
-                  ],
-                ),
-              ),
-            ),
-            Divider(height: 1),
+      body: Row(
+        children: [
+          if (isDesktop)
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Color(0xFF1E293B)
-                  : Color(0xFFF8FAFC),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+              width: 250,
+              decoration: const BoxDecoration(
+                color: Color(0xFF0B1120),
+                border: Border(right: BorderSide(color: Color(0xFF1E293B), width: 1)),
+              ),
+              child: _buildSidebarContent(isDark, primaryColor, isDesktop: true),
+            ),
+          Expanded(
+            child: Scaffold(
+              appBar: _buildTopAppBar(isDark, primaryColor, isDesktop),
+              drawer: isDesktop ? null : Drawer(child: _buildSidebarContent(isDark, primaryColor, isDesktop: false)),
+              body: _screens[_currentIndex],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildTopAppBar(bool isDark, Color primaryColor, bool isDesktop) {
+    final userName = activeUser?['first_name'] ?? activeUser?['username'] ?? 'User';
+    final roleName = activeUser?['role_name'] ?? 'Staff';
+
+    return AppBar(
+      elevation: 0,
+      backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
+      title: Row(
+        children: [
+          Text(_getAppBarTitle(), style: GoogleFonts.outfit(fontWeight: FontWeight.bold, fontSize: 18)),
+          const SizedBox(width: 16),
+          // Command Palette Search Trigger
+          if (isDesktop)
+            Container(
+              width: 240,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF151D30) : const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: isDark ? const Color(0xFF1F2937) : const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Theme.of(context).brightness == Brightness.dark
-                                ? Icons.dark_mode_outlined
-                                : Icons.light_mode_outlined,
-                            size: 18,
-                            color: Color(0xFF64748B),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Theme Mode',
-                            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      DropdownButtonHideUnderline(
-                        child: DropdownButton<ThemeMode>(
-                          value: widget.currentThemeMode,
-                          dropdownColor: Theme.of(context).cardColor,
-                          onChanged: (ThemeMode? mode) {
-                            if (mode != null) {
-                              widget.onThemeChanged(mode, widget.currentAccent);
-                            }
-                          },
-                          items: [
-                            DropdownMenuItem(
-                              value: ThemeMode.light,
-                              child: Text('Light', style: TextStyle(fontSize: 12.5)),
-                            ),
-                            DropdownMenuItem(
-                              value: ThemeMode.dark,
-                              child: Text('Dark', style: TextStyle(fontSize: 12.5)),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.palette_outlined, size: 18, color: Color(0xFF64748B)),
-                          SizedBox(width: 8),
-                          Text(
-                            'Accent Color',
-                            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: widget.currentAccent,
-                          dropdownColor: Theme.of(context).cardColor,
-                          onChanged: (String? accent) {
-                            if (accent != null) {
-                              widget.onThemeChanged(widget.currentThemeMode, accent);
-                            }
-                          },
-                          items: [
-                            DropdownMenuItem(value: 'blue', child: Text('Blue', style: TextStyle(fontSize: 12.5))),
-                            DropdownMenuItem(value: 'green', child: Text('Green', style: TextStyle(fontSize: 12.5))),
-                            DropdownMenuItem(value: 'purple', child: Text('Purple', style: TextStyle(fontSize: 12.5))),
-                            DropdownMenuItem(value: 'red', child: Text('Red', style: TextStyle(fontSize: 12.5))),
-                            DropdownMenuItem(value: 'orange', child: Text('Orange', style: TextStyle(fontSize: 12.5))),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            backgroundColor: Theme.of(context).cardColor,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            title: Text('Confirm Logout', style: TextStyle(fontWeight: FontWeight.bold)),
-                            content: Text('Are you sure you want to log out of this session?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(ctx),
-                                child: Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
-                              ),
-                              ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.pop(ctx);
-                                    setState(() {
-                                      activeUser = null;
-                                      _currentIndex = 0;
-                                    });
-                                    _clearUser();
-                                  },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Color(0xFFEF4444),
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                                ),
-                                child: Text('Logout'),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      icon: Icon(Icons.logout, size: 14),
-                      label: Text('Logout Session', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold)),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Color(0xFFEF4444),
-                        side: BorderSide(color: Color(0xFFFCA5A5)),
-                        padding: EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                    ),
-                  ),
+                  Icon(Icons.search_rounded, size: 16, color: primaryColor),
+                  const SizedBox(width: 8),
+                  Text('Search anything...', style: GoogleFonts.inter(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(color: isDark ? const Color(0xFF1E293B) : Colors.white, borderRadius: BorderRadius.circular(4)),
+                    child: Text('Ctrl K', style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold, color: const Color(0xFF64748B))),
+                  )
                 ],
               ),
             ),
-          ],
-        ),
+        ],
       ),
-      body: (() {
-        final hasAmcExpired = activeUser != null &&
-            activeUser!['license'] != null &&
-            (activeUser!['license'] as Map<String, dynamic>)['status']?.toString() == 'AMC Expired';
-            
-        if (hasAmcExpired) {
-          return Column(
+      actions: [
+        // Store Selector Dropdown
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: primaryColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+          ),
+          child: Row(
             children: [
-              Container(
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFFFBEB),
-                  border: Border(bottom: BorderSide(color: Color(0xFFFEF3C7), width: 1.5)),
-                ),
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                child: Row(
-                  children: [
-                    const Icon(Icons.warning_amber_rounded, color: Color(0xFFD97706), size: 18),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Notice: Your Annual Maintenance Contract (AMC) has expired. Please contact Vanshee Infotech to renew support.',
-                        style: GoogleFonts.inter(
-                          color: const Color(0xFFB45309),
-                          fontSize: 12.0,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(child: _screens[_currentIndex]),
+              Icon(Icons.storefront_rounded, size: 16, color: primaryColor),
+              const SizedBox(width: 6),
+              Text('Main Branch', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor)),
             ],
-          );
-        }
-        return _screens[_currentIndex];
-      })(),
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        // User profile badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF151D30) : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(radius: 12, backgroundColor: primaryColor, child: Text(userName[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+              const SizedBox(width: 8),
+              Text('$userName ($roleName)', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        // Theme Toggle
+        IconButton(
+          icon: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined, size: 20),
+          onPressed: () {
+            widget.onThemeChanged(isDark ? ThemeMode.light : ThemeMode.dark, widget.currentAccent);
+          },
+          tooltip: 'Toggle Dark/Light Mode',
+        ),
+
+        // Logout Pill
+        Padding(
+          padding: const EdgeInsets.only(right: 16.0),
+          child: InkWell(
+            onTap: () async {
+              await _clearUser();
+              setState(() => activeUser = null);
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.logout_rounded, size: 14, color: Color(0xFFEF4444)),
+                  const SizedBox(width: 4),
+                  Text('Logout', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
-}
 
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final String description;
-
-  const PlaceholderScreen({
-    super.key,
-    required this.title,
-    required this.icon,
-    required this.description,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        'No details',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF64748B),
+  Widget _buildSidebarContent(bool isDark, Color primaryColor, {required bool isDesktop}) {
+    return Column(
+      children: [
+        // Sidebar Branding Header
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Color(0xFF0B1120),
+            border: Border(bottom: BorderSide(color: Color(0xFF1E293B), width: 1)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)]),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.storefront_rounded, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('VANSHI POS', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
+                  Text('Business Suite', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8))),
+                ],
+              ),
+            ],
+          ),
         ),
+
+        // Sidebar Category Menu List
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+            children: [
+              _buildSectionHeader('OPERATIONS'),
+              _buildNavItem(0, 'Home', Icons.home_rounded, isDesktop),
+              if (_hasPermission(4)) _buildNavItem(9, 'Sell', Icons.shopping_cart_outlined, isDesktop),
+              if (_hasPermission(5)) _buildNavItem(10, 'Purchase', Icons.receipt_long_outlined, isDesktop),
+              if (_hasPermission(4)) _buildNavItem(11, 'Receipt', Icons.receipt_outlined, isDesktop),
+
+              _buildSectionHeader('MASTERS'),
+              if (_hasPermission(3)) _buildNavItem(2, 'Item Master', Icons.inventory_2_outlined, isDesktop),
+              if (_hasPermission(3)) _buildNavItem(1, 'Category Master', Icons.category_outlined, isDesktop),
+              if (_hasPermission(3)) _buildNavItem(5, 'Unit Master', Icons.straighten_outlined, isDesktop),
+              if (_hasPermission(3)) _buildNavItem(7, 'Tax Master', Icons.percent_outlined, isDesktop),
+
+              _buildSectionHeader('INVENTORY'),
+              _buildNavItem(25, 'Stock Inventory', Icons.shelves, isDesktop),
+              _buildNavItem(26, 'Purchase Orders', Icons.local_shipping_outlined, isDesktop),
+
+              _buildSectionHeader('PEOPLE'),
+              if (_hasPermission(1)) _buildNavItem(6, 'Users Directory', Icons.people_outline, isDesktop),
+              if (_hasPermission(2)) _buildNavItem(3, 'Customers', Icons.contact_mail_outlined, isDesktop),
+              if (_hasPermission(3)) _buildNavItem(4, 'Vendors', Icons.local_shipping_outlined, isDesktop),
+              _buildNavItem(27, 'Staff Attendance', Icons.badge_outlined, isDesktop),
+              if (activeUser?['client_id'] == null) _buildNavItem(16, 'Clients Stores', Icons.business_outlined, isDesktop),
+
+              if (_hasModuleGroup('Restaurant')) ...[
+                _buildSectionHeader('RESTAURANT'),
+                _buildNavItem(18, 'Dine-in Tables', Icons.table_restaurant_outlined, isDesktop),
+                _buildNavItem(19, 'Restaurant Menu', Icons.restaurant_menu_outlined, isDesktop),
+                _buildNavItem(20, 'Rest. Orders & KOT', Icons.ramen_dining_outlined, isDesktop),
+                _buildNavItem(21, 'Kitchen Queue (KDS)', Icons.kitchen_outlined, isDesktop),
+              ],
+
+              if (_hasModuleGroup('Hotel')) ...[
+                _buildSectionHeader('HOTEL'),
+                _buildNavItem(22, 'Hotel Rooms', Icons.bed_outlined, isDesktop),
+                _buildNavItem(23, 'Hotel Guests', Icons.person_pin_outlined, isDesktop),
+                _buildNavItem(24, 'Room Bookings', Icons.bedroom_parent_outlined, isDesktop),
+              ],
+
+              _buildSectionHeader('ANALYTICS'),
+              if (_hasPermission(6)) _buildNavItem(12, 'Reports & Analytics', Icons.assessment_outlined, isDesktop),
+
+              _buildSectionHeader('SUPPORT'),
+              _buildNavItem(14, 'Support & Contact', Icons.contact_support_outlined, isDesktop),
+              _buildNavItem(15, 'License & AMC', Icons.workspace_premium_outlined, isDesktop),
+
+              _buildSectionHeader('SETTINGS'),
+              if (_hasPermission(1)) _buildNavItem(8, 'Role Permissions', Icons.security_outlined, isDesktop),
+              _buildNavItem(17, 'Printer Settings', Icons.print_outlined, isDesktop),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, top: 16, bottom: 6),
+      child: Text(
+        title,
+        style: GoogleFonts.inter(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
+          color: const Color(0xFF64748B),
+          letterSpacing: 1.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, String label, IconData icon, bool isDesktop) {
+    final isSelected = _currentIndex == index;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 3),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        tileColor: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+        dense: true,
+        leading: Icon(icon, size: 18, color: isSelected ? Colors.white : const Color(0xFF94A3B8)),
+        title: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            color: isSelected ? Colors.white : const Color(0xFFCBD5E1),
+          ),
+        ),
+        onTap: () {
+          setState(() => _currentIndex = index);
+          if (!isDesktop) Navigator.pop(context);
+        },
       ),
     );
   }
