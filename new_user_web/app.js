@@ -816,10 +816,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const moduleForScreen = (screenName) => {
     if (['user_listing', 'settings', 'role_listing'].includes(screenName)) return 1;
     if (screenName === 'customer_listing') return 2;
-    if (['item', 'category', 'unit', 'tax', 'vendor_listing'].includes(screenName)) return 3;
+    if (['item', 'category', 'unit', 'tax', 'vendor_listing', 'inventory', 'purchase_orders', 'barcode_studio'].includes(screenName)) return 3;
     if (['sales', 'receipt'].includes(screenName)) return 4;
     if (screenName === 'purchase') return 5;
     if (screenName === 'reports') return 6;
+    if (['rest_tables', 'rest_menu', 'rest_orders', 'rest_kds'].includes(screenName)) return 7;
+    if (['hotel_rooms', 'hotel_guests', 'hotel_bookings'].includes(screenName)) return 8;
+    if (['employees', 'attendance'].includes(screenName)) return 9;
     return null;
   };
 
@@ -850,22 +853,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const applyNavigationPermissions = () => {
     if (!activeUser) return;
     const moduleMenus = {
-      1: [document.getElementById('menuUserListing')],
+      1: [document.getElementById('menuUserListing'), document.getElementById('menuSettings'), document.getElementById('menuRoleListing')],
       2: [document.getElementById('menuCustomerListing')],
       3: [
         document.getElementById('menuItem'),
         document.getElementById('menuCategory'),
         document.getElementById('menuUnit'),
         document.getElementById('menuTax'),
-        document.getElementById('menuVendorListing')
+        document.getElementById('menuVendorListing'),
+        document.getElementById('menuInventory'),
+        document.getElementById('menuPurchaseOrders'),
+        document.getElementById('menuBarcodeStudio')
       ],
-      4: [document.getElementById('menuSales')],
+      4: [document.getElementById('menuSales'), document.getElementById('menuReceipt')],
       5: [document.getElementById('menuPurchase')],
-      6: [document.getElementById('menuReports')]
+      6: [document.getElementById('menuReports')],
+      7: [
+        document.getElementById('menuRestTables'),
+        document.getElementById('menuRestMenu'),
+        document.getElementById('menuRestOrders'),
+        document.getElementById('menuRestKds')
+      ],
+      8: [
+        document.getElementById('menuHotelRooms'),
+        document.getElementById('menuHotelGuests'),
+        document.getElementById('menuHotelBookings')
+      ],
+      9: [
+        document.getElementById('menuEmployees'),
+        document.getElementById('menuAttendance')
+      ]
     };
-
-    moduleMenus[1].push(document.getElementById('menuSettings'), document.getElementById('menuRoleListing'));
-    moduleMenus[4].push(document.getElementById('menuReceipt'));
 
     Object.keys(moduleMenus).forEach(mId => {
       const allowed = hasModulePermission(parseInt(mId));
