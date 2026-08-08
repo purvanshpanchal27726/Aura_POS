@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260808_v15">
+  <link rel="stylesheet" href="style.css?v=20260808_v20">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -1257,21 +1257,21 @@
           <section class="pos-product-panel">
             <div class="pos-search-row" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.75rem; align-items: end; margin-bottom: 1rem;">
               <div class="form-field">
-                <label for="salesItemSelect" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Select Item / Search Catalog</label>
-                <select id="salesItemSelect" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem; font-weight: 500;">
+                <label for="purchaseAdderItem" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Select Item / Search Catalog</label>
+                <select id="purchaseAdderItem" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem; font-weight: 500;">
                   <option value="">-- Choose Item from List --</option>
                 </select>
               </div>
               <div class="form-field">
-                <label for="salesCodeSearch" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Barcode Scan</label>
-                <input type="text" id="salesCodeSearch" placeholder="Scan or type code..." style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem;">
+                <label for="purchaseCodeSearch" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Barcode Scan</label>
+                <input type="text" id="purchaseCodeSearch" placeholder="Scan or type code..." style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem;">
               </div>
               <div class="form-field pos-qty-field">
-                <label for="adderQty" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Default Qty</label>
-                <input type="number" step="0.01" id="adderQty" value="1.00" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem; text-align: center; font-weight: bold;">
+                <label for="purchaseAdderQty" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Default Qty</label>
+                <input type="number" step="0.01" id="purchaseAdderQty" value="1.00" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem; text-align: center; font-weight: bold;">
               </div>
             </div>
-            <input type="hidden" id="salesItemSearch">
+            <input type="hidden" id="purchaseItemSearch">
             
             <div id="purchaseProductGrid" class="pos-product-grid"></div>
           </section>
@@ -2817,7 +2817,7 @@
             <input type="checkbox" id="item_editable_price" name="editable_price" value="false">
             <input type="checkbox" id="item_visible" name="visible" value="true" checked>
             <input type="checkbox" id="item_active" name="active" value="true" checked>
-            <select id="item_tax_id" name="tax_id">
+            <select id="item_tax_id_legacy" name="tax_id">
               <option value="">Select Tax Rate</option>
             </select>
             <input type="number" step="0.01" id="item_base_quantity" name="base_quantity" value="1.00">
@@ -3873,6 +3873,6 @@
 
   <div id="toastContainer" style="z-index: 99999 !important; position: fixed;"></div>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <script src="app.js?v=20260808_v15"></script>
+  <script src="app.js?v=20260808_v20"></script>
 </body>
 </html>
