@@ -910,11 +910,11 @@ tr:hover td {
   grid-template-columns: minmax(320px, 1fr) minmax(400px, 1.5fr);
   gap: 1.25rem;
   flex: 1;
-  min-height: 0;
+  min-height: 480px !important;
 }
 
 .pos-cart-panel, .pos-product-panel, .pos-category-panel {
-  min-height: 0;
+  min-height: 450px !important;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);
