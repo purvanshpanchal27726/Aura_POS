@@ -1121,17 +1121,7 @@ document.addEventListener('DOMContentLoaded', () => {
       targetView.style.setProperty('visibility', 'visible', 'important');
       targetView.style.setProperty('opacity', '1', 'important');
 
-      Array.from(targetView.children).forEach(child => {
-        if (child.style.display === 'none') {
-          child.style.display = '';
-        }
-        child.style.visibility = 'visible';
-        child.style.opacity = '1';
-      });
-
-      // Unhide all descendant card, section, form, and pos-terminal containers
-      const innerContainers = targetView.querySelectorAll('.pos-terminal, .pos-workspace, .pos-toolbar, .pos-cart-panel, .pos-catalog-panel, .pos-product-panel, .list-section, .card, .form-section, .table-container, section, form');
-      innerContainers.forEach(el => {
+      targetView.querySelectorAll('*').forEach(el => {
         if (el.style.display === 'none') {
           el.style.display = '';
         }

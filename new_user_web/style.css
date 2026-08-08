@@ -353,7 +353,8 @@ h1, h2, h3, h4, h5, h6 {
   z-index: 1 !important;
 }
 
-.screen-view.active-screen > * {
+.screen-view.active-screen,
+.screen-view.active-screen * {
   visibility: visible !important;
   opacity: 1 !important;
 }
@@ -376,6 +377,38 @@ h1, h2, h3, h4, h5, h6 {
   display: grid !important;
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+.screen-view.active-screen .pos-cart-panel,
+.screen-view.active-screen .pos-product-panel,
+.screen-view.active-screen .pos-category-panel,
+.screen-view.active-screen .list-section,
+.screen-view.active-screen .card,
+.screen-view.active-screen .form-section,
+.screen-view.active-screen .table-container,
+.screen-view.active-screen form,
+.screen-view.active-screen section {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.screen-view.active-screen .pos-cart-panel {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.screen-view.active-screen table {
+  display: table !important;
+  width: 100% !important;
+}
+
+.screen-view.active-screen tbody {
+  display: table-row-group !important;
+}
+
+.screen-view.active-screen tr {
+  display: table-row !important;
 }
 
 .list-section, .card, .form-section, .pos-cart-panel, .pos-catalog-panel, .pos-product-panel {
