@@ -339,7 +339,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .screen-view {
-  display: none;
+  display: none !important;
   width: 100% !important;
   box-sizing: border-box !important;
 }
@@ -349,34 +349,10 @@ h1, h2, h3, h4, h5, h6 {
   visibility: visible !important;
   opacity: 1 !important;
   min-height: 400px !important;
-  position: relative !important;
-  z-index: 1 !important;
 }
 
-.screen-view.active-screen > .pos-terminal {
-  display: flex !important;
-  flex-direction: column !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  min-height: 500px !important;
-}
-
-.screen-view.active-screen > .card,
-.screen-view.active-screen > .list-section,
-.screen-view.active-screen > .saas-hero-banner,
-.screen-view.active-screen > .form-section {
+.list-section, .card, .form-section {
   display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  min-height: 300px !important;
-}
-
-.screen-view.active-screen .pos-cart-panel {
-  display: flex !important;
-  flex-direction: column !important;
-}
-
-.list-section, .card, .form-section, .pos-cart-panel, .pos-catalog-panel, .pos-product-panel {
   visibility: visible !important;
   opacity: 1 !important;
 }
@@ -736,7 +712,6 @@ tr:hover td {
 
 /* Modals & Overlays (Glassmorphic) */
 .modal-overlay {
-  display: none;
   position: fixed;
   top: 0;
   left: 0;
@@ -744,14 +719,11 @@ tr:hover td {
   height: 100vh;
   background-color: rgba(15, 23, 42, 0.75);
   backdrop-filter: var(--glass-blur);
+  display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 15000;
+  z-index: 15000 !important;
   animation: fadeIn 0.3s ease;
-}
-
-.modal-overlay.open, .modal-overlay.show {
-  display: flex !important;
 }
 
 .modal-card {
@@ -913,14 +885,14 @@ tr:hover td {
 
 .pos-workspace {
   display: grid;
-  grid-template-columns: minmax(320px, 1fr) minmax(400px, 1.5fr);
-  gap: 1.25rem;
+  grid-template-columns: minmax(350px, 1fr) minmax(450px, 1.8fr) 180px;
+  gap: 1.5rem;
   flex: 1;
-  min-height: 480px !important;
+  min-height: 0;
 }
 
 .pos-cart-panel, .pos-product-panel, .pos-category-panel {
-  min-height: 450px !important;
+  min-height: 0;
   background: var(--card-bg);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);

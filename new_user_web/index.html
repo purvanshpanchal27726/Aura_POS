@@ -5,13 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vanshee POS - Advanced Point of Sale Dashboard</title>
   <meta name="description" content="Manage inventory, customers, vendors, sales billing, purchases, and advanced reporting with Vanshee POS System.">
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=20260808_v50">
+  <link rel="stylesheet" href="style.css?v=20260808_v100">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -39,7 +33,7 @@
   </div>
 
   <!-- Login / Signup Overlay -->
-  <div id="loginOverlay" class="modal-overlay open" style="justify-content: center; align-items: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); z-index: 10000; position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
+  <div id="loginOverlay" class="modal-overlay" style="display: flex; justify-content: center; align-items: center; background: var(--bg-color); z-index: 10000; position: fixed; top: 0; left: 0; width: 100%; height: 100%;">
     <div class="modal-card" style="max-width: 400px; width: 90%; padding: 2.5rem; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main);">
       <h2 style="text-align: center; margin-bottom: 1.5rem; color: var(--text-main);" id="loginTitle">Login to POS System</h2>
       
@@ -320,10 +314,6 @@
             <li class="drawer-item" id="menuSupport" style="border-radius: 6px; padding: 0.55rem 0.85rem;">
               <span class="material-icons" style="font-size: 1.1rem;">contact_support</span>
               <span>Support & Help</span>
-            </li>
-            <li class="drawer-item" id="menuUnitTests" onclick="window.open('test_runner.html', '_blank')" style="border-radius: 6px; padding: 0.55rem 0.85rem; cursor: pointer; color: #10b981; font-weight: 600;">
-              <span class="material-icons" style="font-size: 1.1rem; color: #10b981;">verified_user</span>
-              <span>Run Unit Tests Dashboard</span>
             </li>
           </ul>
         </li>
@@ -773,7 +763,7 @@
       </div>
 
       <!-- Screen 2: User Listing -->
-      <div id="screenUserListing" class="screen-view">
+      <div id="screenUserListing" class="screen-view" style="display: none;">
         <section class="list-section card">
         <div class="list-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <h2>Registered Users</h2>
@@ -820,7 +810,7 @@
     </div> <!-- Closes screenUserListing -->
 
     <!-- Clients Listing Screen -->
-    <div id="screenClients" class="screen-view">
+    <div id="screenClients" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header">
           <h2>Client Companies (Tenants)</h2>
@@ -855,7 +845,7 @@
     </div> <!-- Closes screenClients -->
 
     <!-- Screen 3: Customer Listing -->
-    <div id="screenCustomerListing" class="screen-view">
+    <div id="screenCustomerListing" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <h2>Registered Customers</h2>
@@ -901,7 +891,7 @@
     </div> <!-- Closes screenCustomerListing -->
 
     <!-- Screen 4: Item Master -->
-    <div id="screenItem" class="screen-view">
+    <div id="screenItem" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <h2>Registered Items</h2>
@@ -947,7 +937,7 @@
 
 
     <!-- Screen 5: Category Master -->
-    <div id="screenCategory" class="screen-view">
+    <div id="screenCategory" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header">
           <h2>Registered Categories</h2>
@@ -980,7 +970,7 @@
     </div>
 
     <!-- Screen 6: Unit Master -->
-    <div id="screenUnit" class="screen-view">
+    <div id="screenUnit" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header">
           <h2>Registered Units</h2>
@@ -1013,7 +1003,7 @@
     </div> <!-- Closes screenUnit -->
 
     <!-- Screen 7: Tax Master -->
-    <div id="screenTax" class="screen-view">
+    <div id="screenTax" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header">
           <h2>Registered Taxes</h2>
@@ -1046,7 +1036,7 @@
     </div>
 
     <!-- Screen 8: Company Master -->
-    <div id="screenCompany" class="screen-view">
+    <div id="screenCompany" class="screen-view" style="display: none;">
       <section class="form-section card" style="max-width: 800px; margin: 0 auto;">
         <h2>Company Master Settings</h2>
         <form id="companyForm">
@@ -1081,7 +1071,7 @@
     </div>
 
     <!-- Screen 9: Sales Management (Sell billing tab) -->
-    <div id="screenSales" class="screen-view">
+    <div id="screenSales" class="screen-view" style="display: none;">
       <div class="pos-terminal">
         <form id="invoiceForm" class="pos-toolbar">
           <div class="form-field" style="flex: 1.5;">
@@ -1191,7 +1181,7 @@
     </div>
 
     <!-- Screen 10: Purchase Management -->
-    <div id="screenPurchase" class="screen-view">
+    <div id="screenPurchase" class="screen-view" style="display: none;">
       <div class="pos-terminal purchase-mode">
         <form id="purchaseForm" class="pos-toolbar">
           <div class="form-field" style="flex: 1.5;">
@@ -1257,21 +1247,21 @@
           <section class="pos-product-panel">
             <div class="pos-search-row" style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 0.75rem; align-items: end; margin-bottom: 1rem;">
               <div class="form-field">
-                <label for="purchaseAdderItem" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Select Item / Search Catalog</label>
-                <select id="purchaseAdderItem" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem; font-weight: 500;">
+                <label for="salesItemSelect" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Select Item / Search Catalog</label>
+                <select id="salesItemSelect" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem; font-weight: 500;">
                   <option value="">-- Choose Item from List --</option>
                 </select>
               </div>
               <div class="form-field">
-                <label for="purchaseCodeSearch" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Barcode Scan</label>
-                <input type="text" id="purchaseCodeSearch" placeholder="Scan or type code..." style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem;">
+                <label for="salesCodeSearch" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Barcode Scan</label>
+                <input type="text" id="salesCodeSearch" placeholder="Scan or type code..." style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem;">
               </div>
               <div class="form-field pos-qty-field">
-                <label for="purchaseAdderQty" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Default Qty</label>
-                <input type="number" step="0.01" id="purchaseAdderQty" value="1.00" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem; text-align: center; font-weight: bold;">
+                <label for="adderQty" style="font-weight: 600; font-size: 0.85rem; margin-bottom: 0.35rem; display: block;">Default Qty</label>
+                <input type="number" step="0.01" id="adderQty" value="1.00" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.9rem; text-align: center; font-weight: bold;">
               </div>
             </div>
-            <input type="hidden" id="purchaseItemSearch">
+            <input type="hidden" id="salesItemSearch">
             
             <div id="purchaseProductGrid" class="pos-product-grid"></div>
           </section>
@@ -1284,7 +1274,7 @@
       </div>
     </div>
     <!-- Screen 11: Reports & Analytics -->
-    <div id="screenReports" class="screen-view">
+    <div id="screenReports" class="screen-view" style="display: none;">
       <!-- Print-Only Report Header -->
       <div class="print-header-only" style="display: none; margin-bottom: 2.5rem; width: 100%;">
         <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 1rem; width: 100%;">
@@ -1484,7 +1474,7 @@
     </div>
 
     <!-- Screen 12: Premium Settings Control Hub -->
-    <div id="screenSettings" class="screen-view">
+    <div id="screenSettings" class="screen-view" style="display: none;">
       <div class="settings-hub-container">
         
         <!-- Header & Title -->
@@ -1799,7 +1789,7 @@
       </div>
 
     <!-- Screen 13: Vendor Listing [NEW] -->
-    <div id="screenVendorListing" class="screen-view">
+    <div id="screenVendorListing" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
           <h2>Registered Vendors</h2>
@@ -1846,7 +1836,7 @@
     </div>
 
     <!-- Screen 14: Receipt Management [NEW] -->
-    <div id="screenReceipt" class="screen-view">
+    <div id="screenReceipt" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header">
           <h2>Invoices & Receipts</h2>
@@ -1883,7 +1873,7 @@
     </div>
 
     <!-- Screen 15: Role Listing [NEW] -->
-    <div id="screenRoleListing" class="screen-view">
+    <div id="screenRoleListing" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header">
           <h2>Registered Roles</h2>
@@ -1916,7 +1906,7 @@
     </div>
 
     <!-- Screen 16: Support & Contact [NEW] -->
-    <div id="screenSupport" class="screen-view">
+    <div id="screenSupport" class="screen-view" style="display: none;">
       <section class="support-section card">
         <div class="support-container">
           <div class="support-header">
@@ -1976,7 +1966,7 @@
     </div>
 
     <!-- Screen 18: Dine-in Tables [NEW] -->
-    <div id="screenRestTables" class="screen-view">
+    <div id="screenRestTables" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -1994,7 +1984,7 @@
     </div>
 
     <!-- Screen 19: Restaurant Menu Management [NEW] -->
-    <div id="screenRestMenu" class="screen-view">
+    <div id="screenRestMenu" class="screen-view" style="display: none;">
       <div style="display: flex; gap: 1.5rem; margin-bottom: 1.5rem;">
         <button type="button" id="btnTabMenuCategories" class="btn btn-primary" style="padding: 0.5rem 1.5rem;">Menu Categories</button>
         <button type="button" id="btnTabMenuItems" class="btn btn-secondary" style="padding: 0.5rem 1.5rem;">Menu Items</button>
@@ -2058,7 +2048,7 @@
     </div>
 
     <!-- Screen 20: Restaurant Orders & KOT [NEW] -->
-    <div id="screenRestOrders" class="screen-view">
+    <div id="screenRestOrders" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2090,7 +2080,7 @@
     </div>
 
     <!-- Screen 21: Kitchen Queue / KDS [NEW] -->
-    <div id="screenRestKds" class="screen-view">
+    <div id="screenRestKds" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.5rem;">
           <div>
@@ -2113,7 +2103,7 @@
     </div>
 
     <!-- Screen 22: Hotel Rooms [NEW] -->
-    <div id="screenHotelRooms" class="screen-view">
+    <div id="screenHotelRooms" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2131,7 +2121,7 @@
     </div>
 
     <!-- Screen 23: Hotel Guests [NEW] -->
-    <div id="screenHotelGuests" class="screen-view">
+    <div id="screenHotelGuests" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2162,7 +2152,7 @@
     </div>
 
     <!-- Screen 24: Room Bookings [NEW] -->
-    <div id="screenHotelBookings" class="screen-view">
+    <div id="screenHotelBookings" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2194,7 +2184,7 @@
     </div>
 
     <!-- Screen 25: Stock Inventory [NEW] -->
-    <div id="screenInventory" class="screen-view">
+    <div id="screenInventory" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2233,7 +2223,7 @@
     </div>
 
     <!-- Screen 26: Purchase Orders (PO) [NEW] -->
-    <div id="screenPurchaseOrders" class="screen-view">
+    <div id="screenPurchaseOrders" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2265,7 +2255,7 @@
     </div>
 
     <!-- Screen 27: Employee Directory [NEW] -->
-    <div id="screenEmployees" class="screen-view">
+    <div id="screenEmployees" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2299,7 +2289,7 @@
     </div>
 
     <!-- Screen 28: Staff Attendance [NEW] -->
-    <div id="screenAttendance" class="screen-view">
+    <div id="screenAttendance" class="screen-view" style="display: none;">
       <section class="list-section card">
         <div class="list-header" style="margin-bottom: 1.5rem;">
           <div>
@@ -2331,7 +2321,7 @@
     </div>
 
     <!-- Screen 17: License & AMC Management [NEW] -->
-    <div id="screenLicense" class="screen-view">
+    <div id="screenLicense" class="screen-view" style="display: none;">
       <!-- Validity Status Banner Alert -->
       <div id="licenseAlertBanner" class="license-alert-banner" style="display: none; background: #fee2e2; border-left: 5px solid #ef4444; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem; color: #991b1b;">
         <span class="material-icons" style="font-size: 28px; color: #ef4444;">warning</span>
@@ -2817,7 +2807,7 @@
             <input type="checkbox" id="item_editable_price" name="editable_price" value="false">
             <input type="checkbox" id="item_visible" name="visible" value="true" checked>
             <input type="checkbox" id="item_active" name="active" value="true" checked>
-            <select id="item_tax_id_legacy" name="tax_id">
+            <select id="item_tax_id" name="tax_id">
               <option value="">Select Tax Rate</option>
             </select>
             <input type="number" step="0.01" id="item_base_quantity" name="base_quantity" value="1.00">
@@ -3779,7 +3769,7 @@
   
 
     <!-- Screen 21: Barcode & Label Printing Studio -->
-    <div id="screenBarcodeStudio" class="screen-view">
+    <div id="screenBarcodeStudio" class="screen-view" style="display: none;">
       <section class="form-section card" style="max-width: 1000px; margin: 0 auto; padding: 1.5rem; border-radius: 12px; border: 1px solid var(--border-color); background: var(--card-bg);">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
           <div style="display: flex; align-items: center; gap: 0.75rem;">
@@ -3847,32 +3837,10 @@
 
         </div>
       </section>
-  <!-- Indian UPI Payment QR Modal -->
-  <div id="upiModal" class="modal-overlay" style="display: none; justify-content: center; align-items: center; z-index: 12000; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px);">
-    <div class="modal-card" style="max-width: 420px; width: 90%; text-align: center; border-radius: 16px; padding: 2rem; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); position: relative;">
-      <span class="close-modal" id="upiModalClose" onclick="document.getElementById('upiModal').style.display='none'" style="cursor: pointer; position: absolute; right: 1.5rem; top: 1.5rem; font-size: 1.5rem;">&times;</span>
-      <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); color: #10b981; margin-bottom: 1rem;">
-        <span class="material-icons" style="font-size: 2rem;">qr_code_scanner</span>
-      </div>
-      <h2 style="margin: 0 0 0.5rem 0; font-size: 1.4rem; color: var(--text-main);">Instant UPI QR Payment</h2>
-      <p style="color: var(--text-secondary); font-size: 0.88rem; margin: 0 0 1.25rem 0;">Scan using GPay, PhonePe, Paytm or any UPI App</p>
-      
-      <div style="background: white; padding: 1.25rem; border-radius: 12px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 1rem;">
-        <img id="upiQrCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi%3A%2F%2Fpay%3Fpa%3Dvanshee%40upi%26pn%3DVanshee%2520POS" alt="UPI QR Code" style="width: 180px; height: 180px; display: block;">
-      </div>
-
-      <div style="background: var(--input-bg); padding: 0.75rem 1rem; border-radius: 8px; font-weight: 700; color: var(--primary-color); font-size: 1.1rem; margin-bottom: 1.25rem;">
-        Amount: <span id="upiModalAmount">₹0.00</span>
-      </div>
-
-      <div style="display: flex; gap: 0.75rem; justify-content: center;">
-        <button type="button" class="btn btn-primary" onclick="document.getElementById('upiModal').style.display='none'" style="flex: 1; padding: 0.65rem; border-radius: 8px; font-weight: 700;">Confirm Payment Received</button>
-      </div>
     </div>
-  </div>
 
   <div id="toastContainer" style="z-index: 99999 !important; position: fixed;"></div>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <script src="app.js?v=20260808_v50"></script>
+  <script src="app.js?v=20260808_v100"></script>
 </body>
 </html>

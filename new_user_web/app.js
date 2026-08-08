@@ -36,19 +36,15 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const res = await fetch(url, { ...options, headers });
     
-    // Auto-handle expired or invalid JWT token (401 Unauthorized / 403 Forbidden)
-    if ((res.status === 401 || res.status === 403) && !url.includes('/api/users/login')) {
+    // Auto-handle expired or invalid JWT token (401 Unauthorized)
+    if (res.status === 401 && !url.includes('/api/users/login')) {
       console.warn('Session expired or invalid token. Redirecting to login...');
       localStorage.removeItem('pos_auth_token');
       localStorage.removeItem('pos_active_user');
-      activeUser = null;
       const loginOverlay = document.getElementById('loginOverlay');
       if (loginOverlay) loginOverlay.style.display = 'flex';
-      const loginErrorBanner = document.getElementById('loginErrorBanner');
-      if (loginErrorBanner) {
-        loginErrorBanner.textContent = 'Session expired or invalid login. Please log in again.';
-        loginErrorBanner.style.display = 'block';
-      }
+      const mainContainer = document.getElementById('mainContainer');
+      if (mainContainer) mainContainer.style.display = 'none';
     }
     return res;
   };
@@ -321,20 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initRealtimeSSE();
 
 
-  const money = (value) => {
-    const num = parseFloat(value);
-    if (isNaN(num)) return '₹0.00';
-    const isNegative = num < 0;
-    const absVal = Math.abs(num);
-    const parts = absVal.toFixed(2).split('.');
-    let lastThree = parts[0].slice(-3);
-    const otherNumbers = parts[0].slice(0, -3);
-    if (otherNumbers !== '') {
-      lastThree = ',' + lastThree;
-    }
-    const formattedInt = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree;
-    return (isNegative ? '-₹' : '₹') + formattedInt + '.' + parts[1];
-  };
+  const money = (value) => `Rs.${(parseFloat(value || 0)).toFixed(2)}`;
 
   const getItemImageSrc = (item, preferred = 'thumb') => {
     if (!item) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300';
@@ -797,18 +780,11 @@ document.addEventListener('DOMContentLoaded', () => {
     options = options || {};
     options.headers = options.headers || {};
     const token = localStorage.getItem('pos_auth_token');
-    if (token && !options.headers['Authorization']) {
+    if (token) {
       options.headers['Authorization'] = 'Bearer ' + token;
     }
-    // Only set x-client-id if NOT already set by authFetch
-    if (!options.headers['x-client-id']) {
-      const isSuper = activeUser && (activeUser.role_id == 1 || activeUser.is_superadmin == 1 || activeUser.is_superadmin === true);
-      if (isSuper) {
-        const selectedCid = localStorage.getItem('pos_active_client_id');
-        options.headers['x-client-id'] = (selectedCid && selectedCid !== 'ALL') ? selectedCid : 'ALL';
-      } else if (activeUser && activeUser.client_id) {
-        options.headers['x-client-id'] = activeUser.client_id.toString();
-      }
+    if (activeUser && activeUser.client_id) {
+      options.headers['x-client-id'] = activeUser.client_id.toString();
     }
     return originalFetch(url, options);
   };
@@ -816,13 +792,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const moduleForScreen = (screenName) => {
     if (['user_listing', 'settings', 'role_listing'].includes(screenName)) return 1;
     if (screenName === 'customer_listing') return 2;
-    if (['item', 'category', 'unit', 'tax', 'vendor_listing', 'inventory', 'purchase_orders', 'barcode_studio'].includes(screenName)) return 3;
+    if (['item', 'category', 'unit', 'tax', 'vendor_listing'].includes(screenName)) return 3;
     if (['sales', 'receipt'].includes(screenName)) return 4;
     if (screenName === 'purchase') return 5;
     if (screenName === 'reports') return 6;
-    if (['rest_tables', 'rest_menu', 'rest_orders', 'rest_kds'].includes(screenName)) return 7;
-    if (['hotel_rooms', 'hotel_guests', 'hotel_bookings'].includes(screenName)) return 8;
-    if (['employees', 'attendance'].includes(screenName)) return 9;
     return null;
   };
 
@@ -853,37 +826,22 @@ document.addEventListener('DOMContentLoaded', () => {
   const applyNavigationPermissions = () => {
     if (!activeUser) return;
     const moduleMenus = {
-      1: [document.getElementById('menuUserListing'), document.getElementById('menuSettings'), document.getElementById('menuRoleListing')],
+      1: [document.getElementById('menuUserListing')],
       2: [document.getElementById('menuCustomerListing')],
       3: [
         document.getElementById('menuItem'),
         document.getElementById('menuCategory'),
         document.getElementById('menuUnit'),
         document.getElementById('menuTax'),
-        document.getElementById('menuVendorListing'),
-        document.getElementById('menuInventory'),
-        document.getElementById('menuPurchaseOrders'),
-        document.getElementById('menuBarcodeStudio')
+        document.getElementById('menuVendorListing')
       ],
-      4: [document.getElementById('menuSales'), document.getElementById('menuReceipt')],
+      4: [document.getElementById('menuSales')],
       5: [document.getElementById('menuPurchase')],
-      6: [document.getElementById('menuReports')],
-      7: [
-        document.getElementById('menuRestTables'),
-        document.getElementById('menuRestMenu'),
-        document.getElementById('menuRestOrders'),
-        document.getElementById('menuRestKds')
-      ],
-      8: [
-        document.getElementById('menuHotelRooms'),
-        document.getElementById('menuHotelGuests'),
-        document.getElementById('menuHotelBookings')
-      ],
-      9: [
-        document.getElementById('menuEmployees'),
-        document.getElementById('menuAttendance')
-      ]
+      6: [document.getElementById('menuReports')]
     };
+
+    moduleMenus[1].push(document.getElementById('menuSettings'), document.getElementById('menuRoleListing'));
+    moduleMenus[4].push(document.getElementById('menuReceipt'));
 
     Object.keys(moduleMenus).forEach(mId => {
       const allowed = hasModulePermission(parseInt(mId));
@@ -1097,30 +1055,18 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // 1. Close any open modal overlays (except loginOverlay if active)
-    const allModals = document.querySelectorAll('.modal-overlay');
-    allModals.forEach(m => {
-      if (m.id !== 'loginOverlay') {
-        m.style.display = 'none';
-        m.classList.remove('open', 'show');
-      }
-    });
-
-    // 2. Remove active-screen class and hide ALL screen views
+    // 1. Remove active-screen class and reset inline display styles on ALL screen views
     const allViews = document.querySelectorAll('.screen-view');
     allViews.forEach(v => {
       v.classList.remove('active-screen');
-      v.style.setProperty('display', 'none', 'important');
+      v.style.display = '';
     });
 
     // 2. Add active-screen class and set display block ONLY on target screen view
     const targetView = document.getElementById(targetConfig.viewId);
     if (targetView) {
       targetView.classList.add('active-screen');
-      targetView.style.setProperty('display', 'block', 'important');
-      targetView.style.setProperty('visibility', 'visible', 'important');
-      targetView.style.setProperty('opacity', '1', 'important');
-
+      targetView.style.display = 'block';
       activeScreen = targetView.id;
       console.log(`[switchScreen] Screen switched to '${screenName}' (ID: ${targetConfig.viewId})`);
     } else {
@@ -3986,11 +3932,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const salesItemSelect = document.getElementById('salesItemSelect');
       if (salesItemSelect) {
         salesItemSelect.innerHTML = '<option value="">-- Choose Item from List --</option>' + 
-          availableItems.map(i => `<option value="${i.item_id}">${i.name || i.item_name} - Rs.${parseFloat(i.sales_price || i.sell_price || i.price || 0).toFixed(2)}</option>`).join('');
+          availableItems.map(i => `<option value="${i.item_id}">${i.name} - Rs.${i.sell_price || i.unit_price || 0}</option>`).join('');
       }
       if (adderItem) {
         adderItem.innerHTML = '<option value="">-- Choose Item from List --</option>' + 
-          availableItems.map(i => `<option value="${i.item_id}">${i.name || i.item_name} - Rs.${parseFloat(i.sales_price || i.sell_price || i.price || 0).toFixed(2)}</option>`).join('');
+          availableItems.map(i => `<option value="${i.item_id}">${i.name} - Rs.${i.sell_price || i.unit_price || 0}</option>`).join('');
       }
       renderSalesCategories(); 
       renderSalesCatalog();
@@ -5407,10 +5353,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (amcBanner) amcBanner.style.display = 'none';
       }
 
-      if (loginOverlay) {
-        loginOverlay.style.display = 'none';
-        loginOverlay.classList.remove('open', 'show');
-      }
+      if (loginOverlay) loginOverlay.style.display = 'none';
       if (loggedInUsername) loggedInUsername.textContent = (activeUser && activeUser.username) ? activeUser.username : 'User';
       updateNavigationMenuForRole();
       
@@ -5425,10 +5368,7 @@ document.addEventListener('DOMContentLoaded', () => {
       activeUser = null;
       if (lockoutOverlay) lockoutOverlay.style.display = 'none';
       if (amcBanner) amcBanner.style.display = 'none';
-      if (loginOverlay) {
-        loginOverlay.style.display = 'flex';
-        loginOverlay.classList.add('open');
-      }
+      if (loginOverlay) loginOverlay.style.display = 'flex';
       if (loggedInUsername) loggedInUsername.textContent = 'Guest';
     }
   };
@@ -10861,28 +10801,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  window.openUpiModal = function(amount) {
-    const upiModal = document.getElementById('upiModal');
-    const upiModalAmount = document.getElementById('upiModalAmount');
-    const upiQrCodeImg = document.getElementById('upiQrCodeImg');
-    const num = parseFloat(amount) || 0;
-    if (upiModalAmount) upiModalAmount.textContent = money(num);
-    const upiUrl = `upi://pay?pa=vanshee@upi&pn=Vanshee%20POS&am=${num.toFixed(2)}&cu=INR`;
-    if (upiQrCodeImg) {
-      upiQrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiUrl)}`;
-    }
-    if (upiModal) upiModal.style.display = 'flex';
-  };
-
-  window.shareWhatsAppInvoice = function(billNo, phone, netAmount) {
-    const cleanPhone = (phone || '').toString().replace(/[^0-9]/g, '');
-    const msg = `Hello! Thank you for shopping with us. Your invoice *${billNo}* for total amount *${money(netAmount)}* has been generated. Have a great day!`;
-    const waUrl = cleanPhone.length >= 10 
-      ? `https://wa.me/91${cleanPhone.slice(-10)}?text=${encodeURIComponent(msg)}`
-      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    window.open(waUrl, '_blank');
-  };
 
   window.fetchLicenseDetails = fetchLicenseDetails;
 
