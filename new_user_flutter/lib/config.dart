@@ -149,6 +149,24 @@ class AppConfig {
   /// URL endpoint for purchase-related API operations
   static String get purchasesApiUrl => '$baseUrl/api/purchase';
 
+  /// URL endpoint for purchase orders API operations
+  static String get purchaseOrdersApiUrl => '$baseUrl/api/purchase-orders';
+
+  /// URL endpoint for inventory API operations
+  static String get inventoryApiUrl => '$baseUrl/api/inventory';
+
+  /// URL endpoint for employees API operations
+  static String get employeesApiUrl => '$baseUrl/api/employees';
+
+  /// URL endpoint for hotel API operations
+  static String get hotelApiUrl => '$baseUrl/api/hotel';
+
+  /// URL endpoint for restaurant API operations
+  static String get restaurantApiUrl => '$baseUrl/api/restaurant';
+
+  /// URL endpoint for clients management API operations
+  static String get clientsApiUrl => '$baseUrl/api/clients';
+
   /// Returns extra HTTP headers required based on the current host.
   /// Render.com does not need any special headers.
   /// Ngrok tunnels require a bypass header to skip the interstitial warning page.
