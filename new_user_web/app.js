@@ -36,8 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const res = await fetch(url, { ...options, headers });
     
-    // Auto-handle expired or invalid JWT token (401 Unauthorized)
-    if (res.status === 401 && !url.includes('/api/users/login')) {
+    // Auto-handle expired or invalid JWT token (401 Unauthorized / 403 Forbidden)
+    if ((res.status === 401 || res.status === 403) && !url.includes('/api/users/login')) {
       console.warn('Session expired or invalid token. Redirecting to login...');
       localStorage.removeItem('pos_auth_token');
       localStorage.removeItem('pos_active_user');
