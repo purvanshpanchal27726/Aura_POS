@@ -3921,22 +3921,30 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const custRes = await authFetch(getApiUrl('/api/customers'));
       availableCustomers = custRes.ok ? await custRes.json() : [];
-      if (invoiceCustomer) {
-        invoiceCustomer.innerHTML = '<option value="">-- Choose Customer --</option>' + 
-          availableCustomers.map(c => `<option value="${c.customer_id}">${c.first_name} ${c.last_name} (${c.phone || 'No phone'})</option>`).join('');
-      }
+      const getCustomerName = (c) => {
+        if (c.first_name || c.last_name) return `${c.first_name || ''} ${c.last_name || ''}`.trim();
+        if (c.name) return c.name;
+        if (c.customer_name) return c.customer_name;
+        return 'Customer #' + c.customer_id;
+      };
+      const getCustomerPhone = (c) => c.phone_1 || c.phone || c.mobile || 'No phone';
+
+      invoiceCustomer.innerHTML = '<option value="">-- Choose Customer --</option>' + 
+        availableCustomers.map(c => `<option value="${c.customer_id}">${getCustomerName(c)} (${getCustomerPhone(c)})</option>`).join('');
 
       const itemsRes = await authFetch(getApiUrl('/api/items'));
       availableItems = itemsRes.ok ? (await itemsRes.json()).filter(item => item.visible !== 0 && item.visible !== "0" && item.visible !== false && item.active !== 0 && item.active !== "0" && item.active !== false) : [];
       
+      const getItemPrice = (i) => i.sales_price ?? i.sell_price ?? i.unit_price ?? i.price ?? 0;
+
       const salesItemSelect = document.getElementById('salesItemSelect');
       if (salesItemSelect) {
         salesItemSelect.innerHTML = '<option value="">-- Choose Item from List --</option>' + 
-          availableItems.map(i => `<option value="${i.item_id}">${i.name} - Rs.${i.sell_price || i.unit_price || 0}</option>`).join('');
+          availableItems.map(i => `<option value="${i.item_id}">${i.name} - ₹${getItemPrice(i)}</option>`).join('');
       }
       if (adderItem) {
         adderItem.innerHTML = '<option value="">-- Choose Item from List --</option>' + 
-          availableItems.map(i => `<option value="${i.item_id}">${i.name} - Rs.${i.sell_price || i.unit_price || 0}</option>`).join('');
+          availableItems.map(i => `<option value="${i.item_id}">${i.name} - ₹${getItemPrice(i)}</option>`).join('');
       }
       renderSalesCategories(); 
       renderSalesCatalog();
@@ -5491,8 +5499,16 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const vendorRes = await authFetch(getApiUrl('/api/vendors'));
       availableVendors = vendorRes.ok ? await vendorRes.json() : [];
+      const getVendorName = (v) => {
+        if (v.company_name) return v.company_name;
+        if (v.first_name || v.last_name) return `${v.first_name || ''} ${v.last_name || ''}`.trim();
+        if (v.contact_person) return v.contact_person;
+        if (v.name) return v.name;
+        return 'Vendor #' + v.vendor_id;
+      };
+
       purchaseVendor.innerHTML = '<option value="">Choose Supplier</option>' + 
-        availableVendors.map(v => `<option value="${v.vendor_id}">${v.first_name} ${v.last_name} (${v.company || 'Individual'})</option>`).join('');
+        availableVendors.map(v => `<option value="${v.vendor_id}">${getVendorName(v)} (${v.phone_1 || v.phone || 'No phone'})</option>`).join('');
 
       const itemsRes = await authFetch(getApiUrl('/api/items'));
       availableItems = itemsRes.ok ? (await itemsRes.json()).filter(item => item.visible !== 0 && item.visible !== "0" && item.visible !== false && item.active !== 0 && item.active !== "0" && item.active !== false) : [];
