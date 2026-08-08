@@ -1121,14 +1121,6 @@ document.addEventListener('DOMContentLoaded', () => {
       targetView.style.setProperty('visibility', 'visible', 'important');
       targetView.style.setProperty('opacity', '1', 'important');
 
-      targetView.querySelectorAll('*').forEach(el => {
-        if (el.style.display === 'none') {
-          el.style.display = '';
-        }
-        el.style.setProperty('visibility', 'visible', 'important');
-        el.style.setProperty('opacity', '1', 'important');
-      });
-
       activeScreen = targetView.id;
       console.log(`[switchScreen] Screen switched to '${screenName}' (ID: ${targetConfig.viewId})`);
     } else {
