@@ -66,6 +66,10 @@ const flutterWebPath = fs.existsSync(path.join(__dirname, 'flutter_web'))
 if (fs.existsSync(flutterWebPath)) {
   app.use('/flutter', express.static(flutterWebPath));
   app.use('/app', express.static(flutterWebPath));
+
+  app.get(['/app/*', '/flutter/*'], (req, res) => {
+    res.sendFile(path.join(flutterWebPath, 'index.html'));
+  });
 }
 
 // Serve static frontend files with no-cache headers to prevent stale browser caching
