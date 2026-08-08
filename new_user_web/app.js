@@ -1129,6 +1129,16 @@ document.addEventListener('DOMContentLoaded', () => {
         child.style.opacity = '1';
       });
 
+      // Unhide all descendant card, section, form, and pos-terminal containers
+      const innerContainers = targetView.querySelectorAll('.pos-terminal, .pos-workspace, .pos-toolbar, .pos-cart-panel, .pos-catalog-panel, .pos-product-panel, .list-section, .card, .form-section, .table-container, section, form');
+      innerContainers.forEach(el => {
+        if (el.style.display === 'none') {
+          el.style.display = '';
+        }
+        el.style.setProperty('visibility', 'visible', 'important');
+        el.style.setProperty('opacity', '1', 'important');
+      });
+
       activeScreen = targetView.id;
       console.log(`[switchScreen] Screen switched to '${screenName}' (ID: ${targetConfig.viewId})`);
     } else {
