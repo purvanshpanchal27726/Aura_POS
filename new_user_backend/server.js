@@ -67,7 +67,10 @@ if (fs.existsSync(flutterWebPath)) {
   app.use('/flutter', express.static(flutterWebPath));
   app.use('/app', express.static(flutterWebPath));
 
-  app.get(['/app/*', '/flutter/*'], (req, res) => {
+  app.use('/app', (req, res) => {
+    res.sendFile(path.join(flutterWebPath, 'index.html'));
+  });
+  app.use('/flutter', (req, res) => {
     res.sendFile(path.join(flutterWebPath, 'index.html'));
   });
 }
