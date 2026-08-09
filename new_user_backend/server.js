@@ -147,6 +147,10 @@ app.use('/api/system/backup', backupAPI.router);
 app.use('/api/backup', backupAPI.router);
 app.use('/api/Backup', backupAPI.router);
 
+const exportRoutes = require('./ExportAPI');
+app.use('/api/export', exportRoutes);
+app.use('/api/Export', exportRoutes);
+
 // Schedule 12-hour periodic database backup snapshot
 setInterval(() => {
   backupAPI.generateDatabaseBackup().catch(err => console.warn('[AutoBackup] Error:', err.message));

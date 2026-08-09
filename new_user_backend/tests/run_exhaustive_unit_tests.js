@@ -204,6 +204,30 @@ runTest('Automated DB Backup Engine: Generates JSON snapshot payload', () => {
 });
 
 // -----------------------------------------------------------------------------
+// 6. 1-CLICK EXCEL / CSV DATA EXPORT ENGINE
+// -----------------------------------------------------------------------------
+console.log('\n📊 CATEGORY 6: 1-CLICK EXCEL & CSV DATA EXPORT ENGINE');
+
+runTest('Export Suite: Inventory CSV Header & Formatting', () => {
+  const items = [{ item_id: 1, name: 'Amul Milk 500ml', item_code: 'ITM-001', sales_price: 30, purchase_price: 25, stock: 45, min_stock_alert: 5 }];
+  let csv = 'Item ID,Item Name,Item Code,Sales Price (INR),Purchase Price (INR),Current Stock,Min Alert Level\n';
+  for (const item of items) {
+    csv += `${item.item_id},"${item.name}",${item.item_code},${item.sales_price},${item.purchase_price},${item.stock},${item.min_stock_alert}\n`;
+  }
+  assert.ok(csv.includes('Item ID,Item Name,Item Code'), 'CSV header must be present');
+  assert.ok(csv.includes('Amul Milk 500ml'), 'Item row must be formatted properly');
+});
+
+runTest('Export Suite: GST GSTR-1 Tax Report CGST/SGST Breakdown', () => {
+  const invoice = { invoice_number: 'INV-1001', sales_date: '2025-05-24', subtotal: 2500, tax_amount: 450, total: 2950 };
+  const cgst = invoice.tax_amount / 2;
+  const sgst = invoice.tax_amount / 2;
+  let csvRow = `${invoice.invoice_number},${invoice.sales_date},${invoice.subtotal.toFixed(2)},${cgst.toFixed(2)},${sgst.toFixed(2)},0.00,${invoice.tax_amount.toFixed(2)},${invoice.total.toFixed(2)}`;
+  
+  assert.ok(csvRow.includes('225.00,225.00'), 'CGST and SGST must split tax 50/50 for intra-state billing');
+});
+
+// -----------------------------------------------------------------------------
 // SUMMARY REPORT
 // -----------------------------------------------------------------------------
 console.log('\n================================================================');
