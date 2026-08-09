@@ -229,9 +229,12 @@ class _MainLayoutState extends State<MainLayout> {
   bool _isWakingUp = false;
 
   List<dynamic> allUsers = [];
+  List<dynamic> allClients = [];
   Map<String, dynamic>? activeUser;
   List<dynamic> permissionsData = [];
   Timer? _keepAliveTimer;
+
+  String activeStoreId = '1';
 
   @override
   void initState() {
@@ -241,7 +244,8 @@ class _MainLayoutState extends State<MainLayout> {
         activeUser = json.decode(widget.initialUser!);
         if (activeUser != null) {
           if (activeUser!['client_id'] != null) {
-            AppConfig.setActiveUserClientId(activeUser!['client_id'].toString());
+            activeStoreId = activeUser!['client_id'].toString();
+            AppConfig.setActiveUserClientId(activeStoreId);
           }
           if (activeUser!['token'] != null) {
             AppConfig.setAuthToken(activeUser!['token'].toString());
@@ -315,16 +319,19 @@ class _MainLayoutState extends State<MainLayout> {
         final responses = await Future.wait([
           ApiClient.get(Uri.parse(AppConfig.usersApiUrl)),
           ApiClient.get(Uri.parse(AppConfig.permissionsApiUrl)),
+          ApiClient.get(Uri.parse(AppConfig.clientsApiUrl)),
         ]).timeout(attempts[i]);
 
         if (responses[0].statusCode == 200 && responses[1].statusCode == 200) {
           final List<dynamic> users = json.decode(responses[0].body);
           final Map<String, dynamic> permData = json.decode(responses[1].body);
+          final List<dynamic> clients = responses[2].statusCode == 200 ? json.decode(responses[2].body) : [];
 
           if (mounted) {
             setState(() {
               allUsers = users;
               permissionsData = permData['permissions'] ?? [];
+              allClients = clients;
               isLoading = false;
               isConnectionFailed = false;
               _isWakingUp = false;
@@ -400,7 +407,7 @@ class _MainLayoutState extends State<MainLayout> {
     RoleListingScreen(roleId: activeUser?['role_id'], canModify: _hasPermission(1)),
     const SupportScreen(),
     const LicenseScreen(),
-    ClientsScreen(canModify: activeUser?['client_id'] == null),
+    ClientsScreen(canModify: true),
     const PrinterSettingsScreen(),
     const RestaurantTablesScreen(),
     const RestaurantMenuScreen(),
@@ -494,9 +501,11 @@ class _MainLayoutState extends State<MainLayout> {
           setState(() {
             activeUser = user;
             if (user['client_id'] != null) {
-              AppConfig.setActiveUserClientId(user['client_id'].toString());
+              activeStoreId = user['client_id'].toString();
+              AppConfig.setActiveUserClientId(activeStoreId);
             } else {
-              AppConfig.setActiveUserClientId(null);
+              activeStoreId = 'ALL';
+              AppConfig.setActiveUserClientId('ALL');
             }
             if (user['token'] != null) {
               AppConfig.setAuthToken(user['token'].toString());
@@ -539,6 +548,7 @@ class _MainLayoutState extends State<MainLayout> {
   PreferredSizeWidget _buildTopAppBar(bool isDark, Color primaryColor, bool isDesktop) {
     final userName = activeUser?['first_name'] ?? activeUser?['username'] ?? 'User';
     final roleName = activeUser?['role_name'] ?? 'Staff';
+    final isSuperAdmin = activeUser?['role_id'] == 1 || activeUser?['is_superadmin'] == 1 || activeUser?['client_id'] == null;
 
     return AppBar(
       elevation: 0,
@@ -550,7 +560,7 @@ class _MainLayoutState extends State<MainLayout> {
           // Command Palette Search Trigger
           if (isDesktop)
             Container(
-              width: 240,
+              width: 220,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
                 color: isDark ? const Color(0xFF151D30) : const Color(0xFFF1F5F9),
@@ -574,19 +584,44 @@ class _MainLayoutState extends State<MainLayout> {
         ],
       ),
       actions: [
-        // Store Selector Dropdown
+        // Store Selector Dropdown for Super Admin & Multi-Store Management
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
           decoration: BoxDecoration(
             color: primaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
           ),
           child: Row(
             children: [
               Icon(Icons.storefront_rounded, size: 16, color: primaryColor),
               const SizedBox(width: 6),
-              Text('Main Branch', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor)),
+              DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: activeStoreId,
+                  dropdownColor: isDark ? const Color(0xFF151D30) : Colors.white,
+                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor),
+                  items: [
+                    if (isSuperAdmin) const DropdownMenuItem(value: 'ALL', child: Text('All Stores (Global View)')),
+                    if (allClients.isNotEmpty)
+                      ...allClients.map((c) => DropdownMenuItem(
+                        value: c['client_id']?.toString() ?? '1',
+                        child: Text(c['name'] ?? 'Store ${c['client_id']}'),
+                      ))
+                    else
+                      const DropdownMenuItem(value: '1', child: Text('Vanshee POS Enterprise')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        activeStoreId = val;
+                        AppConfig.setActiveUserClientId(val == 'ALL' ? null : val);
+                      });
+                      fetchUsersAndPermissions();
+                    }
+                  },
+                ),
+              ),
             ],
           ),
         ),
@@ -706,7 +741,7 @@ class _MainLayoutState extends State<MainLayout> {
               if (_hasPermission(2)) _buildNavItem(3, 'Customers', Icons.contact_mail_outlined, isDesktop),
               if (_hasPermission(3)) _buildNavItem(4, 'Vendors', Icons.local_shipping_outlined, isDesktop),
               _buildNavItem(27, 'Staff Attendance', Icons.badge_outlined, isDesktop),
-              if (activeUser?['client_id'] == null) _buildNavItem(16, 'Clients Stores', Icons.business_outlined, isDesktop),
+              _buildNavItem(16, 'Clients Stores', Icons.business_outlined, isDesktop),
 
               if (_hasModuleGroup('Restaurant')) ...[
                 _buildSectionHeader('RESTAURANT'),
