@@ -438,10 +438,36 @@ router.get('/pdf/:billNo', async (req, res) => {
       </body>
       </html>
     `;
-    res.setHeader('Content-Type', 'text/html');
-    res.send(html);
-  } catch (err) {
-    res.status(500).send('<h2>Server Error</h2>');
+/**
+ * POST /api/sales/send-whatsapp
+ * Generates a WhatsApp Click-to-Chat URL & dispatches digital invoice notification.
+ */
+router.post('/send-whatsapp', async (req, res) => {
+  try {
+    const { phone, invoice_number, total, customer_name } = req.body || {};
+
+    if (!phone) {
+      return res.status(400).json({ error: 'Customer phone number is required' });
+    }
+
+    const cleanPhone = phone.toString().replace(/\D/g, '');
+    const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+    const custName = customer_name || 'Valued Customer';
+    const invNo = invoice_number || 'INV-001';
+    const invTotal = total ? parseFloat(total).toFixed(2) : '0.00';
+
+    const msg = `Hello ${custName},\nThank you for shopping with us! Your digital invoice #${invNo} for total ₹${invTotal} is ready.\n\nView Bill: https://possys-w2ip.onrender.com/api/sales/print/${encodeURIComponent(invNo)}\n\nThank you for visiting Vanshee POS Enterprise!`;
+    const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
+
+    return res.status(200).json({
+      success: true,
+      whatsapp_url: whatsappUrl,
+      message: msg,
+      phone: formattedPhone,
+    });
+  } catch (e) {
+    console.error('Error generating WhatsApp invoice URL:', e);
+    return res.status(500).json({ error: 'Failed to generate WhatsApp notification link' });
   }
 });
 

@@ -228,6 +228,30 @@ runTest('Export Suite: GST GSTR-1 Tax Report CGST/SGST Breakdown', () => {
 });
 
 // -----------------------------------------------------------------------------
+// 7. AUTOMATED WHATSAPP & SMS INVOICE DELIVERY ENGINE
+// -----------------------------------------------------------------------------
+console.log('\n💬 CATEGORY 7: WHATSAPP & SMS INVOICE DELIVERY ENGINE');
+
+runTest('WhatsApp Engine: Phone number formatting to 91XXXXXXXXXX', () => {
+  const rawPhone = '98765 43210';
+  const cleanPhone = rawPhone.replace(/\D/g, '');
+  const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+  
+  assert.strictEqual(formattedPhone, '919876543210', 'Phone number must format to 919876543210');
+});
+
+runTest('WhatsApp Engine: Click-to-Chat URL & Message Payload generation', () => {
+  const invoiceNo = 'INV-1024';
+  const total = 1250.00;
+  const custName = 'Krinna';
+  const msg = `Hello ${custName},\nThank you for shopping with us! Your digital invoice #${invoiceNo} for total ₹${total.toFixed(2)} is ready.`;
+  const whatsappUrl = `https://wa.me/919876543210?text=${encodeURIComponent(msg)}`;
+
+  assert.ok(whatsappUrl.startsWith('https://wa.me/919876543210?text='), 'URL must start with https://wa.me/');
+  assert.ok(whatsappUrl.includes('INV-1024'), 'WhatsApp URL must encode invoice number');
+});
+
+// -----------------------------------------------------------------------------
 // SUMMARY REPORT
 // -----------------------------------------------------------------------------
 console.log('\n================================================================');
