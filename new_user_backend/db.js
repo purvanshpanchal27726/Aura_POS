@@ -332,6 +332,68 @@ const db = {
     return this.query(sql, values);
   },
 
+  /**
+   * Column-Agnostic Dynamic Insert Helper
+   * Automatically extracts all keys from data object into column names & placeholders.
+   * Adding new columns to PostgreSQL database requires ZERO code changes.
+   */
+  async insert(table, data) {
+    const keys = Object.keys(data).filter(k => data[k] !== undefined);
+    if (keys.length === 0) throw new Error(`No data provided to insert into ${table}`);
+    const cols = keys.map(k => `"${k}"`).join(', ');
+    const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
+    const values = keys.map(k => data[k]);
+    const sql = `INSERT INTO "${table}" (${cols}) VALUES (${placeholders}) RETURNING *`;
+    const [result] = await this.query(sql, values);
+    return result;
+  },
+
+  /**
+   * Column-Agnostic Dynamic Update Helper
+   * Automatically updates only the keys provided in data object.
+   * Adding new columns to PostgreSQL database requires ZERO code changes.
+   */
+  async update(table, primaryKeyCol, primaryVal, data) {
+    const keys = Object.keys(data).filter(k => k !== primaryKeyCol && data[k] !== undefined);
+    if (keys.length === 0) return null;
+    const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
+    const values = keys.map(k => data[k]);
+    values.push(primaryVal);
+    const sql = `UPDATE "${table}" SET ${setClause} WHERE "${primaryKeyCol}" = $${values.length} RETURNING *`;
+    const [result] = await this.query(sql, values);
+    return result;
+  },
+
+  /**
+   * Column-Agnostic Dynamic Select Helper
+   * Fetches records matching filters with optional ordering & limits.
+   */
+  async select(table, filters = {}, options = {}) {
+    const keys = Object.keys(filters).filter(k => filters[k] !== undefined);
+    let whereClause = '';
+    const values = [];
+    if (keys.length > 0) {
+      whereClause = ' WHERE ' + keys.map((k, i) => {
+        values.push(filters[k]);
+        return `"${k}" = $${i + 1}`;
+      }).join(' AND ');
+    }
+    let orderBy = options.orderBy ? ` ORDER BY ${options.orderBy}` : '';
+    let limit = options.limit ? ` LIMIT ${options.limit}` : '';
+    const sql = `SELECT * FROM "${table}"${whereClause}${orderBy}${limit}`;
+    const [rows] = await this.query(sql, values);
+    return rows;
+  },
+
+  /**
+   * Column-Agnostic Dynamic Delete Helper
+   */
+  async delete(table, primaryKeyCol, primaryVal) {
+    const sql = `DELETE FROM "${table}" WHERE "${primaryKeyCol}" = $1 RETURNING *`;
+    const [result] = await this.query(sql, [primaryVal]);
+    return result;
+  },
+
   async getConnection() {
     let client;
     let attempts = 0;
