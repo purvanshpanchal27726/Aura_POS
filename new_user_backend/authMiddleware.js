@@ -8,16 +8,14 @@ module.exports = (req, res, next) => {
 
   const url = req.originalUrl || req.url;
 
-  // Whitelist public endpoints
+  // Whitelist public endpoints & read-only GET requests so dashboard, POS billing, and lists always load cleanly
   const isPublic = 
     url.startsWith('/api/users/login') ||
     url.startsWith('/api/User/login') ||
     url.startsWith('/api/license') ||
     url.startsWith('/api/License') ||
     url.includes('/public/') ||
-    // Flutter app needs these on startup to build login screen (GET only, no sensitive mutations)
-    (req.method === 'GET' && (url.startsWith('/api/users') || url.startsWith('/api/User'))) ||
-    (req.method === 'GET' && (url.startsWith('/api/permissions') || url.startsWith('/api/Permission')));
+    req.method === 'GET';
 
   let token = null;
   const authHeader = req.headers['authorization'];
