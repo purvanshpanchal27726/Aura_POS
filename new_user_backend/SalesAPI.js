@@ -377,12 +377,22 @@ router.post('/cloudinary/upload-pdf', async (req, res) => {
 router.get('/pdf/:billNo', async (req, res) => {
   try {
     const billNo = req.params.billNo;
-    const [rows] = await db.execute('SELECT * FROM sales_master WHERE sales_bill_no = $1', [billNo]);
+    const [rows] = await db.execute(`
+      SELECT sm.*, c.name AS client_name, c.address_1, c.phone_1, c.gstin
+      FROM sales_master sm
+      LEFT JOIN clients c ON sm.client_id = c.client_id
+      WHERE sm.sales_bill_no = $1
+    `, [billNo]);
     if (rows.length === 0) {
       return res.status(404).send('<h2>Invoice Not Found</h2>');
     }
     const sale = rows[0];
     const [items] = await db.execute('SELECT * FROM sales_details WHERE sales_id = $1', [sale.sales_id]);
+    
+    const storeName = sale.client_name || 'VANSHEE POS ENTERPRISE';
+    const storeAddress = sale.address_1 || '123 Commercial Hub, SG Highway, Ahmedabad';
+    const storePhone = sale.phone_1 || '9876543210';
+    const storeGstin = sale.gstin || '24AAACV1234F1Z9';
     
     let html = `
       <!DOCTYPE html>
@@ -391,25 +401,36 @@ router.get('/pdf/:billNo', async (req, res) => {
         <meta charset="utf-8">
         <title>Invoice #${sale.sales_bill_no}</title>
         <style>
-          body { font-family: sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; color: #1e293b; }
-          .header { text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 1rem; margin-bottom: 1rem; }
-          .bill-title { font-size: 1.5rem; font-weight: 800; color: #2563eb; margin: 0; }
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 2rem; max-width: 650px; margin: 0 auto; color: #0f172a; background: #fff; }
+          .header { text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+          .store-title { font-size: 1.6rem; font-weight: 800; color: #1e293b; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+          .store-subtitle { margin: 4px 0 0 0; color: #64748b; font-size: 0.85rem; }
+          .barcode-container { text-align: center; margin: 16px 0; padding: 8px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; }
+          .barcode-text { font-family: 'Courier New', Courier, monospace; font-size: 1.4rem; font-weight: bold; letter-spacing: 4px; color: #0f172a; }
           .info-table, .items-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
-          .items-table th, .items-table td { padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0; }
-          .items-table th { background: #f8fafc; font-size: 0.85rem; }
-          .total-row { font-weight: bold; font-size: 1.1rem; color: #10b981; }
-          .footer { text-align: center; margin-top: 2rem; color: #64748b; font-size: 0.85rem; }
+          .items-table th, .items-table td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+          .items-table th { background: #f1f5f9; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: #475569; }
+          .total-row { font-weight: 800; font-size: 1.2rem; color: #2563eb; }
+          .footer { text-align: center; margin-top: 2rem; border-top: 2px dashed #cbd5e1; padding-top: 1rem; color: #64748b; font-size: 0.85rem; }
         </style>
       </head>
       <body>
         <div class="header">
-          <h1 class="bill-title">VANSHEE POS</h1>
-          <p style="margin: 4px 0 0 0; color: #64748b;">Official Tax Invoice</p>
+          <h1 class="store-title">${storeName}</h1>
+          <p class="store-subtitle">${storeAddress} | Ph: +91 ${storePhone}</p>
+          <p class="store-subtitle"><strong>GSTIN:</strong> ${storeGstin}</p>
         </div>
+
+        <div class="barcode-container">
+          <div class="barcode-text">||| | || |||| | ||| |||| | |||</div>
+          <div style="font-size: 0.85rem; color: #475569; margin-top: 4px;">*${sale.sales_bill_no}*</div>
+        </div>
+
         <table class="info-table">
           <tr><td><strong>Bill No:</strong> ${sale.sales_bill_no}</td><td style="text-align:right;"><strong>Date:</strong> ${new Date(sale.sales_date).toLocaleDateString('en-IN')}</td></tr>
-          <tr><td><strong>Customer ID:</strong> ${sale.customer_id || 'Walk-in'}</td><td style="text-align:right;"><strong>Payment:</strong> ${sale.payment_method || 'Cash'}</td></tr>
+          <tr><td><strong>Customer ID:</strong> ${sale.customer_id || 'Walk-in Customer'}</td><td style="text-align:right;"><strong>Pay Method:</strong> ${sale.payment_method || 'Cash'}</td></tr>
         </table>
+
         <table class="items-table">
           <thead>
             <tr><th>Item Name</th><th style="text-align:right;">Qty</th><th style="text-align:right;">Rate</th><th style="text-align:right;">Amount</th></tr>
@@ -417,7 +438,7 @@ router.get('/pdf/:billNo', async (req, res) => {
           <tbody>
             ${items.map(it => `
               <tr>
-                <td>${it.item_name}</td>
+                <td><strong>${it.item_name}</strong></td>
                 <td style="text-align:right;">${parseFloat(it.quantity).toFixed(2)}</td>
                 <td style="text-align:right;">₹${parseFloat(it.rate).toFixed(2)}</td>
                 <td style="text-align:right;">₹${parseFloat(it.item_amount).toFixed(2)}</td>
@@ -425,14 +446,16 @@ router.get('/pdf/:billNo', async (req, res) => {
             `).join('')}
           </tbody>
         </table>
-        <div style="text-align: right; border-top: 2px solid #cbd5e1; padding-top: 8px;">
-          <div>Gross: ₹${parseFloat(sale.gross).toFixed(2)}</div>
-          <div>Tax: ₹${parseFloat(sale.tax).toFixed(2)}</div>
-          <div class="total-row">Grand Total: ₹${parseFloat(sale.total).toFixed(2)}</div>
+
+        <div style="text-align: right; border-top: 2px solid #94a3b8; padding-top: 10px; margin-top: 10px;">
+          <div>Gross Subtotal: ₹${parseFloat(sale.gross).toFixed(2)}</div>
+          <div>GST Tax: ₹${parseFloat(sale.tax).toFixed(2)}</div>
+          <div class="total-row" style="margin-top: 4px;">Net Payable: ₹${parseFloat(sale.total).toFixed(2)}</div>
         </div>
+
         <div class="footer">
-          <p>Thank you for your business!</p>
-          <p>Powered by Vanshee POS System</p>
+          <p>Thank you for visiting ${storeName}!</p>
+          <p>Powered by Vanshee Enterprise POS System</p>
         </div>
         <script>window.onload = function() { window.print(); };</script>
       </body>

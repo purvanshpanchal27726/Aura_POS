@@ -303,9 +303,47 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('POS SYSTEM RECEIPT', style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.0, color: isDark ? Colors.white : const Color(0xFF0F172A))),
-                    Text('123 Enterprise St, POS City', style: GoogleFonts.inter(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
-                    const Divider(height: 24, thickness: 1),
+                    Text(
+                      (invoice['client_name'] ?? 'VANSHEE POS ENTERPRISE').toString().toUpperCase(),
+                      style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.0, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      invoice['address_1'] ?? '123 Commercial Hub, SG Highway, Ahmedabad',
+                      style: GoogleFonts.inter(fontSize: 11, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      'GSTIN: ${invoice['gstin'] ?? '24AAACV1234F1Z9'}',
+                      style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF38BDF8) : const Color(0xFF0284C7)),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Visual Invoice Barcode Box
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFCBD5E1)),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            '||| | || |||| | ||| |||| | |||',
+                            style: GoogleFonts.robotoMono(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 3, color: isDark ? Colors.white : const Color(0xFF0F172A)),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '*${invoice['sales_bill_no'] ?? 'INV-1001'}*',
+                            style: GoogleFonts.inter(fontSize: 10.5, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Divider(height: 20, thickness: 1),
                     
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
