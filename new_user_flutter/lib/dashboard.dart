@@ -596,13 +596,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildLowStockAlertsCard(bool isDark) {
-    final defaultLowStock = [
-      {'name': 'Amul Taaza 500ml', 'code': 'SKU-64315', 'stock': '3 left'},
-      {'name': 'Pepsi 500ml', 'code': 'ITM-002', 'stock': '2 left'},
-      {'name': 'Coca Cola 500ml', 'code': 'ITM-003', 'stock': '1 left'},
-      {'name': 'Parle-G Biscuit', 'code': 'ITM-045', 'stock': '5 left'},
-    ];
-
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -658,41 +651,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ))
           else
-            ...defaultLowStock.map((i) => Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(Icons.inventory_2_outlined, size: 18, color: Color(0xFF64748B)),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(i['name']!, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
-                        Text(i['code']!, style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8))),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF2F2),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFFCA5A5)),
-                    ),
-                    child: Text(i['stock']!, style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
-                  ),
-                ],
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: Center(
+                child: Column(
+                  children: [
+                    const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF10B981), size: 28),
+                    const SizedBox(height: 6),
+                    Text('All stock levels healthy!', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+                  ],
+                ),
               ),
-            )),
+            ),
         ],
       ),
     );
@@ -719,17 +689,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 14),
           if (recentTransactions.isNotEmpty)
             ...recentTransactions.map((tx) {
-              final invNo = tx['sales_bill_no'] ?? tx['invoice_number'] ?? '#INV-1001';
+              final invNo = tx['sales_bill_no'] ?? tx['invoice_number'] ?? '#INV-1';
               final amt = double.tryParse(tx['total']?.toString() ?? '0.0') ?? 0.0;
               final pMode = tx['payment_method'] ?? 'Cash';
               return _buildTxRow(isDark, invNo.toString(), tx['customer_name']?.toString() ?? 'Customer', '₹ ${amt.toStringAsFixed(2)}', pMode.toString(), const Color(0xFF10B981));
             })
-          else ...[
-            _buildTxRow(isDark, '#INV-1024', 'May 24, 2025 • 11:45 AM', '₹ 1,250.00', 'Paid', const Color(0xFF10B981)),
-            _buildTxRow(isDark, '#INV-1023', 'May 24, 2025 • 10:30 AM', '₹ 840.00', 'Paid', const Color(0xFF10B981)),
-            _buildTxRow(isDark, '#INV-1022', 'May 24, 2025 • 09:15 AM', '₹ 2,100.00', 'UPI', const Color(0xFF0284C7)),
-            _buildTxRow(isDark, '#INV-1021', 'May 23, 2025 • 08:50 PM', '₹ 560.00', 'Card', const Color(0xFF8B5CF6)),
-          ],
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: Center(
+                child: Text('No sales recorded yet', style: GoogleFonts.inter(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
+              ),
+            ),
         ],
       ),
     );
@@ -771,13 +742,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildTopSellingItemsCard(bool isDark) {
-    final List<Map<String, String>> defaultItems = [
-      {'rank': '1', 'name': 'Pepsi 500ml', 'sold': '124 sold', 'amount': '₹ 4,960.00'},
-      {'rank': '2', 'name': 'Amul Taaza 500ml', 'sold': '98 sold', 'amount': '₹ 2,940.00'},
-      {'rank': '3', 'name': 'Coca Cola 500ml', 'sold': '76 sold', 'amount': '₹ 3,040.00'},
-      {'rank': '4', 'name': 'Parle-G Biscuit', 'sold': '64 sold', 'amount': '₹ 1,280.00'},
-    ];
-
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -827,31 +791,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               );
             })
-          else ...[
-            ...defaultItems.map((i) => Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: const Color(0xFFF59E0B).withValues(alpha: 0.18),
-                    child: Text(i['rank']!, style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFFD97706))),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(i['name']!, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
-                        Text(i['sold']!, style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8))),
-                      ],
-                    ),
-                  ),
-                  Text(i['amount']!, style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A))),
-                ],
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20.0),
+              child: Center(
+                child: Text('No item sales recorded yet', style: GoogleFonts.inter(fontSize: 12, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B))),
               ),
-            )),
-          ],
+            ),
         ],
       ),
     );

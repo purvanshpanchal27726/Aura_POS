@@ -54,9 +54,20 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
-    const { customer_id, sales_date, sales_bill_no, gross, tax, total, created_by, items, payment_method } = data;
+    // Auto-generate per-client sequential bill number starting from 1, 2, 3... per client_id
+    const targetCid = clientId || 1;
+    const [countRow] = await connection.execute(
+      'SELECT COUNT(*) AS bill_count FROM sales_master WHERE client_id = $1',
+      [targetCid]
+    ).catch(() => [[{ bill_count: 0 }]]);
+    
+    const nextBillNumber = (parseInt(countRow[0]?.bill_count || 0) + 1);
+    const generatedBillNo = `INV-${nextBillNumber}`;
+    const finalSalesBillNo = (sales_bill_no && sales_bill_no !== 'INV-1001' && sales_bill_no !== 'AUTO') 
+      ? sales_bill_no 
+      : generatedBillNo;
 
-    if (!sales_bill_no || !gross || !total || !items || !Array.isArray(items) || items.length === 0) {
+    if (!gross || !total || !items || !Array.isArray(items) || items.length === 0) {
       await connection.rollback();
       return res.status(400).json({ error: 'Missing required fields for invoice creation.' });
     }
@@ -68,10 +79,10 @@ router.post('/', async (req, res) => {
     `;
 
     const masterValues = [
-      clientId,
+      targetCid,
       customer_id || null,
       sales_date || new Date(),
-      sales_bill_no,
+      finalSalesBillNo,
       parseFloat(gross),
       parseFloat(tax || 0.00),
       parseFloat(total),
@@ -84,27 +95,38 @@ router.post('/', async (req, res) => {
 
     const detailQuery = `
       INSERT INTO sales_details (
-        sales_id, item_id, rate, quantity, item_amount
-      ) VALUES (?, ?, ?, ?, ?)
+        sales_id, item_id, item_name, rate, quantity, item_amount, client_id
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
     for (const it of items) {
       const qty = parseFloat(it.quantity !== undefined ? it.quantity : (it.qty !== undefined ? it.qty : 1));
       const amt = parseFloat(it.item_amount !== undefined ? it.item_amount : (it.total !== undefined ? it.total : 0));
+      const itemName = it.item_name || it.name || 'Item';
+      
       const detailValues = [
         newSalesId,
         parseInt(it.item_id),
+        itemName,
         parseFloat(it.rate || 0),
         qty,
-        amt
+        amt,
+        targetCid
       ];
       await connection.execute(detailQuery, detailValues);
+
+      // Deduct item stock in items table
+      await connection.execute(
+        'UPDATE items SET stock_quantity = GREATEST(0, COALESCE(stock_quantity, quantity, 0) - ?), quantity = GREATEST(0, COALESCE(quantity, stock_quantity, 0) - ?) WHERE item_id = ?',
+        [qty, qty, parseInt(it.item_id)]
+      ).catch(() => {});
     }
 
     await connection.commit();
     res.status(201).json({
       message: 'Invoice created successfully',
-      sales_id: newSalesId
+      sales_id: newSalesId,
+      sales_bill_no: finalSalesBillNo
     });
   } catch (err) {
     await connection.rollback().catch(() => {});
@@ -204,17 +226,18 @@ router.get('/:id', async (req, res) => {
 
     let masterQuery = `
       SELECT sm.*, 
-             CONCAT(c.first_name, ' ', c.last_name) AS customer_name
+             CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+             c.mobile_no_1 AS customer_phone,
+             cl.name AS client_name, cl.address_1, cl.phone_1, cl.gstin
       FROM sales_master sm
       LEFT JOIN customers c ON sm.customer_id = c.customer_id
-      WHERE sm.sales_id = $1 AND 
+      LEFT JOIN clients cl ON sm.client_id = cl.client_id
+      WHERE sm.sales_id = $1
     `;
     let masterParams = [salesId];
-    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0') {
-      masterQuery += 'sm.client_id = $2';
+    if (clientId !== null && clientId !== undefined && clientId !== 'ALL' && clientId !== 'all' && clientId !== '0' && !isSuperAdmin) {
+      masterQuery += ' AND sm.client_id = $2';
       masterParams.push(clientId);
-    } else {
-      masterQuery += 'sm.client_id IS NULL';
     }
 
     const [masters] = await db.execute(masterQuery, masterParams);
@@ -223,9 +246,9 @@ router.get('/:id', async (req, res) => {
     }
 
     const [details] = await db.execute(`
-      SELECT sd.*, i.name AS item_name, i.code AS item_code
+      SELECT sd.*, COALESCE(sd.item_name, i.name, 'Item') AS item_name, COALESCE(i.code, 'SKU-001') AS item_code
       FROM sales_details sd
-      JOIN items i ON sd.item_id = i.item_id
+      LEFT JOIN items i ON sd.item_id = i.item_id
       WHERE sd.sales_id = $1
     `, [salesId]);
 
