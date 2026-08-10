@@ -542,14 +542,50 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
     );
   }
 
-  Widget _getItemImage(dynamic imageUrlOrBase64, {double size = 48}) {
-    if (imageUrlOrBase64 == null || imageUrlOrBase64.toString().isEmpty) {
+  Widget _getItemImage(dynamic imageUrlOrBase64, {String? itemName, double size = 48}) {
+    Widget buildAvatarFallback() {
+      final name = (itemName ?? 'POS Item').trim();
+      final parts = name.split(' ').where((p) => p.isNotEmpty).toList();
+      final initials = parts.length >= 2 
+        ? '${parts[0][0]}${parts[1][0]}'.toUpperCase() 
+        : (name.length >= 2 ? name.substring(0, 2).toUpperCase() : name.toUpperCase());
+
+      final colorIndex = (name.codeUnits.fold<int>(0, (a, b) => a + b)) % 5;
+      final gradients = [
+        [const Color(0xFF2563EB), const Color(0xFF3B82F6)],
+        [const Color(0xFF0284C7), const Color(0xFF38BDF8)],
+        [const Color(0xFFD97706), const Color(0xFFF59E0B)],
+        [const Color(0xFF059669), const Color(0xFF10B981)],
+        [const Color(0xFF7C3AED), const Color(0xFFA855F7)],
+      ];
+      final selectedGradient = gradients[colorIndex];
+
       return Container(
-        color: const Color(0xFFF1F5F9),
         width: size,
         height: size,
-        child: Icon(Icons.image, size: size * 0.45, color: const Color(0xFF94A3B8)),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: selectedGradient,
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Center(
+          child: Text(
+            initials,
+            style: GoogleFonts.outfit(
+              fontSize: size * 0.38,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
       );
+    }
+
+    if (imageUrlOrBase64 == null || imageUrlOrBase64.toString().isEmpty || imageUrlOrBase64.toString() == 'null') {
+      return buildAvatarFallback();
     }
     final imgStr = imageUrlOrBase64.toString();
     if (imgStr.startsWith('http://') || imgStr.startsWith('https://')) {
@@ -558,12 +594,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
         width: size,
         height: size,
         fit: BoxFit.cover,
-        errorBuilder: (ctx, err, st) => Container(
-          color: const Color(0xFFF1F5F9),
-          width: size,
-          height: size,
-          child: Icon(Icons.broken_image, size: size * 0.45, color: const Color(0xFF94A3B8)),
-        ),
+        errorBuilder: (ctx, err, st) => buildAvatarFallback(),
       );
     } else if (imgStr.startsWith('/uploads/') || imgStr.startsWith('/Images/')) {
       final fullUrl = '${AppConfig.baseUrl}$imgStr';
@@ -572,12 +603,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
         width: size,
         height: size,
         fit: BoxFit.cover,
-        errorBuilder: (ctx, err, st) => Container(
-          color: const Color(0xFFF1F5F9),
-          width: size,
-          height: size,
-          child: Icon(Icons.broken_image, size: size * 0.45, color: const Color(0xFF94A3B8)),
-        ),
+        errorBuilder: (ctx, err, st) => buildAvatarFallback(),
       );
     } else if (imgStr.contains('base64,')) {
       try {
@@ -587,20 +613,10 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (ctx, err, st) => Container(
-            color: const Color(0xFFF1F5F9),
-            width: size,
-            height: size,
-            child: Icon(Icons.broken_image, size: size * 0.45, color: const Color(0xFF94A3B8)),
-          ),
+          errorBuilder: (ctx, err, st) => buildAvatarFallback(),
         );
       } catch (e) {
-        return Container(
-          color: const Color(0xFFF1F5F9),
-          width: size,
-          height: size,
-          child: Icon(Icons.broken_image, size: size * 0.45, color: const Color(0xFF94A3B8)),
-        );
+        return buildAvatarFallback();
       }
     } else {
       try {
@@ -609,20 +625,10 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
           width: size,
           height: size,
           fit: BoxFit.cover,
-          errorBuilder: (ctx, err, st) => Container(
-            color: const Color(0xFFF1F5F9),
-            width: size,
-            height: size,
-            child: Icon(Icons.broken_image, size: size * 0.45, color: const Color(0xFF94A3B8)),
-          ),
+          errorBuilder: (ctx, err, st) => buildAvatarFallback(),
         );
       } catch (e) {
-        return Container(
-          color: const Color(0xFFF1F5F9),
-          width: size,
-          height: size,
-          child: Icon(Icons.image, size: size * 0.45, color: const Color(0xFF94A3B8)),
-        );
+        return buildAvatarFallback();
       }
     }
   }
@@ -764,7 +770,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
                     Expanded(
                       child: ClipRRect(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                        child: _getItemImage(item['image']),
+                        child: _getItemImage(item['image'], itemName: item['name']),
                       ),
                     ),
                     Padding(

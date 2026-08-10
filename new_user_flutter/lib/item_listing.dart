@@ -478,6 +478,54 @@ class _ItemListingScreenState extends State<ItemListingScreen> {
                       selectedCategoryId = val;
                     },
                   ),
+                  const SizedBox(height: 14),
+                  // Unit Selection Dropdown
+                  DropdownButtonFormField<int>(
+                    initialValue: selectedUnitId,
+                    decoration: InputDecoration(
+                      labelText: 'Unit / Package Type',
+                      prefixIcon: const Icon(Icons.straighten_rounded, color: Color(0xFF2563EB)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                    ),
+                    dropdownColor: Theme.of(context).cardColor,
+                    items: units.map<DropdownMenuItem<int>>((u) {
+                      return DropdownMenuItem<int>(
+                        value: u['unit_id'] as int,
+                        child: Text(u['name'] ?? ''),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      selectedUnitId = val;
+                    },
+                  ),
+                  const SizedBox(height: 14),
+                  // Tax Slab Selection Dropdown (GST Rate)
+                  DropdownButtonFormField<int>(
+                    initialValue: selectedTaxId,
+                    decoration: InputDecoration(
+                      labelText: 'Tax Slab / GST Rate',
+                      prefixIcon: const Icon(Icons.percent_rounded, color: Color(0xFF2563EB)),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      filled: true,
+                      fillColor: Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC),
+                    ),
+                    dropdownColor: Theme.of(context).cardColor,
+                    items: taxes.map<DropdownMenuItem<int>>((tax) {
+                      final tId = tax['tax_id'] as int;
+                      final tName = tax['name'] ?? tax['tax_name'] ?? 'GST';
+                      final tRate = tax['rate'] ?? tax['tax_rate'] ?? 0;
+                      return DropdownMenuItem<int>(
+                        value: tId,
+                        child: Text('$tName ($tRate%)'),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      selectedTaxId = val;
+                    },
+                  ),
+                  const SizedBox(height: 14),
                   // Retail Price (Sales Price)
                   TextFormField(
                     controller: _salesPriceController,

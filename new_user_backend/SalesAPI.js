@@ -54,8 +54,10 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Client ID required' });
     }
 
+    const { customer_id, sales_date, sales_bill_no, gross, tax, total, created_by, items, payment_method } = data;
+
     // Auto-generate per-client sequential bill number starting from 1, 2, 3... per client_id
-    const targetCid = clientId || 1;
+    const targetCid = parseInt(clientId || 1) || 1;
     const [countRow] = await connection.execute(
       'SELECT COUNT(*) AS bill_count FROM sales_master WHERE client_id = $1',
       [targetCid]
@@ -64,12 +66,16 @@ router.post('/', async (req, res) => {
     const nextBillNumber = (parseInt(countRow[0]?.bill_count || 0) + 1);
     const generatedBillNo = `INV-${nextBillNumber}`;
     const finalSalesBillNo = (sales_bill_no && sales_bill_no !== 'INV-1001' && sales_bill_no !== 'AUTO') 
-      ? sales_bill_no 
+      ? String(sales_bill_no) 
       : generatedBillNo;
 
-    if (!gross || !total || !items || !Array.isArray(items) || items.length === 0) {
+    const parsedGross = parseFloat(gross || 0.0);
+    const parsedTax = parseFloat(tax || 0.0);
+    const parsedTotal = parseFloat(total || (parsedGross + parsedTax));
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
       await connection.rollback();
-      return res.status(400).json({ error: 'Missing required fields for invoice creation.' });
+      return res.status(400).json({ error: 'Missing required items for invoice creation.' });
     }
 
     const masterQuery = `
@@ -80,12 +86,12 @@ router.post('/', async (req, res) => {
 
     const masterValues = [
       targetCid,
-      customer_id || null,
+      parseInt(customer_id) || null,
       sales_date || new Date(),
       finalSalesBillNo,
-      parseFloat(gross),
-      parseFloat(tax || 0.00),
-      parseFloat(total),
+      parsedGross,
+      parsedTax,
+      parsedTotal,
       created_by || 'System',
       payment_method || 'Cash'
     ];
@@ -100,15 +106,17 @@ router.post('/', async (req, res) => {
     `;
 
     for (const it of items) {
-      const qty = parseFloat(it.quantity !== undefined ? it.quantity : (it.qty !== undefined ? it.qty : 1));
-      const amt = parseFloat(it.item_amount !== undefined ? it.item_amount : (it.total !== undefined ? it.total : 0));
-      const itemName = it.item_name || it.name || 'Item';
+      const itemId = parseInt(it.item_id || it.id || 1) || 1;
+      const qty = parseFloat(it.quantity !== undefined ? it.quantity : (it.qty !== undefined ? it.qty : 1)) || 1.0;
+      const rate = parseFloat(it.rate || it.price || 0.0) || 0.0;
+      const amt = parseFloat(it.item_amount !== undefined ? it.item_amount : (it.total !== undefined ? it.total : (qty * rate))) || 0.0;
+      const itemName = String(it.item_name || it.name || 'Item');
       
       const detailValues = [
         newSalesId,
-        parseInt(it.item_id),
+        itemId,
         itemName,
-        parseFloat(it.rate || 0),
+        rate,
         qty,
         amt,
         targetCid
@@ -118,7 +126,7 @@ router.post('/', async (req, res) => {
       // Deduct item stock in items table
       await connection.execute(
         'UPDATE items SET stock_quantity = GREATEST(0, COALESCE(stock_quantity, quantity, 0) - ?), quantity = GREATEST(0, COALESCE(quantity, stock_quantity, 0) - ?) WHERE item_id = ?',
-        [qty, qty, parseInt(it.item_id)]
+        [qty, qty, itemId]
       ).catch(() => {});
     }
 
@@ -130,6 +138,7 @@ router.post('/', async (req, res) => {
     });
   } catch (err) {
     await connection.rollback().catch(() => {});
+    console.error('Error in POST /api/sales:', err);
     res.status(500).json({ error: err.message });
   } finally {
     connection.release();
