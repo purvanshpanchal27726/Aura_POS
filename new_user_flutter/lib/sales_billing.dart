@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'config.dart';
 import 'api_client.dart';
 
@@ -387,6 +388,20 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
               ),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF25D366),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                icon: const Icon(Icons.chat_rounded, size: 16),
+                label: Text('WhatsApp', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _sendWhatsAppReceipt(invoice);
+                },
+              ),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6366F1),
                   foregroundColor: Colors.white,
                   elevation: 0,
@@ -412,6 +427,81 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
     } catch (e) {
       debugPrint('Error viewing receipt: $e');
     }
+  }
+
+  void _sendWhatsAppReceipt(Map<String, dynamic> invoice) {
+    final phoneController = TextEditingController(text: invoice['customer_phone']?.toString() ?? '9876543210');
+    showDialog(
+      context: context,
+      builder: (dlgCtx) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: [
+              const Icon(Icons.chat_rounded, color: Color(0xFF25D366)),
+              const SizedBox(width: 8),
+              Text('Send WhatsApp Receipt', style: GoogleFonts.inter(fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Enter Customer WhatsApp 10-Digit Mobile Number:', style: GoogleFonts.inter(fontSize: 12, color: isDark ? Colors.white70 : const Color(0xFF475569))),
+              const SizedBox(height: 12),
+              TextField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  prefixText: '+91 ',
+                  labelText: 'Mobile Number',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dlgCtx),
+              child: Text('Cancel', style: GoogleFonts.inter(color: Colors.grey)),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF25D366),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              icon: const Icon(Icons.send_rounded, size: 16),
+              label: Text('Send Invoice', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
+              onPressed: () async {
+                final rawPhone = phoneController.text.trim().replaceAll(RegExp(r'\D'), '');
+                final phone = rawPhone.length >= 10 ? rawPhone.substring(rawPhone.length - 10) : rawPhone;
+                final billNo = invoice['sales_bill_no'] ?? 'INV-1001';
+                final total = invoice['total'] ?? '0.00';
+                final pdfUrl = '${AppConfig.salesApiUrl}/pdf/$billNo';
+                final msg = 'Hello! Thank you for shopping with us. Your POS Invoice $billNo for total ₹$total is ready. View/Download Official Invoice: $pdfUrl';
+                final url = Uri.parse('https://wa.me/91$phone?text=${Uri.encodeComponent(msg)}');
+                
+                Navigator.pop(dlgCtx);
+                try {
+                  if (await canLaunchUrl(url)) {
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
+                  } else {
+                    await launchUrl(url);
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('WhatsApp Delivery Link: $url'), backgroundColor: const Color(0xFF25D366)),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Widget _getItemImage(dynamic imageUrlOrBase64, {double size = 48}) {
