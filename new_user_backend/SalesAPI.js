@@ -438,6 +438,13 @@ router.get('/pdf/:billNo', async (req, res) => {
       </body>
       </html>
     `;
+    return res.status(200).send(html);
+  } catch (err) {
+    console.error('Error generating PDF view:', err);
+    return res.status(500).send('<h2>Error loading invoice</h2>');
+  }
+});
+
 /**
  * POST /api/sales/send-whatsapp
  * Generates a WhatsApp Click-to-Chat URL & dispatches digital invoice notification.
