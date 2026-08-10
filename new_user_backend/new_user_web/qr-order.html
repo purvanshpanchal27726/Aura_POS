@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Self-Order Menu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #f97316;
+      --primary-dark: #ea580c;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --accent: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding-bottom: 70px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      color: white;
+      padding: 1.5rem 1rem;
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-details {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-details h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .table-badge {
+      background-color: var(--primary);
+      padding: 0.4rem 0.8rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      box-shadow: 0 4px 10px rgba(249, 115, 22, 0.3);
+    }
+
+    main {
+      padding: 1rem;
+      flex: 1;
+    }
+
+    /* Category Selector */
+    .category-scroll {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      scrollbar-width: none;
+    }
+    .category-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .category-btn {
+      border: none;
+      background-color: var(--card-bg);
+      color: var(--text-muted);
+      padding: 0.6rem 1rem;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .category-btn.active {
+      background-color: var(--primary);
+      color: white;
+      box-shadow: 0 4px 10px rgba(249, 115, 22, 0.25);
+    }
+
+    /* Menu Items Grid */
+    .menu-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .menu-card {
+      background-color: var(--card-bg);
+      border-radius: 16px;
+      padding: 1rem;
+      display: flex;
+      gap: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+      border: 1px solid var(--border);
+      transition: transform 0.2s ease;
+    }
+
+    .menu-img {
+      width: 90px;
+      height: 90px;
+      border-radius: 12px;
+      object-fit: cover;
+      background-color: #f1f5f9;
+    }
+
+    .menu-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .menu-title-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .menu-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .veg-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      border: 1.5px solid var(--accent);
+      border-radius: 2px;
+      position: relative;
+      background: white;
+    }
+    .veg-icon::after {
+      content: '';
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .nonveg-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      display: inline-block;
+      border: 1.5px solid #ef4444;
+      border-radius: 2px;
+      position: relative;
+      background: white;
+    }
+    .nonveg-icon::after {
+      content: '';
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background-color: #ef4444;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .menu-desc {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .menu-price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .menu-price {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .qty-btn-container {
+      display: flex;
+      align-items: center;
+      background-color: #f1f5f9;
+      border-radius: 20px;
+      padding: 2px;
+    }
+
+    .qty-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .qty-btn.add-btn-main {
+      background-color: var(--primary);
+      color: white;
+      padding: 0.4rem 1rem;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .qty-count {
+      width: 28px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.95rem;
+    }
+
+    /* Floating Cart Button */
+    .cart-float-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: var(--card-bg);
+      border-top: 1px solid var(--border);
+      padding: 0.8rem 1rem;
+      box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
+      z-index: 101;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transform: translateY(100px);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cart-float-bar.show {
+      transform: translateY(0);
+    }
+
+    .cart-summary {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cart-summary-qty {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .cart-summary-total {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .btn-view-cart {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+    }
+
+    /* Cart Modal Sheet */
+    .cart-sheet-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: flex;
+      justify-content: flex-end;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .cart-sheet-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .cart-sheet-card {
+      background-color: var(--card-bg);
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 1.5rem;
+      max-height: 85vh;
+      overflow-y: auto;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cart-sheet-overlay.show .cart-sheet-card {
+      transform: translateY(0);
+    }
+
+    .cart-sheet-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.75rem;
+    }
+
+    .cart-sheet-header h2 {
+      font-size: 1.25rem;
+      font-weight: 800;
+    }
+
+    .close-sheet {
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .cart-items-list {
+      margin-bottom: 1.5rem;
+    }
+
+    .cart-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px dashed var(--border);
+    }
+
+    .cart-item-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    /* Guest Details Form */
+    .guest-form-field {
+      margin-bottom: 1rem;
+    }
+    .guest-form-field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .guest-form-field input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+    .guest-form-field input:focus {
+      border-color: var(--primary);
+    }
+
+    .btn-submit-order {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 1rem;
+      border-radius: 16px;
+      font-weight: 700;
+      font-size: 1rem;
+      box-shadow: 0 4px 15px rgba(249, 115, 22, 0.35);
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+
+    /* Success / Toast Panel */
+    .success-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: var(--card-bg);
+      z-index: 300;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .success-panel.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .success-panel .material-icons {
+      font-size: 5rem;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+    }
+
+    .success-panel h2 {
+      font-size: 1.75rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .success-panel p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 2rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-details">
+      <div>
+        <h1 id="restaurantName">Loading Menu...</h1>
+        <p style="font-size: 0.8rem; color: #94a3b8; font-weight: 600;" id="tableSection">Resolving table details...</p>
+      </div>
+      <div class="table-badge" id="tableNoBadge">Table --</div>
+    </div>
+  </header>
+
+  <main>
+    <div class="category-scroll" id="categoryContainer"></div>
+    <div class="menu-grid" id="menuItemsContainer">
+      <div style="text-align: center; padding: 3rem 0; color: var(--text-muted);">
+        <span class="material-icons" style="font-size: 3rem; margin-bottom: 0.5rem;">rotate_right</span>
+        <p>Loading table menu details...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Floating Cart -->
+  <div class="cart-float-bar" id="cartFloatBar">
+    <div class="cart-summary">
+      <span class="cart-summary-qty" id="cartSummaryQty">0 items</span>
+      <span class="cart-summary-total" id="cartSummaryTotal">₹0.00</span>
+    </div>
+    <button class="btn-view-cart" id="btnViewCart">
+      <span class="material-icons">shopping_basket</span> View Basket
+    </button>
+  </div>
+
+  <!-- Cart Modal Sheet -->
+  <div class="cart-sheet-overlay" id="cartSheetOverlay">
+    <div class="cart-sheet-card">
+      <div class="cart-sheet-header">
+        <h2>Your Order Cart</h2>
+        <button class="close-sheet" id="btnCartClose">
+          <span class="material-icons">close</span>
+        </button>
+      </div>
+
+      <div class="cart-items-list" id="cartItemsList"></div>
+
+      <form id="orderForm">
+        <div class="guest-form-field">
+          <label for="customerName">Your Name *</label>
+          <input type="text" id="customerName" placeholder="Enter name" required>
+        </div>
+        <div class="guest-form-field">
+          <label for="customerPhone">Phone Number *</label>
+          <input type="tel" id="customerPhone" placeholder="Enter phone" required>
+        </div>
+        <div class="guest-form-field">
+          <label for="cookingNotes">Cooking Notes / Requests</label>
+          <input type="text" id="cookingNotes" placeholder="e.g. Extra spicy, No onions">
+        </div>
+
+        <button type="submit" class="btn-submit-order">Place Self-Order</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Success Panel -->
+  <div class="success-panel" id="successPanel">
+    <span class="material-icons">check_circle</span>
+    <h2>Order Placed Successfully!</h2>
+    <p id="successOrderIdText">Your order has been sent directly to the kitchen display queue.</p>
+    <button class="btn-submit-order" onclick="window.location.reload();">Order More Items</button>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const qrToken = urlParams.get('token');
+
+    let allItems = [];
+    let cart = {}; 
+    let clientName = '';
+    let tableNo = '';
+
+    const getApiUrl = (path) => {
+      const base = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+          ? 'http://localhost:5000'
+          : window.location.origin;
+      return base + path;
+    };
+
+    const fetchMenu = async () => {
+      if (!qrToken) {
+        document.getElementById('menuItemsContainer').innerHTML = `
+          <div style="text-align: center; padding: 3rem 1rem; color: #ef4444;">
+            <span class="material-icons" style="font-size: 3.5rem; margin-bottom: 0.5rem;">error_outline</span>
+            <p>Invalid QR ordering token. Please re-scan the code on your table!</p>
+          </div>`;
+        return;
+      }
+
+      try {
+        const response = await fetch(getApiUrl(`/api/restaurant/public/menu/${qrToken}`));
+        if (!response.ok) throw new Error('Failed to resolve QR token');
+        const data = await response.json();
+
+        allItems = data.menuItems;
+        tableNo = data.table.table_no;
+        clientName = data.client.name;
+
+        document.getElementById('restaurantName').innerText = clientName;
+        document.getElementById('tableSection').innerText = `Table ${tableNo} (${data.table.section || 'General'})`;
+        document.getElementById('tableNoBadge').innerText = `Table ${tableNo}`;
+
+        renderCategories();
+        renderMenu('ALL');
+      } catch (err) {
+        document.getElementById('menuItemsContainer').innerHTML = `
+          <div style="text-align: center; padding: 3rem 1rem; color: #ef4444;">
+            <span class="material-icons" style="font-size: 3.5rem; margin-bottom: 0.5rem;">wifi_off</span>
+            <p>Error loading menu. Please check your network connection or try scanning again.</p>
+          </div>`;
+      }
+    };
+
+    const renderCategories = () => {
+      const cats = ['ALL', ...new Set(allItems.map(i => i.category_name))];
+      const container = document.getElementById('categoryContainer');
+      container.innerHTML = cats.map((cat, idx) => `
+        <button class="category-btn ${idx === 0 ? 'active' : ''}" data-cat="${cat}">${cat}</button>
+      `).join('');
+
+      container.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          container.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          renderMenu(btn.getAttribute('data-cat'));
+        });
+      });
+    };
+
+    const renderMenu = (selectedCat) => {
+      const container = document.getElementById('menuItemsContainer');
+      const filtered = selectedCat === 'ALL' ? allItems : allItems.filter(i => i.category_name === selectedCat);
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div style="text-align: center; padding: 2rem 0; color: var(--text-muted);">No items available.</div>`;
+        return;
+      }
+
+      container.innerHTML = filtered.map(i => {
+        const cartQty = cart[i.menu_item_id]?.quantity || 0;
+        const buttonHTML = cartQty > 0
+            ? `<div class="qty-btn-container">
+                 <button class="qty-btn btn-minus" data-id="${i.menu_item_id}">-</button>
+                 <span class="qty-count">${cartQty}</span>
+                 <button class="qty-btn btn-plus" data-id="${i.menu_item_id}">+</button>
+               </div>`
+            : `<button class="qty-btn add-btn-main" data-id="${i.menu_item_id}">ADD</button>`;
+
+        const badgeHTML = i.is_veg === 1 ? `<span class="veg-icon"></span>` : `<span class="nonveg-icon"></span>`;
+
+        return `
+          <div class="menu-card">
+            ${i.image_url ? `<img src="${i.image_url}" class="menu-img" alt="${i.name}">` : ''}
+            <div class="menu-info">
+              <div>
+                <div class="menu-title-row">
+                  ${badgeHTML}
+                  <span class="menu-title">${i.name}</span>
+                </div>
+                <p class="menu-desc">${i.description || 'Tasty fresh preparation.'}</p>
+              </div>
+              <div class="menu-price-row">
+                <span class="menu-price">₹${parseFloat(i.price).toFixed(2)}</span>
+                ${buttonHTML}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.add-btn-main').forEach(btn => {
+        btn.addEventListener('click', () => updateCart(parseInt(btn.getAttribute('data-id')), 1));
+      });
+      container.querySelectorAll('.btn-plus').forEach(btn => {
+        btn.addEventListener('click', () => updateCart(parseInt(btn.getAttribute('data-id')), 1));
+      });
+      container.querySelectorAll('.btn-minus').forEach(btn => {
+        btn.addEventListener('click', () => updateCart(parseInt(btn.getAttribute('data-id')), -1));
+      });
+    };
+
+    const updateCart = (itemId, change) => {
+      const item = allItems.find(i => i.menu_item_id === itemId);
+      if (!item) return;
+
+      if (!cart[itemId]) {
+        cart[itemId] = { name: item.name, price: parseFloat(item.price), quantity: 0 };
+      }
+
+      cart[itemId].quantity += change;
+      if (cart[itemId].quantity <= 0) {
+        delete cart[itemId];
+      }
+
+      const activeCat = document.querySelector('.category-btn.active').getAttribute('data-cat');
+      renderMenu(activeCat);
+      updateCartFloatingBar();
+    };
+
+    const updateCartFloatingBar = () => {
+      const bar = document.getElementById('cartFloatBar');
+      const keys = Object.keys(cart);
+      if (keys.length === 0) {
+        bar.classList.remove('show');
+        return;
+      }
+
+      const totalItems = keys.reduce((sum, k) => sum + cart[k].quantity, 0);
+      const totalCost = keys.reduce((sum, k) => sum + (cart[k].price * cart[k].quantity), 0);
+
+      document.getElementById('cartSummaryQty').innerText = `${totalItems} items in basket`;
+      document.getElementById('cartSummaryTotal').innerText = `₹${totalCost.toFixed(2)}`;
+      bar.classList.add('show');
+    };
+
+    const overlay = document.getElementById('cartSheetOverlay');
+    document.getElementById('btnViewCart').addEventListener('click', () => {
+      renderCartSheetItems();
+      overlay.classList.add('show');
+    });
+    document.getElementById('btnCartClose').addEventListener('click', () => {
+      overlay.classList.remove('show');
+    });
+
+    const renderCartSheetItems = () => {
+      const container = document.getElementById('cartItemsList');
+      const keys = Object.keys(cart);
+      container.innerHTML = keys.map(k => {
+        const item = cart[k];
+        return `
+          <div class="cart-item-row">
+            <div>
+              <span class="cart-item-name">${item.name}</span><br>
+              <small style="color: var(--text-muted);">₹${item.price.toFixed(2)} each</small>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button type="button" class="qty-btn" onclick="updateCart(${k}, -1); renderCartSheetItems();" style="border: 1px solid var(--border); width: 28px; height: 28px; border-radius: 50%;">-</button>
+              <span style="font-weight: 700; font-size: 0.95rem;">${item.quantity}</span>
+              <button type="button" class="qty-btn" onclick="updateCart(${k}, 1); renderCartSheetItems();" style="border: 1px solid var(--border); width: 28px; height: 28px; border-radius: 50%;">+</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    };
+
+    document.getElementById('orderForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const keys = Object.keys(cart);
+      if (keys.length === 0) return;
+
+      const orderItems = keys.map(k => ({
+        menu_item_id: parseInt(k),
+        quantity: parseFloat(cart[k].quantity),
+        price: cart[k].price
+      }));
+
+      const payload = {
+        customer_name: document.getElementById('customerName').value.trim(),
+        customer_phone: document.getElementById('customerPhone').value.trim(),
+        notes: document.getElementById('cookingNotes').value.trim(),
+        items: orderItems
+      };
+
+      try {
+        const response = await fetch(getApiUrl(`/api/restaurant/public/order/${qrToken}`), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error('Order submission failed');
+        const result = await response.json();
+
+        document.getElementById('successOrderIdText').innerText = `Your order #OR-${result.order_id} has been submitted directly to the kitchen KDS queue. Enjoy your meal!`;
+        document.getElementById('successPanel').classList.add('show');
+        cart = {};
+      } catch (err) {
+        alert(err.message);
+      }
+    });
+
+    fetchMenu();
+  </script>
+</body>
+</html>

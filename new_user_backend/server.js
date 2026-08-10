@@ -64,7 +64,9 @@ const flutterWebPath = fs.existsSync(path.join(__dirname, 'flutter_web'))
   : path.join(__dirname, '../new_user_flutter/build/web');
 
 // Serve legacy HTML admin web portal at /admin and /web
-const legacyWebPath = path.join(__dirname, '../new_user_web');
+const legacyWebPath = fs.existsSync(path.join(__dirname, 'new_user_web'))
+  ? path.join(__dirname, 'new_user_web')
+  : path.join(__dirname, '../new_user_web');
 app.use('/admin', express.static(legacyWebPath));
 app.use('/web', express.static(legacyWebPath));
 
