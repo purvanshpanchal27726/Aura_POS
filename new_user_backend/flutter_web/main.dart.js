@@ -104955,7 +104955,7 @@ case 24:return"Hotel Stay Bookings"
 case 25:return"Stock Inventory"
 case 26:return"Purchase Orders"
 case 27:return"Employees & Attendance"
-default:return"VANSHI POS Business Suite"}},
+default:return"VANSHEE POS Business Suite"}},
 K(a){var s,r,q,p=this,o=null,n=A.m(a).ax.a===B.z,m=A.m(a).dx,l=A.be(a,o,t.w).w.a.a>900
 if(p.e&&p.y==null){s=n?B.C:B.at
 r=A.b_(A.fG(o,m,o,o,o,o,o,3.5,o,o),52,52)
@@ -105017,7 +105017,7 @@ k=A.r(20)
 j=A.r(20)
 i=A.bz(B.rc,1)
 return A.aVl(A.a([n,B.aJ,m,B.aJ,l,new A.al(B.Ob,A.fd(!1,k,!0,A.a7(e,A.R(A.a([B.R8,B.Fl,A.d("Logout",e,e,e,e,A.h().$3$color$fontSize$fontWeight(B.a_,12,B.f),e,e,e)],p),B.j,B.i,B.h,0,e),B.l,e,e,new A.ab(B.my,e,i,j,e,e,B.u),e,e,e,B.tl,e,e,e),e,!0,e,e,e,e,e,e,e,e,e,e,e,new A.aA5(f),e,e,e,e,e,e,e),e)],p),d,0,e,o)},
-Td(a,b,c){var s=this,r=null,q=t.p,p=A.a7(r,A.R(A.a([A.a7(r,B.Rv,B.l,r,r,new A.ab(r,r,r,A.r(10),r,B.Tu,B.u),r,r,r,B.bF,r,r,r),B.aJ,A.a8(A.a([A.d("VANSHI POS",r,r,r,r,A.cg().$3$color$fontSize$fontWeight(B.e,16,B.bo),r,r,r),A.d("Business Suite",r,r,r,r,A.h().$2$color$fontSize(B.o,11),r,r,r)],q),B.A,B.i,B.h)],q),B.j,B.i,B.h,0,r),B.l,r,r,B.Hz,r,r,r,B.a4,r,r,r),o=A.a([s.me("OPERATIONS"),s.dH(0,"Home",B.Q4,c)],q)
+Td(a,b,c){var s=this,r=null,q=t.p,p=A.a7(r,A.R(A.a([A.a7(r,B.Rv,B.l,r,r,new A.ab(r,r,r,A.r(10),r,B.Tu,B.u),r,r,r,B.bF,r,r,r),B.aJ,A.a8(A.a([A.d("VANSHEE POS",r,r,r,r,A.cg().$3$color$fontSize$fontWeight(B.e,16,B.bo),r,r,r),A.d("Business Suite",r,r,r,r,A.h().$2$color$fontSize(B.o,11),r,r,r)],q),B.A,B.i,B.h)],q),B.j,B.i,B.h,0,r),B.l,r,r,B.Hz,r,r,r,B.a4,r,r,r),o=A.a([s.me("OPERATIONS"),s.dH(0,"Home",B.Q4,c)],q)
 if(s.f6(4))o.push(s.dH(9,"Sell",B.ig,c))
 if(s.f6(5))o.push(s.dH(10,"Purchase",B.uc,c))
 if(s.f6(4))o.push(s.dH(11,"Receipt",B.ud,c))

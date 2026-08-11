@@ -451,7 +451,7 @@ class _MainLayoutState extends State<MainLayout> {
       case 25: return 'Stock Inventory';
       case 26: return 'Purchase Orders';
       case 27: return 'Employees & Attendance';
-      default: return 'VANSHI POS Business Suite';
+      default: return 'VANSHEE POS Business Suite';
     }
   }
 
@@ -707,7 +707,7 @@ class _MainLayoutState extends State<MainLayout> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('VANSHI POS', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
+                  Text('VANSHEE POS', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
                   Text('Business Suite', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8))),
                 ],
               ),
