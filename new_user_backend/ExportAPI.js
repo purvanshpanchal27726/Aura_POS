@@ -24,7 +24,7 @@ function getClientId(req) {
 router.get('/inventory', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    let query = 'SELECT item_id, name, item_code, sales_price, purchase_price, stock, min_stock_alert FROM items';
+    let query = 'SELECT item_id, name, item_code, sales_price, purchase_price, stock_quantity, min_stock FROM items';
     let params = [];
     if (clientId !== 'ALL') {
       query += ' WHERE client_id = $1';
@@ -37,7 +37,7 @@ router.get('/inventory', async (req, res) => {
     let csv = 'Item ID,Item Name,Item Code,Sales Price (INR),Purchase Price (INR),Current Stock,Min Alert Level\n';
     for (const item of items) {
       const name = `"${(item.name || '').replace(/"/g, '""')}"`;
-      csv += `${item.item_id},${name},${item.item_code || ''},${item.sales_price || 0},${item.purchase_price || 0},${item.stock || 0},${item.min_stock_alert || 5}\n`;
+      csv += `${item.item_id},${name},${item.item_code || ''},${item.sales_price || 0},${item.purchase_price || 0},${item.stock_quantity || 0},${item.min_stock || 5}\n`;
     }
 
     res.setHeader('Content-Type', 'text/csv');
@@ -56,7 +56,7 @@ router.get('/inventory', async (req, res) => {
 router.get('/sales', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    let query = 'SELECT sales_id, invoice_number, sales_date, total, payment_mode, customer_id FROM sales_master';
+    let query = 'SELECT sales_id, sales_bill_no, sales_date, total, payment_method, customer_id FROM sales_master';
     let params = [];
     if (clientId !== 'ALL') {
       query += ' WHERE client_id = $1';
@@ -69,7 +69,7 @@ router.get('/sales', async (req, res) => {
     let csv = 'Sales ID,Invoice Number,Date,Payment Mode,Total Amount (INR)\n';
     for (const s of sales) {
       const dateStr = s.sales_date ? new Date(s.sales_date).toISOString().split('T')[0] : '';
-      csv += `${s.sales_id},${s.invoice_number || ''},${dateStr},${s.payment_mode || 'Cash'},${s.total || 0}\n`;
+      csv += `${s.sales_id},${s.sales_bill_no || ''},${dateStr},${s.payment_method || 'Cash'},${s.total || 0}\n`;
     }
 
     res.setHeader('Content-Type', 'text/csv');
@@ -88,7 +88,7 @@ router.get('/sales', async (req, res) => {
 router.get('/gst', async (req, res) => {
   try {
     const clientId = getClientId(req);
-    let query = 'SELECT sales_id, invoice_number, sales_date, subtotal, tax_amount, total FROM sales_master';
+    let query = 'SELECT sales_id, sales_bill_no, sales_date, gross, tax, total FROM sales_master';
     let params = [];
     if (clientId !== 'ALL') {
       query += ' WHERE client_id = $1';
@@ -99,13 +99,13 @@ router.get('/gst', async (req, res) => {
 
     let csv = 'Invoice No,Sales Date,Taxable Value (INR),CGST (9%),SGST (9%),IGST (18%),Total Tax (INR),Invoice Total (INR)\n';
     for (const s of sales) {
-      const taxable = s.subtotal || (s.total * 0.8475) || 0;
-      const totalTax = s.tax_amount || (s.total - taxable) || 0;
+      const taxable = s.gross || (s.total * 0.8475) || 0;
+      const totalTax = s.tax || (s.total - taxable) || 0;
       const cgst = totalTax / 2;
       const sgst = totalTax / 2;
       const dateStr = s.sales_date ? new Date(s.sales_date).toISOString().split('T')[0] : '';
 
-      csv += `${s.invoice_number || ''},${dateStr},${taxable.toFixed(2)},${cgst.toFixed(2)},${sgst.toFixed(2)},0.00,${totalTax.toFixed(2)},${(s.total || 0).toFixed(2)}\n`;
+      csv += `${s.sales_bill_no || ''},${dateStr},${taxable.toFixed(2)},${cgst.toFixed(2)},${sgst.toFixed(2)},0.00,${totalTax.toFixed(2)},${(s.total || 0).toFixed(2)}\n`;
     }
 
     res.setHeader('Content-Type', 'text/csv');
