@@ -4266,7 +4266,7 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(errRes.error || errRes.message || 'Failed to save sales invoice.');
         }
         const result = await response.json();
-        openPrintReceipt(result.sales_id);
+        openPrintReceipt(result.sales_id, true);
         fetchInvoiceSetup();
       } catch (err) {
         if (!navigator.onLine || (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')))) {
@@ -4384,6 +4384,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       currentReceiptInvoice = invoice;
       if (receiptModal) receiptModal.style.display = 'flex';
+      
+      if (autoPrint) {
+        setTimeout(() => {
+          window.print();
+        }, 500);
+      }
     } catch (err) {
       alert(`Error loading receipt: ${err.message}`);
     }

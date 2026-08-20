@@ -237,7 +237,7 @@ router.get('/:id', async (req, res) => {
       SELECT sm.*, 
              CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
              c.phone_1 AS customer_phone,
-             cl.name AS client_name, cl.address_1, cl.phone_1, cl.gstin
+             cl.name AS client_name, cl.address, cl.phone, cl.gst_no AS gstin
       FROM sales_master sm
       LEFT JOIN customers c ON sm.customer_id = c.customer_id
       LEFT JOIN clients cl ON sm.client_id = cl.client_id
@@ -410,7 +410,7 @@ router.get('/pdf/:billNo', async (req, res) => {
   try {
     const billNo = req.params.billNo;
     const [rows] = await db.execute(`
-      SELECT sm.*, c.name AS client_name, c.address_1, c.phone_1, c.gstin
+      SELECT sm.*, c.name AS client_name, c.address, c.phone, c.gst_no AS gstin
       FROM sales_master sm
       LEFT JOIN clients c ON sm.client_id = c.client_id
       WHERE sm.sales_bill_no = $1
@@ -422,8 +422,8 @@ router.get('/pdf/:billNo', async (req, res) => {
     const [items] = await db.execute('SELECT * FROM sales_details WHERE sales_id = $1', [sale.sales_id]);
     
     const storeName = sale.client_name || 'AURA POS ENTERPRISE';
-    const storeAddress = sale.address_1 || '123 Commercial Hub, SG Highway, Ahmedabad';
-    const storePhone = sale.phone_1 || '9876543210';
+    const storeAddress = sale.address || '123 Commercial Hub, SG Highway, Ahmedabad';
+    const storePhone = sale.phone || '9876543210';
     const storeGstin = sale.gstin || '24AAACV1234F1Z9';
     
     let html = `
