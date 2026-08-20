@@ -125,9 +125,9 @@ router.post('/', async (req, res) => {
 
       // Deduct item stock in items table
       await connection.execute(
-        'UPDATE items SET stock_quantity = GREATEST(0, COALESCE(stock_quantity, quantity, 0) - ?), quantity = GREATEST(0, COALESCE(quantity, stock_quantity, 0) - ?) WHERE item_id = ?',
-        [qty, qty, itemId]
-      ).catch(() => {});
+        'UPDATE items SET stock_quantity = GREATEST(0, COALESCE(stock_quantity, 0) - ?) WHERE item_id = ?',
+        [qty, itemId]
+      );
     }
 
     await connection.commit();
@@ -236,7 +236,7 @@ router.get('/:id', async (req, res) => {
     let masterQuery = `
       SELECT sm.*, 
              CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
-             c.mobile_no_1 AS customer_phone,
+             c.phone_1 AS customer_phone,
              cl.name AS client_name, cl.address_1, cl.phone_1, cl.gstin
       FROM sales_master sm
       LEFT JOIN customers c ON sm.customer_id = c.customer_id
