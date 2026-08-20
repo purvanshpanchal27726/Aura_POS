@@ -203,7 +203,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   items: inventoryList.map<DropdownMenuItem<int>>((i) {
                     return DropdownMenuItem<int>(
                       value: i['inventory_id'],
-                      child: Text('${i['item_name']} (${double.parse(i['current_stock'].toString()).toStringAsFixed(1)})'),
+                      child: Text('${i['item_name']} (${(double.tryParse(i['current_stock']?.toString() ?? '0') ?? 0.0).toStringAsFixed(1)})'),
                     );
                   }).toList(),
                   onChanged: (val) {
@@ -298,8 +298,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   itemCount: inventoryList.length,
                   itemBuilder: (ctx, idx) {
                     final i = inventoryList[idx];
-                    final current = double.parse(i['current_stock'].toString());
-                    final minS = double.parse(i['min_stock'].toString());
+                    final current = double.tryParse(i['current_stock']?.toString() ?? '0') ?? 0.0;
+                    final minS = double.tryParse(i['min_stock']?.toString() ?? '0') ?? 0.0;
                     final isLow = current <= minS;
 
                     return Card(
