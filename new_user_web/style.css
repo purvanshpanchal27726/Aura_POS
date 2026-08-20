@@ -2323,4 +2323,21 @@ input:checked + .switch-slider:before {
 /* OVERFLOW FIXES */
 .main-content { min-width: 0; max-width: 100%; overflow-x: hidden; }
 .table-container { min-width: 0; max-width: 100%; overflow-x: auto; }
-.card, .vanshi-widget-card { min-width: 0; max-width: 100%; overflow-x: auto; }
+.card, .vanshi-widget-card { min-width: 0; max-width: 100%; overflow-x: visible; }
+
+
+/* ===== VISIBLE HORIZONTAL SCROLLBAR FOR PERMISSION TABLE ===== */
+div[style*="overflow-x: scroll"]::-webkit-scrollbar {
+  height: 8px;
+}
+div[style*="overflow-x: scroll"]::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+div[style*="overflow-x: scroll"]::-webkit-scrollbar-thumb {
+  background: #4f46e5;
+  border-radius: 4px;
+}
+div[style*="overflow-x: scroll"]::-webkit-scrollbar-thumb:hover {
+  background: #3730a3;
+}
