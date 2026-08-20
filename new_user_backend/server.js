@@ -246,11 +246,11 @@ app.get('/api/dashboard/stats', async (req, res) => {
     const grossProfitAmount = totalSalesAmount * 0.35; // 35% estimated gross margin
 
     // Real Low Stock Items count & list
-    let lowStockWhere = cidFilter ? `${cidFilter} AND (stock_qty <= 10 OR quantity <= 10)` : ' WHERE (stock_qty <= 10 OR quantity <= 10)';
+    let lowStockWhere = cidFilter ? `${cidFilter} AND (quantity <= 10)` : ' WHERE (quantity <= 10)';
     const [lowStockRow] = await db.execute(`SELECT COUNT(*) AS count FROM items${lowStockWhere}`, params).catch(() => [[{ count: 0 }]]);
     
     let lowStockListQuery = `
-      SELECT item_id, name, item_code, COALESCE(stock_qty, quantity, 0) AS quantity 
+      SELECT item_id, name, item_code, COALESCE(quantity, 0) AS quantity 
       FROM items
       ${lowStockWhere}
       ORDER BY quantity ASC LIMIT 5
