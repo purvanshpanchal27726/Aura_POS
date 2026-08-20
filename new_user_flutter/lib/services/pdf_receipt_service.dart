@@ -60,33 +60,19 @@ class PdfReceiptService {
 
   static Future<void> printReceipt(Map<String, dynamic> invoice) async {
     try {
-      if (kIsWeb && (defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.android)) {
-        final doc = pw.Document();
-        doc.addPage(
-          pw.Page(
-            pageFormat: PdfPageFormat.a4,
-            build: (context) => _buildReceipt(context, invoice),
-          ),
-        );
-        await Printing.sharePdf(
-          bytes: await doc.save(),
-          filename: 'Receipt_${invoice['sales_bill_no']}.pdf',
-        );
-      } else {
-        await Printing.layoutPdf(
-          name: 'Receipt_${invoice['sales_bill_no']}',
-          onLayout: (PdfPageFormat format) async {
-            final doc = pw.Document();
-            doc.addPage(
-              pw.Page(
-                pageFormat: format,
-                build: (context) => _buildReceipt(context, invoice),
-              ),
-            );
-            return doc.save();
-          },
-        );
-      }
+      await Printing.layoutPdf(
+        name: 'Receipt_${invoice['sales_bill_no']}',
+        onLayout: (PdfPageFormat format) async {
+          final doc = pw.Document();
+          doc.addPage(
+            pw.Page(
+              pageFormat: format,
+              build: (context) => _buildReceipt(context, invoice),
+            ),
+          );
+          return doc.save();
+        },
+      );
     } catch (e) {
       debugPrint('Printing error: $e');
     }
