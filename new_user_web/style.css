@@ -1200,11 +1200,27 @@ tr:hover td {
   body:not(.print-report-active) #printReceiptContent * {
     visibility: visible;
   }
+  
+  /* Reset modal parents so it anchors to the physical page */
+  body:not(.print-report-active) #receiptModal,
+  body:not(.print-report-active) .modal-card.receipt-card-modal {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: 0 !important;
+    width: 100% !important;
+  }
+  
   body:not(.print-report-active) #printReceiptContent {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
   }
 
   /* When printing reports */
