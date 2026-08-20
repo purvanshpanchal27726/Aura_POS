@@ -2,6 +2,25 @@ const { Jimp } = require('jimp');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const cloudinary = require('cloudinary').v2;
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'xzhmg1ek',
+  api_key: process.env.CLOUDINARY_API_KEY || '629518777443581',
+  api_secret: process.env.CLOUDINARY_API_SECRET || 'XY7YwH2VKmqXQjBsBdO8BWynx0s'
+});
+
+const uploadToCloudinary = async (dataUri) => {
+  try {
+    const result = await cloudinary.uploader.upload(dataUri, {
+      folder: 'aura_pos_items',
+    });
+    return result.secure_url;
+  } catch (error) {
+    console.error("Cloudinary upload failed:", error);
+    return dataUri; // fallback to Base64 if Cloudinary fails
+  }
+};
 
 const uploadsRoot = path.join(__dirname, 'Images');
 const variants = ['original', 'web', 'mobile', 'thumb'];
@@ -163,18 +182,18 @@ const resolveImageForStorage = async (rawImage, existingImage, req) => {
   }
 
   if (typeof rawImage === 'string') {
-    // Return Base64 directly to save in Postgres (bypasses Render ephemeral storage)
+    // Upload Base64 directly to Cloudinary
     if (rawImage.startsWith('data:image/')) {
-      return rawImage;
+      return await uploadToCloudinary(rawImage);
     }
     return rawImage;
   }
 
   if (typeof rawImage === 'object') {
-    // If HTML payload, extract the base64 directly
+    // If HTML payload, extract the base64 directly and upload to Cloudinary
     const originalDataUri = rawImage.variants?.original?.dataUri;
     if (originalDataUri && originalDataUri.startsWith('data:image/')) {
-      return originalDataUri;
+      return await uploadToCloudinary(originalDataUri);
     }
     return await saveImagePayload(rawImage, req);
   }
@@ -191,8 +210,8 @@ const publicImageFields = (storedImage, req) => {
     };
   }
 
-  // Handle Base64 strings natively stored in the DB
-  if (typeof storedImage === 'string' && storedImage.startsWith('data:image/')) {
+  // Handle Cloudinary URLs or Base64 strings natively stored in the DB
+  if (typeof storedImage === 'string' && (storedImage.startsWith('http') || storedImage.startsWith('data:image/'))) {
     return {
       image: storedImage,
       image_url: storedImage,
