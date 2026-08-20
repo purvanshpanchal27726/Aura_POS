@@ -2318,3 +2318,9 @@ input:checked + .switch-slider:before {
   height: 100%;
   object-fit: cover;
 }
+
+
+/* OVERFLOW FIXES */
+.main-content { min-width: 0; max-width: 100%; overflow-x: hidden; }
+.table-container { min-width: 0; max-width: 100%; overflow-x: auto; }
+.card, .vanshi-widget-card { min-width: 0; max-width: 100%; overflow-x: auto; }
