@@ -734,13 +734,16 @@ class _MainLayoutState extends State<MainLayout> {
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
             children: [
-              if (_hasModuleGroup('Hotel'))
+              if (_hasModuleGroup('Hotel') || _hasModuleGroup('Restaurant'))
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: SegmentedButton<String>(
-                    segments: const [
-                      ButtonSegment(value: 'POS', label: Text('POS')),
-                      ButtonSegment(value: 'Hotel', label: Text('Hotel')),
+                    segments: [
+                      const ButtonSegment(value: 'POS', label: Text('POS')),
+                      if (_hasModuleGroup('Restaurant'))
+                        const ButtonSegment(value: 'Restaurant', label: Text('Rest.')),
+                      if (_hasModuleGroup('Hotel'))
+                        const ButtonSegment(value: 'Hotel', label: Text('Hotel')),
                     ],
                     selected: {_uiMode},
                     onSelectionChanged: (Set<String> newSelection) {
@@ -751,7 +754,7 @@ class _MainLayoutState extends State<MainLayout> {
                     },
                     style: ButtonStyle(
                       visualDensity: VisualDensity.compact,
-                      textStyle: MaterialStateProperty.all(GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold)),
+                      textStyle: MaterialStateProperty.all(GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ),
@@ -773,14 +776,23 @@ class _MainLayoutState extends State<MainLayout> {
                 _buildSectionHeader('INVENTORY'),
                 _buildNavItem(25, 'Stock Inventory', Icons.shelves, isDesktop),
                 _buildNavItem(26, 'Purchase Orders', Icons.local_shipping_outlined, isDesktop),
+              ],
 
-                if (_hasModuleGroup('Restaurant')) ...[
-                  _buildSectionHeader('RESTAURANT'),
-                  _buildNavItem(18, 'Dine-in Tables', Icons.table_restaurant_outlined, isDesktop),
-                  _buildNavItem(19, 'Restaurant Menu', Icons.restaurant_menu_outlined, isDesktop),
-                  _buildNavItem(20, 'Rest. Orders & KOT', Icons.ramen_dining_outlined, isDesktop),
-                  _buildNavItem(21, 'Kitchen Queue (KDS)', Icons.kitchen_outlined, isDesktop),
-                ],
+              if (_uiMode == 'Restaurant' && _hasModuleGroup('Restaurant')) ...[
+                _buildSectionHeader('RESTAURANT'),
+                _buildNavItem(18, 'Dine-in Tables', Icons.table_restaurant_outlined, isDesktop),
+                _buildNavItem(19, 'Restaurant Menu', Icons.restaurant_menu_outlined, isDesktop),
+                _buildNavItem(20, 'Rest. Orders & KOT', Icons.ramen_dining_outlined, isDesktop),
+                _buildNavItem(21, 'Kitchen Queue (KDS)', Icons.kitchen_outlined, isDesktop),
+                
+                _buildSectionHeader('MASTERS'),
+                if (_hasPermission(3)) _buildNavItem(2, 'Item Master', Icons.inventory_2_outlined, isDesktop),
+                if (_hasPermission(3)) _buildNavItem(1, 'Category Master', Icons.category_outlined, isDesktop),
+                if (_hasPermission(3)) _buildNavItem(7, 'Tax Master', Icons.percent_outlined, isDesktop),
+
+                _buildSectionHeader('INVENTORY'),
+                _buildNavItem(25, 'Stock Inventory', Icons.shelves, isDesktop),
+                _buildNavItem(26, 'Purchase Orders', Icons.local_shipping_outlined, isDesktop),
               ],
 
               if (_uiMode == 'Hotel' && _hasModuleGroup('Hotel')) ...[

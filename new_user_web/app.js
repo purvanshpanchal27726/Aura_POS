@@ -495,45 +495,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // App Mode UI segmentation
   const modePosBtn = document.getElementById('modePosBtn');
+  const modeRestBtn = document.getElementById('modeRestBtn');
   const modeHotelBtn = document.getElementById('modeHotelBtn');
 
   if (modePosBtn && modeHotelBtn) {
     const setSidebarMode = (mode) => {
+      const btns = [modePosBtn, modeRestBtn, modeHotelBtn];
+      btns.forEach(b => { 
+        if(b) {
+          b.style.background = 'transparent'; 
+          b.style.color = 'var(--text-main)'; 
+        }
+      });
+      
+      const grpPos = document.getElementById('groupPosCore');
+      const grpInv = document.getElementById('groupInventoryModule');
+      const grpRest = document.getElementById('groupRestaurantModule');
+      const grpHotel = document.getElementById('groupHotelModule');
+
       if (mode === 'hotel') {
-        modeHotelBtn.style.background = 'var(--primary-color)';
-        modeHotelBtn.style.color = 'white';
-        modePosBtn.style.background = 'transparent';
-        modePosBtn.style.color = 'var(--text-main)';
-        
-        const grpPos = document.getElementById('groupPosCore');
-        const grpInv = document.getElementById('groupInventoryModule');
-        const grpRest = document.getElementById('groupRestaurantModule');
-        const grpHotel = document.getElementById('groupHotelModule');
-        
+        if(modeHotelBtn) { modeHotelBtn.style.background = 'var(--primary-color)'; modeHotelBtn.style.color = 'white'; }
         if (grpPos) grpPos.style.display = 'none';
         if (grpInv) grpInv.style.display = 'none';
         if (grpRest) grpRest.style.display = 'none';
         if (grpHotel) grpHotel.style.display = 'block';
-      } else {
-        modePosBtn.style.background = 'var(--primary-color)';
-        modePosBtn.style.color = 'white';
-        modeHotelBtn.style.background = 'transparent';
-        modeHotelBtn.style.color = 'var(--text-main)';
-        
-        const grpPos = document.getElementById('groupPosCore');
-        const grpInv = document.getElementById('groupInventoryModule');
-        const grpRest = document.getElementById('groupRestaurantModule');
-        const grpHotel = document.getElementById('groupHotelModule');
-        
-        if (grpPos) grpPos.style.display = 'block';
+      } else if (mode === 'restaurant') {
+        if(modeRestBtn) { modeRestBtn.style.background = 'var(--primary-color)'; modeRestBtn.style.color = 'white'; }
+        if (grpPos) grpPos.style.display = 'none';
         if (grpInv) grpInv.style.display = 'block';
         if (grpRest) grpRest.style.display = 'block';
+        if (grpHotel) grpHotel.style.display = 'none';
+      } else {
+        if(modePosBtn) { modePosBtn.style.background = 'var(--primary-color)'; modePosBtn.style.color = 'white'; }
+        if (grpPos) grpPos.style.display = 'block';
+        if (grpInv) grpInv.style.display = 'block';
+        if (grpRest) grpRest.style.display = 'none';
         if (grpHotel) grpHotel.style.display = 'none';
       }
     };
     
-    modePosBtn.addEventListener('click', () => setSidebarMode('pos'));
-    modeHotelBtn.addEventListener('click', () => setSidebarMode('hotel'));
+    if(modePosBtn) modePosBtn.addEventListener('click', () => setSidebarMode('pos'));
+    if(modeRestBtn) modeRestBtn.addEventListener('click', () => setSidebarMode('restaurant'));
+    if(modeHotelBtn) modeHotelBtn.addEventListener('click', () => setSidebarMode('hotel'));
     setSidebarMode('pos');
   }
 
