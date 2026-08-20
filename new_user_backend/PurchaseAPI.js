@@ -53,12 +53,25 @@ router.post('/', async (req, res) => {
     }
 
     const data = req.body || {};
-    const { vendor_id, purchase_date, purchase_bill_no, gross, tax, total, created_by, items } = data;
+    const { vendor_id, purchase_date, gross, tax, total, created_by, items } = data;
+    let { purchase_bill_no } = data;
 
-    if (!vendor_id || !purchase_date || !purchase_bill_no || !items || !Array.isArray(items) || items.length === 0) {
+    if (!vendor_id || !purchase_date || !items || !Array.isArray(items) || items.length === 0) {
       await connection.rollback();
       return res.status(400).json({ error: 'Missing required fields for purchase management.' });
     }
+
+    // Auto-generate bill number if missing or invalid
+    const targetCid = parseInt(getClientId(req) || 1) || 1;
+    if (!purchase_bill_no || purchase_bill_no === '--' || purchase_bill_no === 'AUTO') {
+      const [countRow] = await connection.execute(
+        'SELECT COUNT(*) AS bill_count FROM purchase_master WHERE client_id = $1',
+        [targetCid]
+      ).catch(() => [[{ bill_count: 0 }]]);
+      const nextBillNumber = (parseInt(countRow[0]?.bill_count || 0) + 1);
+      purchase_bill_no = `PUR-${nextBillNumber}`;
+    }
+
 
     // Insert into purchase_master
     const masterQuery = `

@@ -68,7 +68,7 @@ router.put('/', async (req, res) => {
     const query = `
       INSERT INTO role_permissions (role_id, module_id, allowed) 
       VALUES (?, ?, ?)
-      ON DUPLICATE KEY UPDATE allowed = VALUES(allowed)
+      ON CONFLICT (role_id, module_id) DO UPDATE SET allowed = EXCLUDED.allowed
     `;
 
     for (const update of updates) {
