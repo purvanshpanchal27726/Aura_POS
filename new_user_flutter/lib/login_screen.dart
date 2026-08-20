@@ -330,10 +330,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 shape: BoxShape.circle,
                 color: primaryColor.withValues(alpha: isDark ? 0.15 : 0.2),
               ),
-              child: Image.network(
-                'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=200',
-                fit: BoxFit.cover,
-                errorBuilder: (c, e, s) => const SizedBox(),
+              child: ClipOval(
+                child: Image.network(
+                  'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=200',
+                  fit: BoxFit.cover,
+                  errorBuilder: (c, e, s) => const SizedBox(),
+                ),
               ),
             ),
           ),
