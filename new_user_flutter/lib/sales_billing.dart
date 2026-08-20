@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'config.dart';
 import 'api_client.dart';
+import 'models/cart_item.dart';
+import 'services/pdf_receipt_service.dart';
 
 class SalesBillingScreen extends StatefulWidget {
   const SalesBillingScreen({super.key});
@@ -448,13 +450,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
                 icon: const Icon(Icons.print_rounded, size: 16),
                 label: Text('Print Receipt', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Print job submitted...', style: GoogleFonts.inter()), 
-                      backgroundColor: const Color(0xFF6366F1),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  PdfReceiptService.printReceipt(invoice);
                   Navigator.pop(ctx);
                 },
               ),

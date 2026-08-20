@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'config.dart';
 import 'api_client.dart';
+import 'package:intl/intl.dart';
+import 'services/pdf_receipt_service.dart';
 
 class ReceiptListingScreen extends StatefulWidget {
   const ReceiptListingScreen({super.key});
@@ -165,13 +167,7 @@ class _ReceiptListingScreenState extends State<ReceiptListingScreen> {
                 icon: const Icon(Icons.print_rounded, size: 16),
                 label: Text('Print Receipt', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Print job submitted...', style: GoogleFonts.inter()), 
-                      backgroundColor: const Color(0xFF6366F1),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
+                  PdfReceiptService.printReceipt(receipt);
                   Navigator.pop(ctx);
                 },
               ),
