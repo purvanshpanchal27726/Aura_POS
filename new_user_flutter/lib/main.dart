@@ -593,65 +593,67 @@ class _MainLayoutState extends State<MainLayout> {
         ],
       ),
       actions: [
-        // Store Selector Dropdown for Super Admin & Multi-Store Management
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-          decoration: BoxDecoration(
-            color: primaryColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.storefront_rounded, size: 16, color: primaryColor),
-              const SizedBox(width: 6),
-              DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: activeStoreId,
-                  dropdownColor: isDark ? const Color(0xFF151D30) : Colors.white,
-                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor),
-                  items: [
-                    if (isSuperAdmin) const DropdownMenuItem(value: 'ALL', child: Text('All Stores (Global View)')),
-                    if (allClients.isNotEmpty)
-                      ...allClients.map((c) => DropdownMenuItem(
-                        value: c['client_id']?.toString() ?? '1',
-                        child: Text(c['name'] ?? 'Store ${c['client_id']}'),
-                      ))
-                    else
-                      const DropdownMenuItem(value: '1', child: Text('Aura POS Enterprise')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        activeStoreId = val;
-                        AppConfig.setActiveUserClientId(val == 'ALL' ? null : val);
-                      });
-                      fetchUsersAndPermissions();
-                    }
-                  },
+        if (isDesktop) ...[
+          // Store Selector Dropdown for Super Admin & Multi-Store Management
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            decoration: BoxDecoration(
+              color: primaryColor.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.storefront_rounded, size: 16, color: primaryColor),
+                const SizedBox(width: 6),
+                DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: activeStoreId,
+                    dropdownColor: isDark ? const Color(0xFF151D30) : Colors.white,
+                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: primaryColor),
+                    items: [
+                      if (isSuperAdmin) const DropdownMenuItem(value: 'ALL', child: Text('All Stores (Global View)')),
+                      if (allClients.isNotEmpty)
+                        ...allClients.map((c) => DropdownMenuItem(
+                          value: c['client_id']?.toString() ?? '1',
+                          child: Text(c['name'] ?? 'Store ${c['client_id']}'),
+                        ))
+                      else
+                        const DropdownMenuItem(value: '1', child: Text('Aura POS Enterprise')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          activeStoreId = val;
+                          AppConfig.setActiveUserClientId(val == 'ALL' ? null : val);
+                        });
+                        fetchUsersAndPermissions();
+                      }
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
+          const SizedBox(width: 12),
 
-        // User profile badge
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF151D30) : const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(20),
+          // User profile badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF151D30) : const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(radius: 12, backgroundColor: primaryColor, child: Text(userName[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
+                const SizedBox(width: 8),
+                Text('$userName ($roleName)', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+              ],
+            ),
           ),
-          child: Row(
-            children: [
-              CircleAvatar(radius: 12, backgroundColor: primaryColor, child: Text(userName[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))),
-              const SizedBox(width: 8),
-              Text('$userName ($roleName)', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: isDark ? Colors.white : const Color(0xFF0F172A))),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
+          const SizedBox(width: 12),
+        ],
 
         // Theme Toggle
         IconButton(
@@ -662,7 +664,7 @@ class _MainLayoutState extends State<MainLayout> {
           tooltip: 'Toggle Dark/Light Mode',
         ),
 
-        // Logout Pill
+        // Logout Pill / Icon
         Padding(
           padding: const EdgeInsets.only(right: 16.0),
           child: InkWell(
@@ -672,7 +674,7 @@ class _MainLayoutState extends State<MainLayout> {
             },
             borderRadius: BorderRadius.circular(20),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: isDesktop ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6) : const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: const Color(0xFFFEF2F2),
                 borderRadius: BorderRadius.circular(20),
@@ -681,8 +683,10 @@ class _MainLayoutState extends State<MainLayout> {
               child: Row(
                 children: [
                   const Icon(Icons.logout_rounded, size: 14, color: Color(0xFFEF4444)),
-                  const SizedBox(width: 4),
-                  Text('Logout', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
+                  if (isDesktop) ...[
+                    const SizedBox(width: 4),
+                    Text('Logout', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
+                  ],
                 ],
               ),
             ),
