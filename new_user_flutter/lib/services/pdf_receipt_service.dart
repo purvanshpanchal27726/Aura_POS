@@ -17,7 +17,7 @@ class PdfReceiptService {
               pageFormat: format,
               build: (pw.Context context) {
                 return pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  crossAxisAlignment: pw.CrossAxisAlignment.stretch,
                   children: [
                     pw.Center(
                       child: pw.Text('AURA POS', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
