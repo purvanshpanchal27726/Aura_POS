@@ -421,7 +421,7 @@ router.get('/pdf/:billNo', async (req, res) => {
     const sale = rows[0];
     const [items] = await db.execute('SELECT * FROM sales_details WHERE sales_id = $1', [sale.sales_id]);
     
-    const storeName = sale.client_name || 'VANSHEE POS ENTERPRISE';
+    const storeName = sale.client_name || 'AURA POS ENTERPRISE';
     const storeAddress = sale.address_1 || '123 Commercial Hub, SG Highway, Ahmedabad';
     const storePhone = sale.phone_1 || '9876543210';
     const storeGstin = sale.gstin || '24AAACV1234F1Z9';
@@ -487,7 +487,7 @@ router.get('/pdf/:billNo', async (req, res) => {
 
         <div class="footer">
           <p>Thank you for visiting ${storeName}!</p>
-          <p>Powered by Vanshee Enterprise POS System</p>
+          <p>Powered by Aura Enterprise POS System</p>
         </div>
         <script>window.onload = function() { window.print(); };</script>
       </body>
@@ -518,7 +518,7 @@ router.post('/send-whatsapp', async (req, res) => {
     const invNo = invoice_number || 'INV-001';
     const invTotal = total ? parseFloat(total).toFixed(2) : '0.00';
 
-    const msg = `Hello ${custName},\nThank you for shopping with us! Your digital invoice #${invNo} for total ₹${invTotal} is ready.\n\nView Bill: https://possys-w2ip.onrender.com/api/sales/print/${encodeURIComponent(invNo)}\n\nThank you for visiting Vanshee POS Enterprise!`;
+    const msg = `Hello ${custName},\nThank you for shopping with us! Your digital invoice #${invNo} for total ₹${invTotal} is ready.\n\nView Bill: https://possys-w2ip.onrender.com/api/sales/print/${encodeURIComponent(invNo)}\n\nThank you for visiting Aura POS Enterprise!`;
     const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(msg)}`;
 
     return res.status(200).json({

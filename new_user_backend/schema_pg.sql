@@ -281,8 +281,8 @@ CREATE TABLE IF NOT EXISTS purchase_details (
 
 -- SEED DATA
 INSERT INTO clients (client_id, name, email, phone, address, active) VALUES 
-(1, 'Vanshee POS Enterprise', 'admin@vanshee.com', '9876543210', 'SG Highway, Ahmedabad, India', 1),
-(2, 'ABC Retail & Hospitality', 'abc@vanshee.com', '9876543214', 'Company Office, Ahmedabad, India', 1)
+(1, 'Aura POS Enterprise', 'admin@aura.com', '9876543210', 'SG Highway, Ahmedabad, India', 1),
+(2, 'ABC Retail & Hospitality', 'abc@aura.com', '9876543214', 'Company Office, Ahmedabad, India', 1)
 ON CONFLICT (client_id) DO NOTHING;
 
 INSERT INTO roles (role_id, name, active, created_by) VALUES 
@@ -309,9 +309,9 @@ ON CONFLICT (role_id, module_id) DO NOTHING;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superadmin SMALLINT DEFAULT 0;
 
 INSERT INTO users (user_id, username, password, first_name, middle_name, last_name, address_1, address_2, address_3, city, country, phone_1, phone_2, email_1, email_2, role_id, client_id, is_superadmin, created_by) VALUES
-(1,'Dhruvi','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Dhruvi','','Patel','Admin Office 1','','','Ahmedabad','India','9876543210','','dhruvi@vanshee.com','',1,1,1,'System'),
-(2,'Krinna','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Krinna','','Anandpara','Manager Desk A','','','Surat','India','9876543211','','krinna@vanshee.com','',1,1,1,'System'),
-(3,'Parshav','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Parshav','','Shah','Store Counter 1','','','Vadodara','India','9876543212','','parshav@vanshee.com','',1,1,1,'System')
+(1,'Dhruvi','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Dhruvi','','Patel','Admin Office 1','','','Ahmedabad','India','9876543210','','dhruvi@aura.com','',1,1,1,'System'),
+(2,'Krinna','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Krinna','','Anandpara','Manager Desk A','','','Surat','India','9876543211','','krinna@aura.com','',1,1,1,'System'),
+(3,'Parshav','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Parshav','','Shah','Store Counter 1','','','Vadodara','India','9876543212','','parshav@aura.com','',1,1,1,'System')
 ON CONFLICT (user_id) DO NOTHING;
 
 -- Fix serial sequences after explicit ID inserts (REQUIRED in PostgreSQL)
@@ -335,7 +335,7 @@ CREATE TABLE IF NOT EXISTS license_info (
 
 -- Seed default license row
 INSERT INTO license_info (client_id, license_key, valid_from, valid_to, amc_start_date, amc_end_date, status)
-VALUES (1, 'VANSHEE-POS-LICENSE-KEY-2026', '2026-01-01', '2030-12-31', '2026-01-01', '2030-12-31', 'Active')
+VALUES (1, 'AURA-POS-LICENSE-KEY-2026', '2026-01-01', '2030-12-31', '2026-01-01', '2030-12-31', 'Active')
 ON CONFLICT DO NOTHING;
 
 SELECT setval(pg_get_serial_sequence('license_info','license_id'), COALESCE((SELECT MAX(license_id) FROM license_info), 1));

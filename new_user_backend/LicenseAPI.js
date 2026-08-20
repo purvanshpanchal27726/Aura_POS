@@ -157,7 +157,7 @@ router.get('/details', async (req, res) => {
     const [rows] = await db.query(query, params);
     if (rows.length === 0) {
       return res.json({
-        license_key: 'VANSHEE-POS-LICENSE-KEY-2026',
+        license_key: 'AURA-POS-LICENSE-KEY-2026',
         valid_from: '2026-01-01',
         valid_to: '2030-12-31',
         amc_start_date: '2026-01-01',

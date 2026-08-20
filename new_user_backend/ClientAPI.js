@@ -12,7 +12,7 @@ router.get('/current', async (req, res) => {
     const clientId = (req.user && req.user.client_id) ? req.user.client_id : 1;
     const [rows] = await db.query('SELECT * FROM clients WHERE client_id = $1', [clientId]);
     if (rows.length === 0) {
-      return res.json({ name: 'Vanshee POS Enterprise', email: 'admin@vanshee.com', phone: '9876543210', gst_no: '24AAACV1234F1Z5' });
+      return res.json({ name: 'Aura POS Enterprise', email: 'admin@aura.com', phone: '9876543210', gst_no: '24AAACV1234F1Z5' });
     }
     res.json(rows[0]);
   } catch (err) {
@@ -44,10 +44,10 @@ router.put('/current', async (req, res) => {
  */
 router.get('/', async (req, res) => {
   try {
-    // 1. Ensure Client 1 (Vanshee POS Enterprise) exists in clients table
+    // 1. Ensure Client 1 (Aura POS Enterprise) exists in clients table
     await db.execute(
       `INSERT INTO clients (client_id, name, email, phone, address, active) 
-       VALUES (1, 'Vanshee POS Enterprise', 'admin@vanshee.com', '9876543210', 'SG Highway, Ahmedabad, India', 1) 
+       VALUES (1, 'Aura POS Enterprise', 'admin@aura.com', '9876543210', 'SG Highway, Ahmedabad, India', 1) 
        ON CONFLICT (client_id) DO NOTHING`
     );
 

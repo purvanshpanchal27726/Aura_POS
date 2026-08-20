@@ -1689,11 +1689,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (superBadge) superBadge.style.display = 'inline-block';
       } else if (isAdmin) {
         titleHeader.textContent = 'Client Admin Menu';
-        if (subtitleHeader) subtitleHeader.textContent = activeUser.client_name || 'Vanshee POS Enterprise';
+        if (subtitleHeader) subtitleHeader.textContent = activeUser.client_name || 'Aura POS Enterprise';
         if (superBadge) superBadge.style.display = 'none';
       } else {
         titleHeader.textContent = `${activeUser.role_name || 'Staff'} Counter`;
-        if (subtitleHeader) subtitleHeader.textContent = activeUser.client_name || 'Vanshee POS Enterprise';
+        if (subtitleHeader) subtitleHeader.textContent = activeUser.client_name || 'Aura POS Enterprise';
         if (superBadge) superBadge.style.display = 'none';
       }
     }
@@ -4457,7 +4457,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const links = await generateCloudinaryBillLink(currentReceiptInvoice);
-      const message = `Hello ${custName},\n\nThank you for shopping with Vanshee POS! 🛍️\nYour Invoice #${billNo} of ₹${total} has been generated.\n\n📄 Download PDF Bill: ${links.pdfUrl}\n🔗 View Digital Bill: ${links.billUrl}\n\nThank you for your business! Have a wonderful day!`;
+      const message = `Hello ${custName},\n\nThank you for shopping with Aura POS! 🛍️\nYour Invoice #${billNo} of ₹${total} has been generated.\n\n📄 Download PDF Bill: ${links.pdfUrl}\n🔗 View Digital Bill: ${links.billUrl}\n\nThank you for your business! Have a wonderful day!`;
       
       const text = encodeURIComponent(message);
       const waUrl = rawPhone 
@@ -4486,8 +4486,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const links = await generateCloudinaryBillLink(currentReceiptInvoice);
-      const subject = encodeURIComponent(`Invoice #${billNo} - Thank You for Shopping with Vanshee POS`);
-      const body = encodeURIComponent(`Dear ${custName},\n\nThank you for your transaction with Vanshee POS System.\n\nInvoice Number: ${billNo}\nTotal Amount Paid: ₹${total}\n\n📄 Download PDF Invoice: ${links.pdfUrl}\n🔗 View Online Digital Bill: ${links.billUrl}\n\nThank you for your business!\n\nBest regards,\nVanshee POS Team`);
+      const subject = encodeURIComponent(`Invoice #${billNo} - Thank You for Shopping with Aura POS`);
+      const body = encodeURIComponent(`Dear ${custName},\n\nThank you for your transaction with Aura POS System.\n\nInvoice Number: ${billNo}\nTotal Amount Paid: ₹${total}\n\n📄 Download PDF Invoice: ${links.pdfUrl}\n🔗 View Online Digital Bill: ${links.billUrl}\n\nThank you for your business!\n\nBest regards,\nAura POS Team`);
       window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank');
     });
   }
@@ -4725,7 +4725,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (stPhone) stPhone.value = clientData.phone || '';
         if (stEmail) stEmail.value = clientData.email || '';
         if (stGst) stGst.value = clientData.gst_no || 'N/A';
-        if (titleInp) titleInp.value = clientData.name || 'Vanshee POS';
+        if (titleInp) titleInp.value = clientData.name || 'Aura POS';
         if (subInp) subInp.value = clientData.address || 'AHMEDABAD, GUJARAT, INDIA';
       }
 
@@ -4767,7 +4767,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const auto_print = document.getElementById('setting_auto_print').checked ? 1 : 0;
       const copies = parseInt(document.getElementById('setting_copies').value) || 1;
 
-      const rTitle = document.getElementById('setting_receipt_title')?.value.trim() || 'Vanshee POS';
+      const rTitle = document.getElementById('setting_receipt_title')?.value.trim() || 'Aura POS';
       const rSub = document.getElementById('setting_receipt_subtitle')?.value.trim() || 'AHMEDABAD, GUJARAT, INDIA';
       const rFoot = document.getElementById('setting_receipt_footer')?.value.trim() || 'THANK YOU! VISIT AGAIN.';
 
@@ -6357,7 +6357,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dateStr = new Date().toISOString().split('T')[0];
     
     link.href = URL.createObjectURL(blob);
-    link.setAttribute('download', `Vanshee_POS_${reportType}_${dateStr}.csv`);
+    link.setAttribute('download', `Aura_POS_${reportType}_${dateStr}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -7634,7 +7634,7 @@ document.addEventListener('DOMContentLoaded', () => {
     pdfContainer.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 20px;">
         <div>
-          <h2 style="margin: 0; color: #0f172a; font-size: 20px; font-weight: bold;">Vanshee POS System</h2>
+          <h2 style="margin: 0; color: #0f172a; font-size: 20px; font-weight: bold;">Aura POS System</h2>
           <p style="margin: 4px 0 0 0; color: #64748b; font-size: 11px;">Official Business Report</p>
         </div>
         <div style="text-align: right;">
@@ -7653,14 +7653,14 @@ document.addEventListener('DOMContentLoaded', () => {
         </tbody>
       </table>
       <div style="margin-top: 25px; border-top: 1px solid #e2e8f0; padding-top: 10px; font-size: 10px; color: #94a3b8; text-align: center;">
-        Generated automatically by Vanshee POS Management System
+        Generated automatically by Aura POS Management System
       </div>
     `;
 
     if (typeof html2pdf !== 'undefined') {
       const opt = {
         margin:       0.4,
-        filename:     `Vanshee_POS_${reportTypeSelect?.value || 'report'}_${dateStr}.pdf`,
+        filename:     `Aura_POS_${reportTypeSelect?.value || 'report'}_${dateStr}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2 },
         jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
@@ -9149,7 +9149,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chkStore = document.getElementById('chkShowStoreName')?.checked;
     const barcodeType = document.getElementById('barcodeType')?.value || 'CODE128';
 
-    const storeTitle = localStorage.getItem('pos_receipt_title') || 'Vanshee POS';
+    const storeTitle = localStorage.getItem('pos_receipt_title') || 'Aura POS';
     if (storeNameEl) {
       storeNameEl.textContent = storeTitle;
       storeNameEl.style.display = chkStore ? 'block' : 'none';
@@ -10711,7 +10711,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const prevSubtitle = document.getElementById('prevSubtitle');
     const prevFooter = document.getElementById('prevFooter');
 
-    if (prevTitle && tInput) prevTitle.textContent = (tInput.value || 'VANSHEE POS').toUpperCase();
+    if (prevTitle && tInput) prevTitle.textContent = (tInput.value || 'AURA POS').toUpperCase();
     if (prevSubtitle && sInput) prevSubtitle.textContent = (sInput.value || 'AHMEDABAD, GUJARAT, INDIA').toUpperCase();
     if (prevFooter && fInput) prevFooter.textContent = (fInput.value || 'THANK YOU! VISIT AGAIN.').toUpperCase();
   };

@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vanshee POS - Advanced Point of Sale Dashboard</title>
-  <meta name="description" content="Manage inventory, customers, vendors, sales billing, purchases, and advanced reporting with Vanshee POS System.">
+  <title>Aura POS - Advanced Point of Sale Dashboard</title>
+  <meta name="description" content="Manage inventory, customers, vendors, sales billing, purchases, and advanced reporting with Aura POS System.">
   <link rel="stylesheet" href="style.css?v=20260808_v105">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,7 +14,7 @@
   <!-- AMC Warning Banner -->
   <div id="amcWarningBanner" style="display: none; background: #fffbeb; border-bottom: 1.5px solid #fef3c7; color: #d97706; padding: 0.75rem 1.5rem; font-size: 0.9rem; font-weight: 500; text-align: center; justify-content: center; align-items: center; gap: 8px; z-index: 9999; position: relative;">
     <span class="material-icons" style="font-size: 1.2rem;">warning</span>
-    <span><strong>Notice:</strong> Your Annual Maintenance Contract (AMC) has expired. Please contact Vanshee Infotech to renew support.</span>
+    <span><strong>Notice:</strong> Your Annual Maintenance Contract (AMC) has expired. Please contact Aura POS to renew support.</span>
   </div>
 
   <!-- License Lockout Overlay -->
@@ -22,7 +22,7 @@
     <div style="max-width: 450px; width: 90%; padding: 2.5rem; border-radius: 16px; background: #1e293b; border: 1px solid #334155; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.75);">
       <span class="material-icons" style="font-size: 4rem; color: #ef4444; margin-bottom: 1rem;">block</span>
       <h2 style="margin-bottom: 0.5rem; font-size: 1.75rem; font-weight: 700; color: #f1f5f9;">POS Access Suspended</h2>
-      <p style="color: #94a3b8; line-height: 1.5; margin-bottom: 1.5rem;">Your client subscription license has expired or has been suspended. Please contact the system administrator at Vanshee Infotech to restore access.</p>
+      <p style="color: #94a3b8; line-height: 1.5; margin-bottom: 1.5rem;">Your client subscription license has expired or has been suspended. Please contact the system administrator at Aura POS to restore access.</p>
       <div style="background: #0f172a; padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 0.9rem; text-align: left; border: 1px solid #1e293b; color: #cbd5e1; margin-bottom: 1.5rem;">
         <div><strong>Company:</strong> <span id="lockoutClientName">N/A</span></div>
         <div><strong>License Key:</strong> <span id="lockoutLicenseKey">N/A</span></div>
@@ -1043,11 +1043,11 @@
           <div class="form-grid col-2">
             <div class="form-field">
               <label>Company Name</label>
-              <input type="text" value="Vanshee Infotech" readonly style="background-color: #f1f5f9;">
+              <input type="text" value="Aura POS" readonly style="background-color: #f1f5f9;">
             </div>
             <div class="form-field">
               <label>Registration Number</label>
-              <input type="text" value="GSTIN-24VANSHEE1234F" readonly style="background-color: #f1f5f9;">
+              <input type="text" value="GSTIN-24AURA1234F" readonly style="background-color: #f1f5f9;">
             </div>
           </div>
           <div class="form-grid col-1">
@@ -1063,7 +1063,7 @@
             </div>
             <div class="form-field">
               <label>System Email</label>
-              <input type="text" value="contact@vanshee.com" readonly style="background-color: #f1f5f9;">
+              <input type="text" value="contact@aura.com" readonly style="background-color: #f1f5f9;">
             </div>
           </div>
         </form>
@@ -1281,7 +1281,7 @@
           <div style="display: flex; align-items: center; gap: 1rem;">
             <img src="logo.png" alt="Logo" style="height: 50px; width: 50px; object-fit: contain;">
             <div>
-              <h1 style="font-size: 1.55rem; font-weight: 800; margin: 0; color: #0f172a; font-family: 'Outfit', sans-serif;">Vanshee Infotech</h1>
+              <h1 style="font-size: 1.55rem; font-weight: 800; margin: 0; color: #0f172a; font-family: 'Outfit', sans-serif;">Aura POS</h1>
               <p style="margin: 0.25rem 0 0 0; font-size: 0.85rem; color: #64748b; font-family: 'Inter', sans-serif;">B-327, Sun South Street, Opposite Bopal Fire Station, South Bopal, 380057</p>
             </div>
           </div>
@@ -1522,7 +1522,7 @@
               <div class="form-grid col-3">
                 <div class="form-field">
                   <label for="setting_store_name" style="font-weight: 600; color: var(--text-main);">Store / Business Name</label>
-                  <input type="text" id="setting_store_name" value="Vanshee POS Enterprise" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                  <input type="text" id="setting_store_name" value="Aura POS Enterprise" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
                 </div>
                 <div class="form-field">
                   <label for="setting_gst_no" style="font-weight: 600; color: var(--text-main);">GST / Tax Registration No.</label>
@@ -1544,7 +1544,7 @@
                 </div>
                 <div class="form-field">
                   <label for="setting_store_email" style="font-weight: 600; color: var(--text-main);">Store Support Email</label>
-                  <input type="email" id="setting_store_email" value="support@vanshee.com" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                  <input type="email" id="setting_store_email" value="support@aura.com" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
                 </div>
                 <div class="form-field">
                   <label for="setting_currency" style="font-weight: 600; color: var(--text-main);">Base Currency Symbol</label>
@@ -1614,7 +1614,7 @@
                   <div class="form-grid col-3">
                     <div class="form-field">
                       <label for="setting_receipt_title" style="font-weight: 600; color: var(--text-main);">Receipt Header Title</label>
-                      <input type="text" id="setting_receipt_title" name="receipt_title" value="Vanshee POS" oninput="updateReceiptLivePreview()" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
+                      <input type="text" id="setting_receipt_title" name="receipt_title" value="Aura POS" oninput="updateReceiptLivePreview()" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; background: var(--input-bg); color: var(--text-main);">
                     </div>
                     <div class="form-field">
                       <label for="setting_receipt_subtitle" style="font-weight: 600; color: var(--text-main);">Header Subtitle Address</label>
@@ -1650,7 +1650,7 @@
                 <h4 style="margin: 0; font-size: 1.05rem; color: var(--text-main);">Live Receipt Preview</h4>
               </div>
               <div class="receipt-live-preview" id="receiptPreviewBox">
-                <div style="text-align: center; font-weight: bold; font-size: 1.1rem;" id="prevTitle">VANSHEE POS</div>
+                <div style="text-align: center; font-weight: bold; font-size: 1.1rem;" id="prevTitle">AURA POS</div>
                 <div style="text-align: center; font-size: 0.75rem; margin-bottom: 0.75rem;" id="prevSubtitle">AHMEDABAD, GUJARAT, INDIA</div>
                 <div style="border-bottom: 1px dashed #94a3b8; margin-bottom: 0.5rem;"></div>
                 <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
@@ -1911,9 +1911,9 @@
         <div class="support-container">
           <div class="support-header">
             <div class="logo-wrapper">
-              <img src="logo.png" alt="Vanshee Infotech Logo" class="support-logo">
+              <img src="logo.png" alt="Aura POS Logo" class="support-logo">
             </div>
-            <h2>Vanshee Infotech</h2>
+            <h2>Aura POS</h2>
             <p class="tagline">Feel free to contact us</p>
           </div>
           <div class="support-grid">
@@ -1928,24 +1928,24 @@
               </div>
             </div>
 
-            <div class="support-card" onclick="window.open('mailto:vansheeinfotech@gmail.com')">
+            <div class="support-card" onclick="window.open('mailto:aurainfotech@gmail.com')">
               <div class="support-icon-wrapper">
                 <span class="material-icons">email</span>
               </div>
               <div class="support-details">
                 <h3>Email Address</h3>
-                <p>vansheeinfotech@gmail.com</p>
+                <p>aurainfotech@gmail.com</p>
                 <span class="support-action">Click to Email</span>
               </div>
             </div>
 
-            <div class="support-card" onclick="window.open('https://www.vansheeinfotech.com', '_blank')">
+            <div class="support-card" onclick="window.open('https://www.aurainfotech.com', '_blank')">
               <div class="support-icon-wrapper">
                 <span class="material-icons">language</span>
               </div>
               <div class="support-details">
                 <h3>Official Website</h3>
-                <p>www.vansheeinfotech.com</p>
+                <p>www.aurainfotech.com</p>
                 <span class="support-action">Visit Website</span>
               </div>
             </div>
@@ -2985,7 +2985,7 @@
       
       <div id="printReceiptContent">
         <div class="receipt-header" style="text-align: center; border-bottom: 2px dashed #cbd5e1; padding-bottom: 0.75rem; margin-bottom: 0.75rem;">
-          <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0;">Vanshee POS & ERP</h2>
+          <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a; margin: 0;">Aura POS & ERP</h2>
           <p style="font-size: 0.75rem; color: #64748b; margin: 2px 0 0 0; font-weight: 600;">AHMEDABAD, GUJARAT, INDIA</p>
         </div>
         <div class="receipt-meta" style="font-size: 0.8rem; color: #334155; display: grid; grid-template-columns: 1fr 1fr; gap: 0.35rem; margin-bottom: 0.75rem; border-bottom: 1px dashed #cbd5e1; padding-bottom: 0.75rem;">
@@ -3826,7 +3826,7 @@
             <h3 style="margin-top: 0; font-size: 1rem; color: var(--text-main); margin-bottom: 1.25rem; font-weight: 700;">Live Label Sticker Preview</h3>
             
             <div id="barcodeStickerPreview" style="background: white; color: black; padding: 1rem 1.25rem; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.12); width: 230px; text-align: center; border: 1px solid #cbd5e1;">
-              <div id="prevStoreName" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #1e293b; letter-spacing: 0.5px;">Vanshee POS</div>
+              <div id="prevStoreName" style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: #1e293b; letter-spacing: 0.5px;">Aura POS</div>
               <div id="prevItemName" style="font-size: 0.95rem; font-weight: 700; margin: 4px 0; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Select an item</div>
               <div id="prevItemPrice" style="font-size: 1rem; font-weight: 800; color: #2563eb; margin-bottom: 4px;">₹0.00</div>
               <div style="margin-top: 6px; display: flex; justify-content: center;" id="prevBarcodeBox">

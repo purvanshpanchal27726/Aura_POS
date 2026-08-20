@@ -323,7 +323,7 @@ db.initDb = async function() {
       if (parseInt(licenseCount[0].count) === 0) {
         await this.query(`
           INSERT INTO license_info (license_key, valid_from, valid_to, amc_start_date, amc_end_date, status)
-          VALUES ('VANSHEE-POS-LICENSE-KEY-2026', '2026-01-01', '2026-08-31', '2026-01-01', '2026-08-31', 'Active');
+          VALUES ('AURA-POS-LICENSE-KEY-2026', '2026-01-01', '2026-08-31', '2026-01-01', '2026-08-31', 'Active');
         `);
         console.log('[DB Seed] Seeded default software license key.');
       }

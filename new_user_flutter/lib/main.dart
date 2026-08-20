@@ -133,7 +133,7 @@ class _MyAppState extends State<MyApp> {
     final primaryColor = _getPrimaryColor();
     
     return MaterialApp(
-      title: 'Vanshee POS Business Suite',
+      title: 'Aura POS Business Suite',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.light,
@@ -451,7 +451,7 @@ class _MainLayoutState extends State<MainLayout> {
       case 25: return 'Stock Inventory';
       case 26: return 'Purchase Orders';
       case 27: return 'Employees & Attendance';
-      default: return 'VANSHEE POS Business Suite';
+      default: return 'AURA POS Business Suite';
     }
   }
 
@@ -609,7 +609,7 @@ class _MainLayoutState extends State<MainLayout> {
                         child: Text(c['name'] ?? 'Store ${c['client_id']}'),
                       ))
                     else
-                      const DropdownMenuItem(value: '1', child: Text('Vanshee POS Enterprise')),
+                      const DropdownMenuItem(value: '1', child: Text('Aura POS Enterprise')),
                   ],
                   onChanged: (val) {
                     if (val != null) {
@@ -707,7 +707,7 @@ class _MainLayoutState extends State<MainLayout> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('VANSHEE POS', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
+                  Text('AURA POS', style: GoogleFonts.outfit(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
                   Text('Business Suite', style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8))),
                 ],
               ),

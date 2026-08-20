@@ -237,7 +237,7 @@ router.get('/', async (req, res) => {
     const cleanedRows = rows.map(row => {
       delete row.password;
       if (!row.client_name && (row.role_id === 1 || row.client_id === 1 || !row.client_id)) {
-        row.client_name = 'Vanshee POS Enterprise';
+        row.client_name = 'Aura POS Enterprise';
       }
       return row;
     });

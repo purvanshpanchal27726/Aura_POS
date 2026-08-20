@@ -274,7 +274,7 @@ class _LicenseScreenState extends State<LicenseScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Merchant: Vanshee Infotech',
+                              'Merchant: Aura POS',
                               style: GoogleFonts.inter(
                                 fontSize: 11,
                                 color: const Color(0xFF64748B),

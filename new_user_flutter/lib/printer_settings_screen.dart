@@ -22,11 +22,11 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
   final copiesCtrl = TextEditingController(text: '1');
 
   // Receipt Customization Controllers
-  final storeNameCtrl = TextEditingController(text: 'Vanshee Enterprise Store');
+  final storeNameCtrl = TextEditingController(text: 'Aura Enterprise Store');
   final addressCtrl = TextEditingController(text: '101 Commercial Hub, Station Road, Ahmedabad');
   final phoneCtrl = TextEditingController(text: '+91 98765 43210');
   final gstinCtrl = TextEditingController(text: '24AAAAA0000A1Z5');
-  final upiIdCtrl = TextEditingController(text: 'vanshee@upi');
+  final upiIdCtrl = TextEditingController(text: 'aura@upi');
   final footerNoteCtrl = TextEditingController(text: 'Thank you for shopping with us! Returns accepted within 7 days.');
 
   String printerType = 'thermal';

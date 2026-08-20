@@ -180,13 +180,13 @@ runTest('Thermal Receipt Customizer: Validates 58mm/80mm/A4 paper size schema', 
 });
 
 runTest('UPI Payment QR Code: String format generation check', () => {
-  const upiId = 'vanshee@upi';
+  const upiId = 'aura@upi';
   const amount = 152.60;
-  const storeName = 'Vanshee POS';
+  const storeName = 'Aura POS';
   const upiQrString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(storeName)}&am=${amount}&cu=INR`;
 
   assert.ok(upiQrString.startsWith('upi://pay?pa='), 'UPI string must start with upi://pay?pa=');
-  assert.ok(upiQrString.includes('vanshee@upi'), 'UPI string must contain store UPI ID');
+  assert.ok(upiQrString.includes('aura@upi'), 'UPI string must contain store UPI ID');
 });
 
 runTest('Automated DB Backup Engine: Generates JSON snapshot payload', () => {

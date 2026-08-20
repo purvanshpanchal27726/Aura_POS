@@ -17,7 +17,7 @@ class PdfReceiptService {
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
                 pw.Center(
-                  child: pw.Text('VANSHEE POS', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                  child: pw.Text('AURA POS', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
                 ),
                 pw.SizedBox(height: 10),
                 pw.Text('Bill No: ${invoice['sales_bill_no'] ?? ''}'),

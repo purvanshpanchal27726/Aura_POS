@@ -71,7 +71,7 @@ class LicenseLockoutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Your client subscription license has expired or has been suspended. Please contact the system administrator at Vanshee Infotech to restore access.',
+                    'Your client subscription license has expired or has been suspended. Please contact the system administrator at Aura POS to restore access.',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.inter(
                       fontSize: 14,

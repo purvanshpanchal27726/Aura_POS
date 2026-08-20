@@ -306,7 +306,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      (invoice['client_name'] ?? 'VANSHEE POS ENTERPRISE').toString().toUpperCase(),
+                      (invoice['client_name'] ?? 'AURA POS ENTERPRISE').toString().toUpperCase(),
                       style: GoogleFonts.outfit(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.0, color: isDark ? Colors.white : const Color(0xFF0F172A)),
                       textAlign: TextAlign.center,
                     ),
