@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
       headers['Content-Type'] = 'application/json';
     }
     
-    const res = await fetch(url, { ...options, headers });
+    const res = await authFetch(url, { ...options, headers });
     
     // Auto-handle expired or invalid JWT token (401 Unauthorized)
     if (res.status === 401 && !url.includes('/api/users/login')) {
@@ -2053,7 +2053,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const method = id ? 'PUT' : 'POST';
 
     try {
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: method,
         headers: {
           'Content-Type': 'application/json'
@@ -2396,7 +2396,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: {
             'Content-Type': 'application/json'
@@ -2622,7 +2622,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: {
             'Content-Type': 'application/json'
@@ -2847,7 +2847,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: {
             'Content-Type': 'application/json'
@@ -3071,7 +3071,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -3568,7 +3568,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -3866,7 +3866,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -5020,7 +5020,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: {
             'Content-Type': 'application/json'
@@ -5257,7 +5257,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(clientData)
