@@ -737,24 +737,40 @@ class _MainLayoutState extends State<MainLayout> {
               if (_hasModuleGroup('Hotel') || _hasModuleGroup('Restaurant'))
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: SegmentedButton<String>(
-                    segments: [
-                      const ButtonSegment(value: 'POS', label: Text('POS')),
-                      if (_hasModuleGroup('Restaurant'))
-                        const ButtonSegment(value: 'Restaurant', label: Text('Rest.')),
-                      if (_hasModuleGroup('Hotel'))
-                        const ButtonSegment(value: 'Hotel', label: Text('Hotel')),
-                    ],
-                    selected: {_uiMode},
-                    onSelectionChanged: (Set<String> newSelection) {
-                      setState(() {
-                        _uiMode = newSelection.first;
-                        _currentIndex = 0; // go back to home on switch
-                      });
-                    },
-                    style: ButtonStyle(
-                      visualDensity: VisualDensity.compact,
-                      textStyle: MaterialStateProperty.all(GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.bold)),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF151D30) : const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _uiMode,
+                        isExpanded: true,
+                        dropdownColor: isDark ? const Color(0xFF151D30) : Colors.white,
+                        icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF94A3B8)),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white : const Color(0xFF0F172A),
+                        ),
+                        items: [
+                          const DropdownMenuItem(value: 'POS', child: Text('Retail POS')),
+                          if (_hasModuleGroup('Restaurant'))
+                            const DropdownMenuItem(value: 'Restaurant', child: Text('Restaurant POS')),
+                          if (_hasModuleGroup('Hotel'))
+                            const DropdownMenuItem(value: 'Hotel', child: Text('Hotel Management')),
+                        ],
+                        onChanged: (val) {
+                          if (val != null) {
+                            setState(() {
+                              _uiMode = val;
+                              _currentIndex = 0;
+                            });
+                          }
+                        },
+                      ),
                     ),
                   ),
                 ),
