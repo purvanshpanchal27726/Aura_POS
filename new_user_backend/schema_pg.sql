@@ -309,9 +309,7 @@ ON CONFLICT (role_id, module_id) DO NOTHING;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_superadmin SMALLINT DEFAULT 0;
 
 INSERT INTO users (user_id, username, password, first_name, middle_name, last_name, address_1, address_2, address_3, city, country, phone_1, phone_2, email_1, email_2, role_id, client_id, is_superadmin, created_by) VALUES
-(1,'Dhruvi','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Dhruvi','','Patel','Admin Office 1','','','Ahmedabad','India','9876543210','','dhruvi@vanshee.com','',1,1,1,'System'),
-(2,'Krinna','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Krinna','','Anandpara','Manager Desk A','','','Surat','India','9876543211','','krinna@vanshee.com','',1,1,1,'System'),
-(3,'Parshav','8d0f37767e31b16034b9d632edf7402b:40f21b5c7d9d28ce873f25a0551d85f9','Parshav','','Shah','Store Counter 1','','','Vadodara','India','9876543212','','parshav@vanshee.com','',1,1,1,'System')
+(1,'admin','$2b$10$aMjt.c8Wii3AFfux.O5H0.wvZ0Lco8Mara1z7Pe7f2yzMQk.1YXMi','System','','Admin','Admin Office 1','','','Ahmedabad','India','9876543210','','admin@vanshee.com','',1,1,1,'System')
 ON CONFLICT (user_id) DO NOTHING;
 
 -- Fix serial sequences after explicit ID inserts (REQUIRED in PostgreSQL)
