@@ -21,6 +21,16 @@ class _RolewisePermissionsScreenState extends State<RolewisePermissionsScreen> {
   List<dynamic> modules = [];
   List<Map<String, dynamic>> permissions = [];
 
+  final ScrollController _verticalScroll = ScrollController();
+  final ScrollController _horizontalScroll = ScrollController();
+
+  @override
+  void dispose() {
+    _verticalScroll.dispose();
+    _horizontalScroll.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -247,11 +257,19 @@ class _RolewisePermissionsScreenState extends State<RolewisePermissionsScreen> {
                                 style: TextStyle(fontSize: 15, color: Color(0xFF94A3B8)),
                               ),
                             )
-                          : SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
+                          : Scrollbar(
+                              controller: _verticalScroll,
+                              thumbVisibility: true,
                               child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: DataTable(
+                                controller: _verticalScroll,
+                                scrollDirection: Axis.vertical,
+                                child: Scrollbar(
+                                  controller: _horizontalScroll,
+                                  thumbVisibility: true,
+                                  child: SingleChildScrollView(
+                                    controller: _horizontalScroll,
+                                    scrollDirection: Axis.horizontal,
+                                    child: DataTable(
                                   headingRowColor: WidgetStateProperty.all(Theme.of(context).brightness == Brightness.dark ? Color(0xFF1E293B) : Color(0xFFF8FAFC)),
                                   headingTextStyle: TextStyle(
                                     fontWeight: FontWeight.bold,
