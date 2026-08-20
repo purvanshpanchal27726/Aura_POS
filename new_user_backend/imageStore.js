@@ -163,13 +163,19 @@ const resolveImageForStorage = async (rawImage, existingImage, req) => {
   }
 
   if (typeof rawImage === 'string') {
+    // Return Base64 directly to save in Postgres (bypasses Render ephemeral storage)
     if (rawImage.startsWith('data:image/')) {
-      return await saveImagePayload({ variants: { original: rawImage } }, req);
+      return rawImage;
     }
     return rawImage;
   }
 
   if (typeof rawImage === 'object') {
+    // If HTML payload, extract the base64 directly
+    const originalDataUri = rawImage.variants?.original?.dataUri;
+    if (originalDataUri && originalDataUri.startsWith('data:image/')) {
+      return originalDataUri;
+    }
     return await saveImagePayload(rawImage, req);
   }
 
@@ -181,6 +187,15 @@ const publicImageFields = (storedImage, req) => {
     return {
       image: null,
       image_url: null,
+      image_variants: null
+    };
+  }
+
+  // Handle Base64 strings natively stored in the DB
+  if (typeof storedImage === 'string' && storedImage.startsWith('data:image/')) {
+    return {
+      image: storedImage,
+      image_url: storedImage,
       image_variants: null
     };
   }
