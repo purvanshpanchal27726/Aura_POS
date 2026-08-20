@@ -167,7 +167,7 @@ class _ReceiptListingScreenState extends State<ReceiptListingScreen> {
                 icon: const Icon(Icons.print_rounded, size: 16),
                 label: Text('Print Receipt', style: GoogleFonts.inter(fontWeight: FontWeight.bold)),
                 onPressed: () {
-                  PdfReceiptService.printReceipt(receipt);
+                  PdfReceiptService.printReceipt(invoice);
                   Navigator.pop(ctx);
                 },
               ),

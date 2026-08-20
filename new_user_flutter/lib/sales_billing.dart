@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'config.dart';
 import 'api_client.dart';
-import 'models/cart_item.dart';
+import 'models/cart_item_model.dart';
 import 'services/pdf_receipt_service.dart';
 
 class SalesBillingScreen extends StatefulWidget {
