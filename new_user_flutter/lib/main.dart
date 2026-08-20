@@ -236,6 +236,7 @@ class _MainLayoutState extends State<MainLayout> {
   bool isLoading = true;
   bool isConnectionFailed = false;
   bool _isWakingUp = false;
+  String _uiMode = 'POS';
 
   List<dynamic> allUsers = [];
   List<dynamic> allClients = [];
@@ -733,21 +734,61 @@ class _MainLayoutState extends State<MainLayout> {
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
             children: [
+              if (_hasModuleGroup('Hotel'))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: SegmentedButton<String>(
+                    segments: const [
+                      ButtonSegment(value: 'POS', label: Text('POS')),
+                      ButtonSegment(value: 'Hotel', label: Text('Hotel')),
+                    ],
+                    selected: {_uiMode},
+                    onSelectionChanged: (Set<String> newSelection) {
+                      setState(() {
+                        _uiMode = newSelection.first;
+                        _currentIndex = 0; // go back to home on switch
+                      });
+                    },
+                    style: ButtonStyle(
+                      visualDensity: VisualDensity.compact,
+                      textStyle: MaterialStateProperty.all(GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ),
+
               _buildSectionHeader('OPERATIONS'),
               _buildNavItem(0, 'Home', Icons.home_rounded, isDesktop),
-              if (_hasPermission(4)) _buildNavItem(9, 'Sell', Icons.shopping_cart_outlined, isDesktop),
-              if (_hasPermission(5)) _buildNavItem(10, 'Purchase', Icons.receipt_long_outlined, isDesktop),
-              if (_hasPermission(4)) _buildNavItem(11, 'Receipt', Icons.receipt_outlined, isDesktop),
 
-              _buildSectionHeader('MASTERS'),
-              if (_hasPermission(3)) _buildNavItem(2, 'Item Master', Icons.inventory_2_outlined, isDesktop),
-              if (_hasPermission(3)) _buildNavItem(1, 'Category Master', Icons.category_outlined, isDesktop),
-              if (_hasPermission(3)) _buildNavItem(5, 'Unit Master', Icons.straighten_outlined, isDesktop),
-              if (_hasPermission(3)) _buildNavItem(7, 'Tax Master', Icons.percent_outlined, isDesktop),
+              if (_uiMode == 'POS') ...[
+                if (_hasPermission(4)) _buildNavItem(9, 'Sell', Icons.shopping_cart_outlined, isDesktop),
+                if (_hasPermission(5)) _buildNavItem(10, 'Purchase', Icons.receipt_long_outlined, isDesktop),
+                if (_hasPermission(4)) _buildNavItem(11, 'Receipt', Icons.receipt_outlined, isDesktop),
 
-              _buildSectionHeader('INVENTORY'),
-              _buildNavItem(25, 'Stock Inventory', Icons.shelves, isDesktop),
-              _buildNavItem(26, 'Purchase Orders', Icons.local_shipping_outlined, isDesktop),
+                _buildSectionHeader('MASTERS'),
+                if (_hasPermission(3)) _buildNavItem(2, 'Item Master', Icons.inventory_2_outlined, isDesktop),
+                if (_hasPermission(3)) _buildNavItem(1, 'Category Master', Icons.category_outlined, isDesktop),
+                if (_hasPermission(3)) _buildNavItem(5, 'Unit Master', Icons.straighten_outlined, isDesktop),
+                if (_hasPermission(3)) _buildNavItem(7, 'Tax Master', Icons.percent_outlined, isDesktop),
+
+                _buildSectionHeader('INVENTORY'),
+                _buildNavItem(25, 'Stock Inventory', Icons.shelves, isDesktop),
+                _buildNavItem(26, 'Purchase Orders', Icons.local_shipping_outlined, isDesktop),
+
+                if (_hasModuleGroup('Restaurant')) ...[
+                  _buildSectionHeader('RESTAURANT'),
+                  _buildNavItem(18, 'Dine-in Tables', Icons.table_restaurant_outlined, isDesktop),
+                  _buildNavItem(19, 'Restaurant Menu', Icons.restaurant_menu_outlined, isDesktop),
+                  _buildNavItem(20, 'Rest. Orders & KOT', Icons.ramen_dining_outlined, isDesktop),
+                  _buildNavItem(21, 'Kitchen Queue (KDS)', Icons.kitchen_outlined, isDesktop),
+                ],
+              ],
+
+              if (_uiMode == 'Hotel' && _hasModuleGroup('Hotel')) ...[
+                _buildSectionHeader('HOTEL'),
+                _buildNavItem(22, 'Hotel Rooms', Icons.bed_outlined, isDesktop),
+                _buildNavItem(23, 'Hotel Guests', Icons.person_pin_outlined, isDesktop),
+                _buildNavItem(24, 'Room Bookings', Icons.bedroom_parent_outlined, isDesktop),
+              ],
 
               _buildSectionHeader('PEOPLE'),
               if (_hasPermission(1)) _buildNavItem(6, 'Users Directory', Icons.people_outline, isDesktop),
@@ -755,21 +796,6 @@ class _MainLayoutState extends State<MainLayout> {
               if (_hasPermission(3)) _buildNavItem(4, 'Vendors', Icons.local_shipping_outlined, isDesktop),
               _buildNavItem(27, 'Staff Attendance', Icons.badge_outlined, isDesktop),
               _buildNavItem(16, 'Clients Stores', Icons.business_outlined, isDesktop),
-
-              if (_hasModuleGroup('Restaurant')) ...[
-                _buildSectionHeader('RESTAURANT'),
-                _buildNavItem(18, 'Dine-in Tables', Icons.table_restaurant_outlined, isDesktop),
-                _buildNavItem(19, 'Restaurant Menu', Icons.restaurant_menu_outlined, isDesktop),
-                _buildNavItem(20, 'Rest. Orders & KOT', Icons.ramen_dining_outlined, isDesktop),
-                _buildNavItem(21, 'Kitchen Queue (KDS)', Icons.kitchen_outlined, isDesktop),
-              ],
-
-              if (_hasModuleGroup('Hotel')) ...[
-                _buildSectionHeader('HOTEL'),
-                _buildNavItem(22, 'Hotel Rooms', Icons.bed_outlined, isDesktop),
-                _buildNavItem(23, 'Hotel Guests', Icons.person_pin_outlined, isDesktop),
-                _buildNavItem(24, 'Room Bookings', Icons.bedroom_parent_outlined, isDesktop),
-              ],
 
               _buildSectionHeader('ANALYTICS'),
               if (_hasPermission(6)) _buildNavItem(12, 'Reports & Analytics', Icons.assessment_outlined, isDesktop),
