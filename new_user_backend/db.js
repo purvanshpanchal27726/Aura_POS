@@ -163,8 +163,18 @@ async function dbQuery(clientOrPool, sql, values = []) {
   // Replace placeholders (? -> $1, $2...)
   const translatedSql = replacePlaceholders(cleanSql);
   
-  // Execute translated query
-  const res = await clientOrPool.query(translatedSql, values);
+  // Convert empty strings to null to prevent PostgreSQL numeric syntax errors
+  const mappedValues = values.map(v => v === '' ? null : v);
+  
+  let res;
+  try {
+    res = await clientOrPool.query(translatedSql, mappedValues);
+  } catch (err) {
+    console.error('[DB Query Error]:', err.message);
+    console.error('[DB Query SQL]:', translatedSql);
+    console.error('[DB Query Values]:', mappedValues);
+    throw err;
+  }
   
   // If it was insert, wrap results to match mysql2 response
   if (isInsert) {
