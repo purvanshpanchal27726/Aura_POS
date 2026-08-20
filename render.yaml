@@ -2,6 +2,7 @@ services:
   - type: web
     name: pos-backend
     runtime: node
+    plan: free
     rootDir: new_user_backend
     buildCommand: npm install
     startCommand: npm start
