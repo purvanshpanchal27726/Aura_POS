@@ -1568,6 +1568,19 @@
 
         <!-- TAB 2: Printer Setup & Receipt Customization -->
         <div id="tabPrinterSetup" class="settings-tab-content">
+          <div class="card" style="padding: 1.75rem; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+              <span class="material-icons" style="color: var(--primary-color);">monitor</span>
+              <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-main);">Customer Display Hardware (Bonrix DQ11)</h3>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;">
+              Connect your 7-inch Bonrix USB Customer Display. The display will automatically show cart totals, QR Codes for UPI payments, and payment success banners. Make sure the USB is plugged in before clicking connect.
+            </p>
+            <button type="button" onclick="connectBonrixDisplay()" class="btn btn-primary" style="padding: 0.75rem 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: bold;">
+              <span class="material-icons">usb</span> Connect USB Display
+            </button>
+          </div>
+
           <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.5rem;">
             
             <!-- Left: Printer Settings Form -->
