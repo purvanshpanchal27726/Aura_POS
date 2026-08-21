@@ -172,7 +172,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
     });
   }
 
-  void _resetInvoice() {
+  void _resetInvoice() {\n    BonrixDisplayService.showWelcome();
     setState(() {
       selectedCustomerId = null;
       invoiceDate = DateTime.now();
