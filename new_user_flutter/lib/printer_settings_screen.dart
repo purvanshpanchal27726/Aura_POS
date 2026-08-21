@@ -287,25 +287,27 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                                     ),
                                   ),
                                   const SizedBox(width: 16),
-                                  ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: BonrixDisplayService.isConnected ? Colors.red : primaryColor,
-                                      foregroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                                  Text(
+                                    BonrixDisplayService.isConnected ? 'Connected' : 'Disconnected',
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.bold,
+                                      color: BonrixDisplayService.isConnected ? const Color(0xFF10B981) : Colors.grey,
                                     ),
-                                    onPressed: () {
-                                      if (BonrixDisplayService.isConnected) {
-                                        BonrixDisplayService.disconnect();
-                                      } else {
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Switch(
+                                    value: BonrixDisplayService.isConnected,
+                                    activeColor: const Color(0xFF10B981),
+                                    onChanged: (bool value) {
+                                      if (value) {
                                         BonrixDisplayService.connect(selectedBaudRate);
+                                      } else {
+                                        BonrixDisplayService.disconnect();
                                       }
-                                      Future.delayed(const Duration(milliseconds: 1500), () {
-                                        if (mounted) setState(() {});
-                                      });
+                                      Future.delayed(const Duration(seconds: 1), () { if (mounted) setState(() {}); });
+                                      Future.delayed(const Duration(seconds: 3), () { if (mounted) setState(() {}); });
+                                      Future.delayed(const Duration(seconds: 5), () { if (mounted) setState(() {}); });
                                     },
-                                    icon: Icon(BonrixDisplayService.isConnected ? Icons.power_off_rounded : Icons.usb_rounded),
-                                    label: Text(BonrixDisplayService.isConnected ? 'Active (Disconnect)' : 'Deactive (Connect)'),
                                   ),
                                 ],
                               ),
