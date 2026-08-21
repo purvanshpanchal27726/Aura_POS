@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+  </head>
+  <body>
+    <button onclick="connect()">Connect to Serial Port</button>
+    <button onclick="disconnect()">Disconnect from Serial Port</button>
+
+    <br />
+	<br />
+	<br />
+	<br />
+
+    <button id="welcomebtn" onclick="generateWelcome()">Show Welcome</button>
+	<button id="qrbtn" onclick="generateQr()">Show Qr</button>
+	<button id="successbtn" onclick="generateSuccess()">Show Success</button>
+	<button id="failbtn" onclick="generateFail()">Show Fail</button>
+	<button id="pendingbtn" onclick="generatePending()">Show Pending</button>
+    <br />
+
+    <script>
+      let serialPort;
+
+	  function disabled()
+	  {
+		  document.getElementById("welcomebtn").disabled = true;
+		  document.getElementById("qrbtn").disabled = true;
+		  document.getElementById("successbtn").disabled = true;
+		  document.getElementById("failbtn").disabled = true;
+		  document.getElementById("pendingbtn").disabled = true;
+	  }
+	  
+	  function enable()
+	  {
+		  document.getElementById("welcomebtn").disabled = false;
+		  document.getElementById("qrbtn").disabled = false;
+		  document.getElementById("successbtn").disabled = false;
+		  document.getElementById("failbtn").disabled = false;
+		  document.getElementById("pendingbtn").disabled = false;
+	  }
+	  
+      function readBinaryFile(url, callback) {
+	  try
+	  {
+        fetch(url)
+          .then((response) => response.arrayBuffer())
+          .then((arrayBuffer) => {
+            var byteArray = new Uint8Array(arrayBuffer);
+            callback(byteArray);
+          })
+          .catch((error) => {
+            console.error("Error fetching binary file:", error);
+          });
+		  }
+		  catch
+		  {
+		  enable()
+		  }
+      }
+
+      async function generateWelcome() {
+	 disabled()
+	 try {
+        readBinaryFile(
+          "https://download.rechargegrid.in/download/welcome_compress.bin",
+          function (byteArray) {
+            let strjoin = "";
+            
+            // Do something with the binary data (byteArray)
+            const resultString = Array.from(byteArray).join(",");
+            
+            writeToSerialImage(byteArray);
+			enable()
+          }
+        );
+		 }
+		  catch
+		  {
+		  enable()
+		  }
+      }
+	  
+	  async function generateQr() {
+	  disabled()
+	  try {
+        readBinaryFile(
+          "https://download.rechargegrid.in/download/qr_compress.bin",
+          function (byteArray) {
+            let strjoin = "";
+            
+            // Do something with the binary data (byteArray)
+            const resultString = Array.from(byteArray).join(",");
+            
+            writeToSerialImage(byteArray);
+			enable()
+          }
+        ); }
+		  catch
+		  {
+		  enable()
+		  }
+      }
+	  
+	  async function generateSuccess() {
+	  disabled()
+	  try {
+        readBinaryFile(
+          "https://download.rechargegrid.in/download/success_compress.bin",
+          function (byteArray) {
+            let strjoin = "";
+            
+            // Do something with the binary data (byteArray)
+            const resultString = Array.from(byteArray).join(",");
+            
+            writeToSerialImage(byteArray);
+			enable()
+          }
+        ); }
+		  catch
+		  {
+		  enable()
+		  }
+      }
+	  
+	  async function generateFail() {
+	  disabled()
+	  try {
+        readBinaryFile(
+          "https://download.rechargegrid.in/download/fail_compress.bin",
+          function (byteArray) {
+            let strjoin = "";
+            
+            // Do something with the binary data (byteArray)
+            const resultString = Array.from(byteArray).join(",");
+            
+            writeToSerialImage(byteArray);
+			enable()
+          }
+        );
+		 }
+		  catch
+		  {
+		  enable()
+		  }
+      }
+	  async function generatePending() {
+	  disabled()
+	  try {
+        readBinaryFile(
+          "https://download.rechargegrid.in/download/pending_compress.bin",
+          function (byteArray) {
+            let strjoin = "";
+            
+            // Do something with the binary data (byteArray)
+            const resultString = Array.from(byteArray).join(",");
+            
+            writeToSerialImage(byteArray);
+			enable()
+          }
+        );
+		 }
+		  catch
+		  {
+		  enable()
+		  }
+      }
+
+      async function connect() {
+	  try{
+        const options = {
+          baudRate: 115200,
+          dataBits: 8, // Set the number of data bits (5, 6, 7, or 8)
+          stopBits: 1, // Set the number of stop bits (1 or 2)
+          parity: "none", // Set the parity (none, even, or odd)
+        };
+        serialPort = await navigator.serial.requestPort();
+        await serialPort.open(options);
+        readLoop();
+		 }
+		  catch
+		  {
+		  enable()
+		  }
+      }
+
+      function disconnect() {
+	  try
+	  {
+        if (serialPort) {
+          serialPort.close();
+        }
+		 }
+		  catch
+		  {
+		  enable()
+		  }
+      }
+
+      async function writeToSerialImage(data) {
+	  try
+	  {
+        if (serialPort) {
+          const writer = serialPort.writable.getWriter();
+          await writer.write(data);
+          writer.releaseLock();
+		  enable()
+        }
+		 }
+		  catch
+		  {
+		  enable()
+		  }
+      }
+
+      async function readLoop() {
+	  try
+	  {
+        if (serialPort) {
+          const reader = serialPort.readable.getReader();
+          try {
+            while (true) {
+              const { value, done } = await reader.read();
+              if (done) {
+                console.log("Read loop finished, done is true");
+                reader.releaseLock();
+                break;
+              }
+
+              console.log(value);
+              const decoder = new TextDecoder();
+              const text = decoder.decode(value);
+              document.getElementById("output").innerText += text + "\n";
+            }
+          } catch (error) {
+            console.error("Serial read error:", error);
+          }
+        }
+		 }
+		  catch
+		  {
+		  enable()
+		  }
+      }
+    </script>
+  <script>
+      (function(d,t) {
+        var BASE_URL="https://api.aichatbot.bonrix.in";
+        var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+        g.src=BASE_URL+"/widget/audio_sdk.js?v=auto";
+        g.async = true;
+        s.parentNode.insertBefore(g,s);
+        g.onload=function(){
+          window.chatSDKAudio.run({
+            websiteToken: 'website_695b5d983618a0ef4e6977fa',
+            userId: '68be72f69a9ae8bfcbf7bbda',
+            baseUrl: BASE_URL,
+            settings: {
+              welcomeMessage: 'Hello! How can I help you today?',
+              themeColor: '#2563eb',
+              widgetPosition: 'right',
+              companyName: 'https://bonrix.co.in/'
+            }
+          })
+        }
+      })(document,"script");
+    </script>
+</body>
+</html>
