@@ -1576,9 +1576,20 @@
             <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;">
               Connect your 7-inch Bonrix USB Customer Display. The display will automatically show cart totals, QR Codes for UPI payments, and payment success banners. Make sure the USB is plugged in before clicking connect.
             </p>
-            <button type="button" onclick="connectBonrixDisplay()" class="btn btn-primary" style="padding: 0.75rem 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: bold;">
-              <span class="material-icons">usb</span> Connect USB Display
-            </button>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+               <div style="display: flex; align-items: center; gap: 0.5rem;">
+                 <label for="setting_bonrix_baudrate" style="font-weight: 600; color: var(--text-main); font-size: 0.95rem;">Baud Rate:</label>
+                 <select id="setting_bonrix_baudrate" style="padding: 0.6rem 1rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.95rem;">
+                   <option value="9600">9600 baud</option>
+                   <option value="115200" selected>115200 baud</option>
+                   <option value="230400">230400 baud</option>
+                   <option value="921600">921600 baud</option>
+                 </select>
+               </div>
+               <button type="button" onclick="connectBonrixDisplay(parseInt(document.getElementById('setting_bonrix_baudrate').value))" class="btn btn-primary" style="padding: 0.75rem 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: bold;">
+                 <span class="material-icons">usb</span> Connect USB Display
+               </button>
+            </div>
           </div>
 
           <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.5rem;">

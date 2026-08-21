@@ -8,11 +8,13 @@ window.bonrixCanvas.width = 320;
 window.bonrixCanvas.height = 480;
 window.bonrixCtx = window.bonrixCanvas.getContext('2d', { willReadFrequently: true });
 
+window.bonrixSelectedBaudRate = 115200;
+
 if ('serial' in navigator) {
     navigator.serial.addEventListener('connect', async (event) => {
         if (!window.bonrixSerialPort) {
             window.bonrixSerialPort = event.target;
-            await _openBonrixPort();
+            await _openBonrixPort(window.bonrixSelectedBaudRate);
         }
     });
     navigator.serial.addEventListener('disconnect', async (event) => {
@@ -23,20 +25,25 @@ if ('serial' in navigator) {
     });
 }
 
-async function _openBonrixPort() {
+async function _openBonrixPort(baudRate) {
     try {
-        await window.bonrixSerialPort.open({ baudRate: 115200 });
+        await window.bonrixSerialPort.open({ baudRate: baudRate });
         window.bonrixWriter = window.bonrixSerialPort.writable.getWriter();
         window.sendBonrixWelcome();
     } catch (e) { console.error('Error opening Bonrix port:', e); }
 }
 
-window.connectBonrixDisplay = async function() {
+window.connectBonrixDisplay = async function(baudRate = 115200) {
+    window.bonrixSelectedBaudRate = baudRate;
     if (!('serial' in navigator)) { alert('Web Serial API not supported!'); return; }
     try {
+        if (window.bonrixSerialPort) {
+            if (window.bonrixWriter) { await window.bonrixWriter.close().catch(()=>{}); window.bonrixWriter = null; }
+            await window.bonrixSerialPort.close().catch(()=>{});
+        }
         window.bonrixSerialPort = await navigator.serial.requestPort();
-        await _openBonrixPort();
-        alert('Connected to Customer Display!');
+        await _openBonrixPort(window.bonrixSelectedBaudRate);
+        alert('Connected to Customer Display at ' + window.bonrixSelectedBaudRate + ' baud!');
     } catch (e) { console.error(e); }
 };
 

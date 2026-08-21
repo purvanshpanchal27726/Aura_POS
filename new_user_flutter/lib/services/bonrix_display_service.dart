@@ -2,9 +2,9 @@ import 'dart:js' as js;
 
 class BonrixDisplayService {
   /// Request connection to the customer display via Web Serial API
-  static void connect() {
+  static void connect(int baudRate) {
     try {
-      js.context.callMethod('connectBonrixDisplay');
+      js.context.callMethod('connectBonrixDisplay', [baudRate]);
     } catch (e) {
       print('Bonrix Connect Error: ');
     }

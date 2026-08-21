@@ -16,6 +16,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
   final _formKey = GlobalKey<FormState>();
 
   bool isLoading = true;
+  int selectedBaudRate = 115200;
 
   final nameCtrl = TextEditingController(text: 'Thermal POS Printer');
   final ipCtrl = TextEditingController(text: '192.168.1.100');
@@ -254,21 +255,51 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                             primaryColor: primaryColor,
                             children: [
                               Text(
-                                'Connect the 7-inch embedded USB Customer Display. Ensure the device is plugged in before clicking connect.',
+                                'Connect your Bonrix USB Customer Display. The display will automatically show cart totals, QR Codes for UPI payments, and payment success banners. Make sure the USB is plugged in before clicking connect.',
                                 style: GoogleFonts.inter(fontSize: 14, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
                               ),
                               const SizedBox(height: 16),
-                              ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: primaryColor,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                ),
-                                onPressed: () {
-                                  BonrixDisplayService.connect();
-                                },
-                                icon: const Icon(Icons.usb_rounded),
-                                label: const Text('Connect Display'),
+                              Row(
+                                children: [
+                                  Text('Baud Rate: ', style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: isDark ? Colors.white : Colors.black87)),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0)),
+                                      borderRadius: BorderRadius.circular(8),
+                                      color: isDark ? const Color(0xFF0B0F19) : const Color(0xFFF8FAFC),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<int>(
+                                        value: selectedBaudRate,
+                                        items: const [
+                                          DropdownMenuItem(value: 9600, child: Text('9600 baud')),
+                                          DropdownMenuItem(value: 115200, child: Text('115200 baud')),
+                                          DropdownMenuItem(value: 230400, child: Text('230400 baud')),
+                                          DropdownMenuItem(value: 921600, child: Text('921600 baud')),
+                                        ],
+                                        onChanged: (val) {
+                                          if (val != null) setState(() => selectedBaudRate = val);
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: primaryColor,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                                    ),
+                                    onPressed: () {
+                                      BonrixDisplayService.connect(selectedBaudRate);
+                                    },
+                                    icon: const Icon(Icons.usb_rounded),
+                                    label: const Text('Connect Display'),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
