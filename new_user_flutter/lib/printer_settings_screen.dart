@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -36,11 +37,24 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
   String connectionType = 'usb'; // usb, bluetooth, network
   bool autoPrint = true;
   bool showUpiQr = true;
+  Timer? _bonrixStateTimer;
+  bool _lastBonrixState = false;
   bool showGstin = true;
 
   @override
   void initState() {
     super.initState();
+    _bonrixStateTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        final currentState = BonrixDisplayService.isConnected;
+        if (currentState != _lastBonrixState) {
+          setState(() {
+            _lastBonrixState = currentState;
+          });
+        }
+      }
+    });
+
     fetchSettings();
   }
 
@@ -56,6 +70,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
     gstinCtrl.dispose();
     upiIdCtrl.dispose();
     footerNoteCtrl.dispose();
+    _bonrixStateTimer?.cancel();
     super.dispose();
   }
 
