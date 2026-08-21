@@ -289,16 +289,23 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                                   const SizedBox(width: 16),
                                   ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: primaryColor,
+                                      backgroundColor: BonrixDisplayService.isConnected ? Colors.red : primaryColor,
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                                     ),
                                     onPressed: () {
-                                      BonrixDisplayService.connect(selectedBaudRate);
+                                      if (BonrixDisplayService.isConnected) {
+                                        BonrixDisplayService.disconnect();
+                                      } else {
+                                        BonrixDisplayService.connect(selectedBaudRate);
+                                      }
+                                      Future.delayed(const Duration(milliseconds: 1500), () {
+                                        if (mounted) setState(() {});
+                                      });
                                     },
-                                    icon: const Icon(Icons.usb_rounded),
-                                    label: const Text('Connect Display'),
+                                    icon: Icon(BonrixDisplayService.isConnected ? Icons.power_off_rounded : Icons.usb_rounded),
+                                    label: Text(BonrixDisplayService.isConnected ? 'Active (Disconnect)' : 'Deactive (Connect)'),
                                   ),
                                 ],
                               ),

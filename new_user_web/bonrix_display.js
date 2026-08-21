@@ -106,3 +106,4 @@ window.sendBonrixSuccess = async function(amount) {
     const date = new Date().toISOString().split('T')[0];
     await _sendCommand(`DisplaySuccessQRCodeScreen**${txId}**${orderNo}**${date}**${amount}`);
 };
+\nwindow.disconnectBonrixDisplay = async function() {\n  if (window.bonrixWriter) { try { window.bonrixWriter.releaseLock(); } catch(e){} window.bonrixWriter = null; }\n  if (window.bonrixSerialPort) { try { await window.bonrixSerialPort.close(); } catch(e){} window.bonrixSerialPort = null; }\n};\nwindow.isBonrixConnected = function() { return window.bonrixSerialPort != null; };\n
