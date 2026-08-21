@@ -10,11 +10,22 @@ window.bonrixCtx = window.bonrixCanvas.getContext('2d', { willReadFrequently: tr
 
 window.bonrixSelectedBaudRate = 115200;
 
+
 if ('serial' in navigator) {
-    
-     window.bonrixWriter = null; }
-            window.bonrixSerialPort = null;
+    navigator.serial.addEventListener('connect', async (event) => {
+        console.log("Hardware plugged in! Auto-connecting...");
+        if (!window.bonrixSerialPort) {
+            window.bonrixSerialPort = event.target;
+            try {
+              await _openBonrixPort(window.bonrixSelectedBaudRate || 115200);
+            } catch(e) {}
         }
+    });
+
+    navigator.serial.addEventListener('disconnect', async (event) => {
+        console.log("Hardware unplugged! Releasing locks...");
+        if (window.bonrixWriter) { try { window.bonrixWriter.releaseLock(); } catch(e){} window.bonrixWriter = null; }
+        if (window.bonrixSerialPort) { try { await window.bonrixSerialPort.close(); } catch(e){} window.bonrixSerialPort = null; }
     });
 }
 
