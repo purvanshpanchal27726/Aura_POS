@@ -1,8 +1,22 @@
 import 'dart:js' as js;
 
 class BonrixDisplayService {
+  static bool get isConnected {
+    try { 
+      return js.context.callMethod('isBonrixConnected') == true; 
+    } catch(e) { 
+      return false; 
+    }
+  }
+
+  static void disconnect() {
+    try { 
+      js.context.callMethod('disconnectBonrixDisplay'); 
+    } catch(e) {}
+  }
+
   /// Request connection to the customer display via Web Serial API
-  static bool get isConnected {\n    try { return js.context.callMethod(\'isBonrixConnected\') == true; } catch(e) { return false; }\n  }\n\n  static void disconnect() {\n    try { js.context.callMethod(\'disconnectBonrixDisplay\'); } catch(e) {}\n  }\n\n  static void connect(int baudRate) {
+  static void connect(int baudRate) {
     try {
       js.context.callMethod('connectBonrixDisplay', [baudRate]);
     } catch (e) {
