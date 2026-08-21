@@ -297,7 +297,7 @@ db.initDb = async function() {
     // Run incremental migrations first
     try {
       await this.query(`
-        ALTER TABLE sales_master ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';
+        ALTER TABLE printer_settings ADD COLUMN IF NOT EXISTS store_name VARCHAR(255), ADD COLUMN IF NOT EXISTS address VARCHAR(255), ADD COLUMN IF NOT EXISTS phone VARCHAR(50), ADD COLUMN IF NOT EXISTS gstin VARCHAR(50), ADD COLUMN IF NOT EXISTS upi_id VARCHAR(100), ADD COLUMN IF NOT EXISTS footer_note TEXT, ADD COLUMN IF NOT EXISTS show_upi_qr SMALLINT DEFAULT 1, ADD COLUMN IF NOT EXISTS show_gstin SMALLINT DEFAULT 0;\n      ALTER TABLE sales_master ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'Cash';
       `);
       console.log('[DB Migrate] Verified sales_master.payment_method column.');
     } catch (err) {
