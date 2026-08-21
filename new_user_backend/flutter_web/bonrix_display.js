@@ -11,15 +11,8 @@ window.bonrixCtx = window.bonrixCanvas.getContext('2d', { willReadFrequently: tr
 window.bonrixSelectedBaudRate = 115200;
 
 if ('serial' in navigator) {
-    navigator.serial.addEventListener('connect', async (event) => {
-        if (!window.bonrixSerialPort) {
-            window.bonrixSerialPort = event.target;
-            await _openBonrixPort(window.bonrixSelectedBaudRate);
-        }
-    });
-    navigator.serial.addEventListener('disconnect', async (event) => {
-        if (event.target === window.bonrixSerialPort) {
-            if (window.bonrixWriter) { await window.bonrixWriter.close().catch(()=>{}); window.bonrixWriter = null; }
+    
+     window.bonrixWriter = null; }
             window.bonrixSerialPort = null;
         }
     });
