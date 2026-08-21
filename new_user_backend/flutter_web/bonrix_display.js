@@ -27,11 +27,7 @@ if ('serial' in navigator) {
 
 async function _openBonrixPort(baudRate) {
     try {
-        try {
-            await window.bonrixSerialPort.open({ baudRate: baudRate });
-        } catch (err) {
-            if (err.name !== 'InvalidStateError') throw err;
-        }
+        await window.bonrixSerialPort.open({ baudRate: baudRate });
         window.bonrixWriter = window.bonrixSerialPort.writable.getWriter();
         window.sendBonrixWelcome();
     } catch (e) { console.error('Error opening Bonrix port:', e); }
@@ -82,27 +78,51 @@ function _canvasToRGB565() {
     return rgb565Data;
 }
 
-async function _sendCommand(cmdString) {
+async function _sendCanvasToDevice() {
     if (!window.bonrixWriter) return;
-    try {
-        const encoder = new TextEncoder();
-        await window.bonrixWriter.write(encoder.encode(cmdString + '\n'));
-    } catch (e) {
-        console.error(e);
-    }
+    try { await window.bonrixWriter.write(_canvasToRGB565()); } catch (e) { console.error(e); }
 }
 
 window.sendBonrixWelcome = async function() {
-    await _sendCommand('WelcomeScreen**store@upi');
+    if (!window.bonrixWriter) return;
+    try {
+        await _downloadImageToCanvas('https://download.rechargegrid.in/download/general/image/jpeg/_home.jpg');
+        await _sendCanvasToDevice();
+    } catch (e) { console.error(e); }
 };
 
 window.sendBonrixQR = async function(amount, upiId, upiUrl) {
-    await _sendCommand(`DisplayQRCodeScreen**${upiUrl}**${amount}**${upiId}`);
+    if (!window.bonrixWriter) return;
+    try {
+        await _downloadImageToCanvas('https://download.rechargegrid.in/download/general/image/jpeg/_background.jpg');
+        window.bonrixCtx.font = 'bold 33px Arial';
+        window.bonrixCtx.fillStyle = 'black';
+        const text = 'Rs. ' + parseFloat(amount).toFixed(2);
+        window.bonrixCtx.fillText(text, (320 - window.bonrixCtx.measureText(text).width) / 2, 127);
+
+        const qrCanvas = document.createElement('canvas');
+        qrCanvas.width = 260; qrCanvas.height = 260;
+        await new Promise((resolve) => {
+            if (typeof QRCode !== 'undefined') { QRCode.toCanvas(qrCanvas, upiUrl, { width: 260, height: 260, margin: 1 }, resolve); }
+            else resolve();
+        });
+        window.bonrixCtx.drawImage(qrCanvas, 30, 150);
+
+        window.bonrixCtx.font = '20px Arial';
+        const utext = 'UPI ID: ' + upiId;
+        window.bonrixCtx.fillText(utext, (320 - window.bonrixCtx.measureText(utext).width) / 2, 430);
+        await _sendCanvasToDevice();
+    } catch (e) { console.error(e); }
 };
 
 window.sendBonrixSuccess = async function(amount) {
-    const txId = 'TXN' + Math.floor(Math.random()*10000);
-    const orderNo = 'ORD' + Math.floor(Math.random()*100);
-    const date = new Date().toISOString().split('T')[0];
-    await _sendCommand(`DisplaySuccessQRCodeScreen**${txId}**${orderNo}**${date}**${amount}`);
+    if (!window.bonrixWriter) return;
+    try {
+        await _downloadImageToCanvas('https://download.rechargegrid.in/download/general/image/jpeg/_success.jpg');
+        window.bonrixCtx.font = 'bold 34px Arial';
+        window.bonrixCtx.fillStyle = 'black';
+        const text = 'Rs. ' + parseFloat(amount).toFixed(2);
+        window.bonrixCtx.fillText(text, (320 - window.bonrixCtx.measureText(text).width) / 2, 275);
+        await _sendCanvasToDevice();
+    } catch (e) { console.error(e); }
 };
