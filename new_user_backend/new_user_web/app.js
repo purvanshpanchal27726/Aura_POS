@@ -34,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
       headers['Content-Type'] = 'application/json';
     }
     
-    const res = await fetch(url, { ...options, headers });
+    const res = await authFetch(url, { ...options, headers });
     
     // Auto-handle expired or invalid JWT token (401 Unauthorized)
     if (res.status === 401 && !url.includes('/api/users/login')) {
@@ -491,6 +491,38 @@ document.addEventListener('DOMContentLoaded', () => {
         sideDrawer.style.display = 'none';
       }
     });
+  }
+
+  // App Mode UI segmentation via Dropdown
+  const modeSelectDropdown = document.getElementById('modeSelectDropdown');
+
+  if (modeSelectDropdown) {
+    const setSidebarMode = (mode) => {
+      const grpPos = document.getElementById('groupPosCore');
+      const grpInv = document.getElementById('groupInventoryModule');
+      const grpRest = document.getElementById('groupRestaurantModule');
+      const grpHotel = document.getElementById('groupHotelModule');
+
+      if (mode === 'hotel') {
+        if (grpPos) grpPos.style.display = 'none';
+        if (grpInv) grpInv.style.display = 'none';
+        if (grpRest) grpRest.style.display = 'none';
+        if (grpHotel) grpHotel.style.display = 'block';
+      } else if (mode === 'restaurant') {
+        if (grpPos) grpPos.style.display = 'none';
+        if (grpInv) grpInv.style.display = 'block';
+        if (grpRest) grpRest.style.display = 'block';
+        if (grpHotel) grpHotel.style.display = 'none';
+      } else {
+        if (grpPos) grpPos.style.display = 'block';
+        if (grpInv) grpInv.style.display = 'block';
+        if (grpRest) grpRest.style.display = 'none';
+        if (grpHotel) grpHotel.style.display = 'none';
+      }
+    };
+    
+    modeSelectDropdown.addEventListener('change', (e) => setSidebarMode(e.target.value));
+    setSidebarMode(modeSelectDropdown.value);
   }
 
   // List of all screen views with explicit DOM element IDs
@@ -2053,7 +2085,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const method = id ? 'PUT' : 'POST';
 
     try {
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method: method,
         headers: {
           'Content-Type': 'application/json'
@@ -2396,7 +2428,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: {
             'Content-Type': 'application/json'
@@ -2622,7 +2654,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: {
             'Content-Type': 'application/json'
@@ -2847,7 +2879,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: {
             'Content-Type': 'application/json'
@@ -3071,7 +3103,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -3568,7 +3600,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -3866,7 +3898,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -4266,7 +4298,7 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(errRes.error || errRes.message || 'Failed to save sales invoice.');
         }
         const result = await response.json();
-        openPrintReceipt(result.sales_id);
+        openPrintReceipt(result.sales_id, true);
         fetchInvoiceSetup();
       } catch (err) {
         if (!navigator.onLine || (err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')))) {
@@ -4343,7 +4375,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnReceiptClose = document.getElementById('btnReceiptClose');
   const btnReceiptPrint = document.getElementById('btnReceiptPrint');
 
-  const openPrintReceipt = async (salesId) => {
+  const openPrintReceipt = async (salesId, isNewSale = false) => {
     try {
       const response = await authFetch(getApiUrl(`/api/sales/${salesId}`));
       if (!response.ok) {
@@ -4351,6 +4383,10 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(errRes.error || errRes.message || 'Failed to fetch invoice details.');
         }
       const invoice = await response.json();
+      
+      if (isNewSale && typeof window.sendBonrixSuccess === 'function') {
+         window.sendBonrixSuccess(invoice.total_amount);
+      }
 
       const printReceiptContent = document.getElementById('printReceiptContent');
       if (printReceiptContent) {
@@ -4384,6 +4420,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       currentReceiptInvoice = invoice;
       if (receiptModal) receiptModal.style.display = 'flex';
+      
+      if (autoPrint) {
+        setTimeout(() => {
+          window.print();
+        }, 500);
+      }
     } catch (err) {
       alert(`Error loading receipt: ${err.message}`);
     }
@@ -5020,7 +5062,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: {
             'Content-Type': 'application/json'
@@ -5257,7 +5299,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const method = id ? 'PUT' : 'POST';
 
       try {
-        const response = await fetch(url, {
+        const response = await authFetch(url, {
           method: method,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(clientData)
@@ -10822,4 +10864,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Session Check initialization
   checkAuthSession();
+
+  // Bonrix DQ11 Hooks
+  document.addEventListener('change', (e) => {
+    if (e.target.id === 'invoicePaymentMethod') {
+      if (e.target.value === 'UPI' && typeof window.sendBonrixQR === 'function') {
+        const tElem = document.getElementById('summaryNet');
+        const total = (tElem ? tElem.textContent : '0').replace(/[^0-9.]/g, '') || '0.00';
+        window.sendBonrixQR(total, 'merchant@upi', 'upi://pay?pa=merchant@upi&pn=Store&am=' + total);
+      } else if (typeof window.sendBonrixWelcome === 'function') {
+        window.sendBonrixWelcome();
+      }
+    }
+  });
 });

@@ -1200,11 +1200,27 @@ tr:hover td {
   body:not(.print-report-active) #printReceiptContent * {
     visibility: visible;
   }
+  
+  /* Reset modal parents so it anchors to the physical page */
+  body:not(.print-report-active) #receiptModal,
+  body:not(.print-report-active) .modal-card.receipt-card-modal {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: 0 !important;
+    width: 100% !important;
+  }
+  
   body:not(.print-report-active) #printReceiptContent {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    margin: 0 !important;
   }
 
   /* When printing reports */
@@ -2317,4 +2333,281 @@ input:checked + .switch-slider:before {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+
+/* OVERFLOW FIXES */
+.main-content { min-width: 0; max-width: 100%; overflow-x: visible; }
+.table-container { min-width: 0; max-width: 100%; overflow-x: auto; }
+.card, .vanshi-widget-card { min-width: 0; max-width: 100%; overflow-x: visible; }
+
+
+/* ===== VISIBLE HORIZONTAL SCROLLBAR FOR PERMISSION TABLE ===== */
+div[style*="overflow-x: scroll"]::-webkit-scrollbar {
+  height: 8px;
+}
+div[style*="overflow-x: scroll"]::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+div[style*="overflow-x: scroll"]::-webkit-scrollbar-thumb {
+  background: #4f46e5;
+  border-radius: 4px;
+}
+div[style*="overflow-x: scroll"]::-webkit-scrollbar-thumb:hover {
+  background: #3730a3;
+}
+
+
+/* ============================================================
+   FULL MOBILE & TABLET RESPONSIVE OVERRIDES
+   Breakpoints: tablet = 1024px, mobile = 768px, small = 480px
+   ============================================================ */
+
+/* ---- TABLET (up to 1024px) ---- */
+@media (max-width: 1024px) {
+
+  /* App bar: tighten spacing */
+  .app-bar {
+    padding: 0 1rem;
+    height: 60px;
+  }
+  #appBarTitle { font-size: 1.1rem; }
+
+  /* Make drawer narrower on tablet */
+  .drawer { width: 280px; }
+
+  /* Dashboard grid: 2 columns on tablet */
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+
+  /* List header: wrap buttons below title */
+  .list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .list-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  /* All table containers: scroll horizontally */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table-container table {
+    min-width: 600px;
+  }
+
+  /* Forms: 2 columns max on tablet */
+  .form-grid.col-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Modal: full width with small margin */
+  .modal-card {
+    width: 95% !important;
+    max-width: 95% !important;
+    margin: 1rem auto;
+    padding: 1.25rem !important;
+  }
+
+  /* Settings tabs: wrap */
+  .settings-tabs {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* POS Billing: stack vertically */
+  .pos-workspace {
+    grid-template-columns: 1fr !important;
+    gap: 1rem;
+  }
+}
+
+/* ---- MOBILE (up to 768px) ---- */
+@media (max-width: 768px) {
+
+  /* App bar: minimal */
+  .app-bar {
+    padding: 0 0.75rem;
+    height: 56px;
+    gap: 0.5rem;
+  }
+  #appBarTitle { font-size: 1rem; }
+
+  /* Hide text labels in user selector, keep avatar */
+  .user-selector-container span:not(.material-icons) {
+    display: none;
+  }
+  .user-selector-container {
+    padding: 0.35rem 0.6rem;
+    gap: 0.4rem;
+  }
+
+  /* Dashboard grid: single column */
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Dashboard cards: compact */
+  .dashboard-card {
+    padding: 1rem 1.25rem;
+  }
+  .card-value { font-size: 1.5rem; }
+
+  /* Cards and sections: reduced padding */
+  .card { padding: 1rem !important; }
+
+  /* List header: stack and full width buttons */
+  .list-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  .list-header h2 { font-size: 1.1rem; }
+  .list-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .list-actions .btn {
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Tables: force horizontal scroll with visible scrollbar */
+  .table-container {
+    overflow-x: scroll;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    border-radius: 8px;
+  }
+  .table-container table {
+    min-width: 560px;
+  }
+
+  /* Table cells: tighter padding */
+  th, td {
+    padding: 0.65rem 0.75rem;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  /* Forms: single column on mobile */
+  .form-grid.col-2,
+  .form-grid.col-3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modal: full screen on mobile */
+  .modal-overlay {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+  .modal-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 1.25rem !important;
+    margin: 0 !important;
+  }
+
+  /* Buttons: full width in modals */
+  .modal-card .btn-group,
+  .modal-card form > div:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .modal-card .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Drawer: full width overlay on small phones */
+  .drawer { width: 290px; }
+
+  /* Settings tabs: horizontal scroll */
+  .settings-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0.35rem;
+    padding-bottom: 0.5rem;
+  }
+  .settings-tab-btn {
+    white-space: nowrap;
+    font-size: 0.78rem;
+    padding: 0.5rem 0.85rem;
+  }
+
+  /* POS Billing: full stack */
+  .pos-workspace {
+    grid-template-columns: 1fr !important;
+  }
+  .pos-cart-panel {
+    position: static !important;
+  }
+
+  /* Receipt listing table */
+  #receiptTable {
+    min-width: 500px;
+  }
+
+  /* Reports grid: single col */
+  .form-grid.col-3 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Dashboard header */
+  .dashboard-header-panel h1 { font-size: 1.4rem; }
+  .dashboard-header-panel p { font-size: 0.9rem; }
+
+  /* Permissions table */
+  div[style*="overflow-x: scroll"] {
+    padding-bottom: 8px;
+  }
+  div[style*="overflow-x: scroll"] table {
+    min-width: 800px;
+  }
+}
+
+/* ---- SMALL PHONES (up to 480px) ---- */
+@media (max-width: 480px) {
+
+  body { font-size: 14px; }
+
+  .app-bar { height: 52px; padding: 0 0.5rem; }
+  #appBarTitle { font-size: 0.9rem; }
+
+  .dashboard-card { padding: 0.85rem 1rem; }
+  .card-icon-wrapper { width: 44px; height: 44px; }
+  .card-icon-wrapper .material-icons { font-size: 22px; }
+  .card-value { font-size: 1.25rem; }
+
+  /* Table action buttons: icon only */
+  .btn-sm .btn-label { display: none; }
+  td .btn { padding: 0.3rem 0.45rem; font-size: 0.75rem; }
+
+  /* Full width inputs */
+  input, select, textarea { font-size: 16px !important; } /* prevents iOS zoom */
+
+  .modal-card { padding: 1rem !important; }
+
+  /* Drawer header smaller */
+  .drawer-header { height: 140px; padding: 2rem 1.5rem 1.25rem; }
+  .drawer-header h2 { font-size: 1.35rem; }
 }

@@ -9,6 +9,8 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.1/build/qrcode.min.js"></script>
+  <script src="bonrix_display.js"></script>
 </head>
 <body>
   <!-- AMC Warning Banner -->
@@ -37,9 +39,7 @@
     <div class="modal-card" style="max-width: 400px; width: 90%; padding: 2.5rem; border-radius: 16px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main);">
       <h2 style="text-align: center; margin-bottom: 1.5rem; color: var(--text-main);" id="loginTitle">Login to POS System</h2>
       
-      <!-- Inline error banner — visible even behind the overlay -->
-      <div id="loginErrorBanner" style="display: none; background: #fef2f2; border: 1px solid #fca5a5; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.875rem; margin-bottom: 1.25rem; text-align: center;"></div>
-
+      
       <!-- Login Form -->
       <form id="loginForm">
         <div class="form-field" style="margin-bottom: 1.25rem;">
@@ -86,8 +86,10 @@
       <span class="material-icons" style="color: var(--primary-color);">account_circle</span>
       <span id="loggedInUsername" style="font-weight: bold; margin-right: 0.5rem; color: var(--text-main);">Guest</span>
       
-      <!-- Theme Controls -->
       <div class="theme-select-container" style="display: flex; align-items: center; gap: 0.5rem; margin-right: 0.5rem;">
+        <button type="button" onclick="connectBonrixDisplay()" class="btn" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; height: auto; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--primary-color); border-radius: 9999px; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+          <span class="material-icons" style="font-size: 1rem;">monitor</span> Connect Display
+        </button>
         <select id="themeSelect" class="theme-dropdown" style="padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 0.85rem; font-weight: 500; cursor: pointer; outline: none;">
           <option value="light">Light Mode</option>
           <option value="dark">Dark Mode</option>
@@ -136,6 +138,15 @@
 
       <ul class="drawer-menu" style="padding: 0.75rem 0.5rem; gap: 0.5rem; overflow-y: auto;">
         
+        <!-- App Mode Dropdown Control -->
+        <li id="drawerModeSelector" style="margin-bottom: 12px; list-style: none; padding: 0 5px;">
+          <select id="modeSelectDropdown" style="width: 100%; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--card-bg); color: var(--text-main); font-size: 0.9rem; font-weight: 600; outline: none; cursor: pointer;">
+            <option value="pos">Retail POS</option>
+            <option value="restaurant">Restaurant POS</option>
+            <option value="hotel">Hotel Management</option>
+          </select>
+        </li>
+
         <!-- 1. Overview & POS Counter Sales -->
         <li class="drawer-group expanded" id="groupPosCore">
           <div class="drawer-group-header" style="padding: 0.65rem 0.85rem; border-radius: 8px; font-weight: 700; font-size: 0.88rem; color: var(--text-main);">
@@ -1557,6 +1568,30 @@
 
         <!-- TAB 2: Printer Setup & Receipt Customization -->
         <div id="tabPrinterSetup" class="settings-tab-content">
+          <div class="card" style="padding: 1.75rem; border-radius: 14px; background: var(--card-bg); border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+              <span class="material-icons" style="color: var(--primary-color);">monitor</span>
+              <h3 style="margin: 0; font-size: 1.15rem; color: var(--text-main);">Customer Display Hardware (Bonrix DQ11)</h3>
+            </div>
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 0.95rem;">
+              Connect your 7-inch Bonrix USB Customer Display. The display will automatically show cart totals, QR Codes for UPI payments, and payment success banners. Make sure the USB is plugged in before clicking connect.
+            </p>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+               <div style="display: flex; align-items: center; gap: 0.5rem;">
+                 <label for="setting_bonrix_baudrate" style="font-weight: 600; color: var(--text-main); font-size: 0.95rem;">Baud Rate:</label>
+                 <select id="setting_bonrix_baudrate" style="padding: 0.6rem 1rem; border-radius: 8px; border: 1.5px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-size: 0.95rem;">
+                   <option value="9600">9600 baud</option>
+                   <option value="115200" selected>115200 baud</option>
+                   <option value="230400">230400 baud</option>
+                   <option value="921600">921600 baud</option>
+                 </select>
+               </div>
+               <button type="button" onclick="connectBonrixDisplay(parseInt(document.getElementById('setting_bonrix_baudrate').value))" class="btn btn-primary" style="padding: 0.75rem 1.5rem; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: bold;">
+                 <span class="material-icons">usb</span> Connect USB Display
+               </button>
+            </div>
+          </div>
+
           <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 1.5rem;">
             
             <!-- Left: Printer Settings Form -->
@@ -1686,17 +1721,17 @@
               <button type="button" id="btnSavePermissions" class="btn btn-primary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Save Permissions Matrix</button>
             </div>
             
-            <div class="table-container">
-              <table>
+            <div style="width: 100%; overflow-x: scroll; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: #4f46e5 #e5e7eb; padding-bottom: 6px;">
+              <table style="width: 100%; min-width: 700px; border-collapse: collapse;">
                 <thead>
                   <tr>
-                    <th>Security Role</th>
-                    <th style="text-align: center; width: 110px;">User Master</th>
-                    <th style="text-align: center; width: 110px;">Customer Master</th>
-                    <th style="text-align: center; width: 110px;">Item Master</th>
-                    <th style="text-align: center; width: 110px;">Sales (Sell)</th>
-                    <th style="text-align: center; width: 110px;">Purchase</th>
-                    <th style="text-align: center; width: 110px;">Reports</th>
+                    <th style="min-width: 120px; white-space: nowrap;">Security Role</th>
+                    <th style="text-align: center; min-width: 100px; white-space: nowrap;">User Master</th>
+                    <th style="text-align: center; min-width: 110px; white-space: nowrap;">Customer Master</th>
+                    <th style="text-align: center; min-width: 100px; white-space: nowrap;">Item Master</th>
+                    <th style="text-align: center; min-width: 100px; white-space: nowrap;">Sales (Sell)</th>
+                    <th style="text-align: center; min-width: 100px; white-space: nowrap;">Purchase</th>
+                    <th style="text-align: center; min-width: 100px; white-space: nowrap;">Reports</th>
                   </tr>
                 </thead>
                 <tbody id="permissionsTableBody">
@@ -2790,6 +2825,12 @@
               </select>
             </div>
             <div class="form-field" style="margin-top: 1rem;">
+              <label for="item_unit_id" style="font-weight: 600;">Unit of Measure</label>
+              <select id="item_unit_id" name="unit_id" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main); font-weight: 500;">
+                <option value="">Select Unit</option>
+              </select>
+            </div>
+            <div class="form-field" style="margin-top: 1rem;">
               <label for="item_tax_id" style="font-weight: 600;">Tax Slab / GST Rate</label>
               <select id="item_tax_id" name="tax_id" style="width: 100%; padding: 0.75rem 1rem; border: 1.5px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; background: var(--input-bg); color: var(--text-main); font-weight: 500;">
                 <option value="">-- Tax Exempt / 0% GST --</option>
@@ -2807,13 +2848,7 @@
             <input type="checkbox" id="item_editable_price" name="editable_price" value="false">
             <input type="checkbox" id="item_visible" name="visible" value="true" checked>
             <input type="checkbox" id="item_active" name="active" value="true" checked>
-            <select id="item_tax_id" name="tax_id">
-              <option value="">Select Tax Rate</option>
-            </select>
             <input type="number" step="0.01" id="item_base_quantity" name="base_quantity" value="1.00">
-            <select id="item_unit_id" name="unit_id">
-              <option value="">Select Unit</option>
-            </select>
             <input type="radio" id="weight_none" name="weight_measurement" value="none" checked>
             <input type="radio" id="weight_auto" name="weight_measurement" value="auto">
             <input type="radio" id="weight_manual" name="weight_measurement" value="manual">
