@@ -4375,7 +4375,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnReceiptClose = document.getElementById('btnReceiptClose');
   const btnReceiptPrint = document.getElementById('btnReceiptPrint');
 
-  const openPrintReceipt = async (salesId) => {
+  const openPrintReceipt = async (salesId, isNewSale = false) => {
     try {
       const response = await authFetch(getApiUrl(`/api/sales/${salesId}`));
       if (!response.ok) {
@@ -4383,6 +4383,10 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(errRes.error || errRes.message || 'Failed to fetch invoice details.');
         }
       const invoice = await response.json();
+      
+      if (isNewSale && typeof window.sendBonrixSuccess === 'function') {
+         window.sendBonrixSuccess(invoice.total_amount);
+      }
 
       const printReceiptContent = document.getElementById('printReceiptContent');
       if (printReceiptContent) {
@@ -10860,4 +10864,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Session Check initialization
   checkAuthSession();
+
+  // Bonrix DQ11 Hooks
+  document.addEventListener('change', (e) => {
+    if (e.target.id === 'invoicePaymentMethod') {
+      if (e.target.value === 'UPI' && typeof window.sendBonrixQR === 'function') {
+        const tElem = document.getElementById('summaryNet');
+        const total = (tElem ? tElem.textContent : '0').replace(/[^0-9.]/g, '') || '0.00';
+        window.sendBonrixQR(total, 'merchant@upi', 'upi://pay?pa=merchant@upi&pn=Store&am=' + total);
+      } else if (typeof window.sendBonrixWelcome === 'function') {
+        window.sendBonrixWelcome();
+      }
+    }
+  });
 });

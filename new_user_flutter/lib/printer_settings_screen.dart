@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'api_client.dart';
 import 'config.dart';
+import 'services/bonrix_display_service.dart';
 
 class PrinterSettingsScreen extends StatefulWidget {
   const PrinterSettingsScreen({super.key});
@@ -241,6 +242,33 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                                     onChanged: (v) => setState(() => autoPrint = v),
                                   ),
                                 ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          // Bonrix DQ11 Customer Display
+                          _buildCardSection(
+                            isDark: isDark,
+                            title: 'Hardware: Bonrix DQ11 Customer Display',
+                            icon: Icons.monitor_rounded,
+                            primaryColor: primaryColor,
+                            children: [
+                              Text(
+                                'Connect the 7-inch embedded USB Customer Display. Ensure the device is plugged in before clicking connect.',
+                                style: GoogleFonts.inter(fontSize: 14, color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primaryColor,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                                onPressed: () {
+                                  BonrixDisplayService.connect();
+                                },
+                                icon: const Icon(Icons.usb_rounded),
+                                label: const Text('Connect Display'),
                               ),
                             ],
                           ),

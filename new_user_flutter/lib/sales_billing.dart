@@ -7,6 +7,7 @@ import 'config.dart';
 import 'api_client.dart';
 import 'models/cart_item_model.dart';
 import 'services/pdf_receipt_service.dart';
+import 'services/bonrix_display_service.dart';
 
 class SalesBillingScreen extends StatefulWidget {
   const SalesBillingScreen({super.key});
@@ -243,6 +244,8 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
         HapticFeedback.heavyImpact();
         final res = json.decode(response.body);
         final salesId = res['sales_id'];
+        
+        BonrixDisplayService.showSuccess(netTotal.toStringAsFixed(2));
         
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -923,6 +926,11 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
             onChanged: (val) {
               if (val != null) {
                 setState(() => selectedPaymentMethod = val);
+                if (val == 'UPI') {
+                   BonrixDisplayService.showQR(_calculateTotal().toStringAsFixed(2), 'store@upi', 'upi://pay?pa=store@upi&pn=Store&am=${_calculateTotal().toStringAsFixed(2)}');
+                } else {
+                   BonrixDisplayService.showWelcome();
+                }
               }
             },
           ),
