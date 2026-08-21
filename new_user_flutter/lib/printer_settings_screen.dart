@@ -276,6 +276,7 @@ class _PrinterSettingsScreenState extends State<PrinterSettingsScreen> {
                                         items: const [
                                           DropdownMenuItem(value: 9600, child: Text('9600 baud')),
                                           DropdownMenuItem(value: 115200, child: Text('115200 baud')),
+                                          DropdownMenuItem(value: 156500, child: Text('156500 baud')),
                                           DropdownMenuItem(value: 230400, child: Text('230400 baud')),
                                           DropdownMenuItem(value: 921600, child: Text('921600 baud')),
                                         ],
