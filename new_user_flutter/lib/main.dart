@@ -595,6 +595,42 @@ class _MainLayoutState extends State<MainLayout> {
       ),
       actions: [
         if (isDesktop) ...[
+          // Module Switcher Dropdown (Retail / Restaurant / Hotel)
+          if (_hasModuleGroup('Hotel') || _hasModuleGroup('Restaurant')) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _uiMode,
+                  dropdownColor: isDark ? const Color(0xFF151D30) : Colors.white,
+                  icon: Icon(Icons.arrow_drop_down, color: primaryColor),
+                  style: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.bold, color: primaryColor),
+                  items: [
+                    const DropdownMenuItem(value: 'POS', child: Text('Retail POS')),
+                    if (_hasModuleGroup('Restaurant'))
+                      const DropdownMenuItem(value: 'Restaurant', child: Text('Restaurant POS')),
+                    if (_hasModuleGroup('Hotel'))
+                      const DropdownMenuItem(value: 'Hotel', child: Text('Hotel Management')),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _uiMode = val;
+                        _currentIndex = 0;
+                      });
+                    }
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+          ],
+
           // Store Selector Dropdown for Super Admin & Multi-Store Management
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
@@ -734,47 +770,6 @@ class _MainLayoutState extends State<MainLayout> {
           child: ListView(
             padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
             children: [
-              if (_hasModuleGroup('Hotel') || _hasModuleGroup('Restaurant'))
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF151D30) : const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0)),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _uiMode,
-                        isExpanded: true,
-                        dropdownColor: isDark ? const Color(0xFF151D30) : Colors.white,
-                        icon: const Icon(Icons.arrow_drop_down, color: Color(0xFF94A3B8)),
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : const Color(0xFF0F172A),
-                        ),
-                        items: [
-                          const DropdownMenuItem(value: 'POS', child: Text('Retail POS')),
-                          if (_hasModuleGroup('Restaurant'))
-                            const DropdownMenuItem(value: 'Restaurant', child: Text('Restaurant POS')),
-                          if (_hasModuleGroup('Hotel'))
-                            const DropdownMenuItem(value: 'Hotel', child: Text('Hotel Management')),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() {
-                              _uiMode = val;
-                              _currentIndex = 0;
-                            });
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-
               _buildSectionHeader('OPERATIONS'),
               _buildNavItem(0, 'Home', Icons.home_rounded, isDesktop),
 

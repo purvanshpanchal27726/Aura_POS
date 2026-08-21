@@ -329,6 +329,8 @@ class _RolewisePermissionsScreenState extends State<RolewisePermissionsScreen> {
                                 ),
                               ),
                             ),
+                          ),
+                        ),
                     ),
                   ),
                 ],

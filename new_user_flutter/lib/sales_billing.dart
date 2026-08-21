@@ -927,7 +927,7 @@ class _SalesBillingScreenState extends State<SalesBillingScreen> {
               if (val != null) {
                 setState(() => selectedPaymentMethod = val);
                 if (val == 'UPI') {
-                   BonrixDisplayService.showQR(_calculateTotal().toStringAsFixed(2), 'store@upi', 'upi://pay?pa=store@upi&pn=Store&am=${_calculateTotal().toStringAsFixed(2)}');
+                   BonrixDisplayService.showQR(netTotal.toStringAsFixed(2), 'store@upi', 'upi://pay?pa=store@upi&pn=Store&am=${netTotal.toStringAsFixed(2)}');
                 } else {
                    BonrixDisplayService.showWelcome();
                 }
