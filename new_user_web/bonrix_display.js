@@ -27,7 +27,11 @@ if ('serial' in navigator) {
 
 async function _openBonrixPort(baudRate) {
     try {
-        await window.bonrixSerialPort.open({ baudRate: baudRate });
+        try {
+            await window.bonrixSerialPort.open({ baudRate: baudRate });
+        } catch (err) {
+            if (err.name !== 'InvalidStateError') throw err;
+        }
         window.bonrixWriter = window.bonrixSerialPort.writable.getWriter();
         window.sendBonrixWelcome();
     } catch (e) { console.error('Error opening Bonrix port:', e); }
@@ -80,7 +84,13 @@ function _canvasToRGB565() {
 
 async function _sendCanvasToDevice() {
     if (!window.bonrixWriter) return;
-    try { await window.bonrixWriter.write(_canvasToRGB565()); } catch (e) { console.error(e); }
+    try { 
+        const data = _canvasToRGB565();
+        const chunkSize = 4096;
+        for (let i = 0; i < data.length; i += chunkSize) {
+            await window.bonrixWriter.write(data.subarray(i, i + chunkSize));
+        }
+    } catch (e) { console.error(e); }
 }
 
 window.sendBonrixWelcome = async function() {
